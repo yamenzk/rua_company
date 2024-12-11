@@ -26,7 +26,9 @@ app_license = "mit"
 
 # include js, css files in header of desk.html
 # app_include_css = "/assets/rua_company/css/rua_company.css"
-# app_include_js = "/assets/rua_company/js/rua_company.js"
+app_include_js = [
+    "/assets/rua_company/js/project_dashboard.js"
+]
 
 # include js, css files in header of web template
 # web_include_css = "/assets/rua_company/css/rua_company.css"
@@ -43,7 +45,11 @@ app_license = "mit"
 # page_js = {"page" : "public/js/file.js"}
 
 # include js in doctype views
-# doctype_js = {"doctype" : "public/js/doctype.js"}
+doctype_js = {
+    "Project": [
+        "public/js/project_dashboard.js"
+    ]
+}
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
@@ -241,4 +247,3 @@ app_license = "mit"
 # default_log_clearing_doctypes = {
 # 	"Logging DocType Name": 30  # days to retain logs
 # }
-

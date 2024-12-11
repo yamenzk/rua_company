@@ -419,7 +419,7 @@
   {
    "fieldname": "html_hcoq",
    "fieldtype": "HTML",
-   "options": "<div class=\"notice-container\">\n  <div class=\"notice\">\n    <h2>Additional Expense Documentation</h2>\n    <p>\n      Please document any additional expenses in the section below. \n      <span class=\"highlighted\">Ensure all item rates are VAT inclusive.</span>\n    </p>\n    <div class=\"info-panel\">\n      <p>\n        Expenses listed here will be automatically processed as paid. The total amount will be incorporated into the final payable sum and adjusted in the balance calculation.\n      </p>\n    </div>\n  </div>\n</div>\n\n<style>\n.notice-container {\n  max-width: 800px;\nmargin: auto;\n}\n\n.notice {\n  border: 1px solid var(--border-color);;\n  border-radius: var(--border-radius);\n  padding: var(--padding-md);\n  position: relative;\n  overflow: hidden;\n}\n\n.notice::before {\n  content: '';\n  position: absolute;\n  top: 0;\n  left: 0;\n  width: 4px;\n  height: 100%;\n  background: #FBC418;\n}\n\n.notice h2 {\n  color: var(--heading-color);\n  font-size: var(--text-lg);\n  font-weight: 600;\n  margin: 0 0 12px 0;\n  letter-spacing: -0.02em;\n}\n\n.notice p {\n  color: var(--text-muted);\n  line-height: 1.7;\n  margin: 0 0 6px 0;\n  font-size: var(--text-base);\n}\n\n.notice .highlighted {\n  color: var(--red);\n  font-weight: 600;\n}\n\n.notice .info-panel {\n  background: var(--subtle-fg);\n  border: 1px solid var(--border-color);\n  border-radius: var(--border-radius);\n  padding: var(--padding-sm);\n}\n\n.notice .info-panel p {\n  color: var(--gray-600);\n  font-size: var(--text-sm);\n  margin: 0;\n  line-height: 1.6;\n}\n\n[data-theme=\"dark\"] .notice .highlighted,\n[data-theme-mode=\"dark\"] .notice .highlighted {\n  color: var(--dt-light-red);\n}\n</style>"
+   "options": "<div class=\"notice-container\">\n  <div class=\"notice\">\n    <h2>Additional Expense Documentation</h2>\n    <p>\n      Please document any additional expenses in the section below. \n      <span class=\"highlighted\">Ensure all item rates are VAT inclusive.</span>\n    </p>\n    <div class=\"info-panel\">\n      <p>\n        Expenses listed here will be automatically processed as paid. The total amount will be incorporated into the final payable sum and adjusted in the balance calculation.\n      </p>\n    </div>\n  </div>\n</div>"
   },
   {
    "collapsible": 1,
@@ -457,7 +457,7 @@
  "index_web_pages_for_search": 1,
  "links": [],
  "make_attachments_public": 1,
- "modified": "2024-12-11 04:17:49.670700",
+ "modified": "2024-12-11 13:51:46.224033",
  "modified_by": "Administrator",
  "module": "Rua Company",
  "name": "Project",
