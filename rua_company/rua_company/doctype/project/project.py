@@ -128,6 +128,7 @@ class Project(Document):
         self.total_invoices = sum(flt(d.grand_total) for d in self.invoices)
         self.total_expenses = sum(flt(d.grand_total) for d in self.lpos)
         self.total_received = sum(flt(d.amount) for d in self.received_table)
+        self.total_additional_expenses = sum(flt(d.amount) for d in self.additional_items)
         
         # Calculate total paid including additional expenses
         total_payments = sum(flt(d.amount) for d in self.paid_table)
@@ -347,6 +348,9 @@ def import_items_from_excel(file_url, scope):
         # Add items to the project
         for item in items:
             project.append('items', item)
+        
+        # Calculate values before saving to ensure new items are included
+        project.calculate_all_values()
         
         # Save the project
         project.save()

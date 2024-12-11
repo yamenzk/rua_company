@@ -25,11 +25,6 @@
   "scopes",
   "section_break_duur",
   "items",
-  "additional_expenses_tab",
-  "section_break_jjtl",
-  "html_hcoq",
-  "section_break_mouu",
-  "additional_items",
   "draft_billing_tab",
   "quotation_drafts",
   "quotations",
@@ -53,6 +48,7 @@
   "expense_column",
   "lpos",
   "total_expenses",
+  "additional_items",
   "total_additional_expenses",
   "payments_section",
   "received_column",
@@ -412,30 +408,10 @@
    "read_only": 1
   },
   {
-   "fieldname": "additional_expenses_tab",
-   "fieldtype": "Tab Break",
-   "label": "Additional Expenses"
-  },
-  {
-   "fieldname": "html_hcoq",
-   "fieldtype": "HTML",
-   "options": "<div class=\"notice-container\">\n  <div class=\"notice\">\n    <h2>Additional Expense Documentation</h2>\n    <p>\n      Please document any additional expenses in the section below. \n      <span class=\"highlighted\">Ensure all item rates are VAT inclusive.</span>\n    </p>\n    <div class=\"info-panel\">\n      <p>\n        Expenses listed here will be automatically processed as paid. The total amount will be incorporated into the final payable sum and adjusted in the balance calculation.\n      </p>\n    </div>\n  </div>\n</div>"
-  },
-  {
-   "collapsible": 1,
-   "fieldname": "section_break_mouu",
-   "fieldtype": "Section Break"
-  },
-  {
    "fieldname": "additional_items",
    "fieldtype": "Table",
    "label": "Additional Items",
    "options": "Items"
-  },
-  {
-   "fieldname": "section_break_jjtl",
-   "fieldtype": "Section Break",
-   "hide_border": 1
   },
   {
    "fieldname": "tab_6_tab",
@@ -457,7 +433,7 @@
  "index_web_pages_for_search": 1,
  "links": [],
  "make_attachments_public": 1,
- "modified": "2024-12-11 13:51:46.224033",
+ "modified": "2024-12-11 20:23:55.706885",
  "modified_by": "Administrator",
  "module": "Rua Company",
  "name": "Project",

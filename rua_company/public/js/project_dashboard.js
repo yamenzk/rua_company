@@ -60,7 +60,7 @@ function generateDashboardHTML(frm) {
     `;
 
     const projectImage = frm.doc.image ? 
-        `<img src="${frm.doc.image}" alt="${frm.doc.name}"/>` : 
+        `<img src="${frm.doc.image}" alt="${frm.doc.name}" style="object-fit: fill"/>` : 
         `<i class="fa fa-building-o fa-3x text-muted"></i>`;
 
     // Project Image Section
@@ -114,7 +114,6 @@ function generateDashboardHTML(frm) {
     width: 4px;
     height: 100%;
     background: var(--primary);
-    opacity: 0.8;
 }
 
 .overview-card.profit::after {
@@ -127,6 +126,10 @@ function generateDashboardHTML(frm) {
 
 .overview-card.net::after {
     background: var(--blue);
+}
+
+.overview-card.expenses::after {
+    background: var(--red);
 }
 
 .overview-card .label {
@@ -169,10 +172,6 @@ function generateDashboardHTML(frm) {
     background: var(--subtle-fg);
 }
 
-.draft-financing .summary-card {
-    background: var(--subtle-accent);
-}
-
 .section-header {
     padding: var(--padding-lg);
     border-bottom: 1px solid var(--border-color);
@@ -205,15 +204,12 @@ function generateDashboardHTML(frm) {
 }
 
 .scope {
-    padding: var(--padding-sm);
-    border-radius: 50%;
     width: 30px;
     height: 30px;
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: var(--subtle-fg);
-    color: var(--text-muted);
+    border-radius: 50%;
 }
 
 /* Summary Grid */
@@ -418,8 +414,8 @@ function generateDashboardHTML(frm) {
     font-weight: 500;
     justify-self: end;
     background: var(--bg-blue);
-    color: var(--blue-600);
-    border: 1px solid var(--blue-200);
+    color: var(--text-on-blue);
+    border: 1px solid var(--blue-600);
 }
 
 .doc-category {
@@ -671,7 +667,7 @@ function generateDashboardHTML(frm) {
 
 .status-completed {
     background: var(--bg-green);
-    color: var(--text-on-green);
+    color: var(--green-600);
 }
 
 .status-cancelled {
@@ -731,9 +727,6 @@ function generateDashboardHTML(frm) {
 .add-scope{
     justify-content: center;
     align-items: center;
-}
-
-.scope-add-content{
     text-align: center;
 }
 
@@ -763,67 +756,88 @@ function generateDashboardHTML(frm) {
 
 .scope-stat i {
     font-size: var(--text-sm);
-    opacity: 0.7;
 }
 
-.notice-container {
+
+
+/* Finance Section Styles */
+.finance-section {
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    background: var(--card-bg);
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--card-shadow);
 }
 
-.notice {
-  border: 1px solid var(--border-color);;
-  border-radius: var(--border-radius);
-  padding: var(--padding-md);
-  position: relative;
-  overflow: hidden;
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
 }
 
-.notice::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 4px;
-  height: 100%;
-  background: #FBC418;
+.section-header h2 {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-color);
 }
 
-.notice h2 {
-  color: var(--heading-color);
-  font-size: var(--text-lg);
-  font-weight: 600;
-  margin: 0 0 12px 0;
-  letter-spacing: -0.02em;
+/* Additional Expenses Styles */
+.info-panel {
+    background: var(--subtle-fg);
+    padding: 1rem;
+    border-radius: var(--border-radius);
 }
 
-.notice p {
-  color: var(--text-muted);
-  line-height: 1.7;
-  margin: 0 0 6px 0;
-  font-size: var(--text-base);
+.info-panel p {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: var(--text-xs)
 }
 
-.notice .highlighted {
-  color: var(--red);
-  font-weight: 600;
+.info-panel i {
+    color: var(--text-muted);
+    margin-right: 0.5rem;
 }
 
-.notice .info-panel {
-  background: var(--subtle-fg);
-  border: 1px solid var(--border-color);
-  border-radius: var(--border-radius);
-  padding: var(--padding-sm);
+.expenses-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
 }
 
-.notice .info-panel p {
-  color: var(--gray-600);
-  font-size: var(--text-sm);
-  margin: 0;
-  line-height: 1.6;
+.expense-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: 1rem;
+    transition: all 0.2s ease;
 }
 
-[data-theme="dark"] .notice .highlighted,
-[data-theme-mode="dark"] .notice .highlighted {
-  color: var(--dt-light-red);
+.expense-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-base);
+}
+
+.expense-title {
+    font-weight: 600;
+    color: var(--text-color);
+    margin-bottom: 0.5rem;
+}
+
+.expense-description {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    margin-bottom: 0.75rem;
+    line-height: 1.4;
+}
+
+.expense-amount {
+    color: var(--text-color);
+    font-weight: 500;
+    font-size: 1.125rem;
 }
 </style>
 <div class="finance-dashboard">
@@ -881,7 +895,7 @@ function generateDashboardHTML(frm) {
             </div>
             <div class="metric">
                 <span class="${(frm.doc.profit_percentage || 0) >= 0 ? 'metric-positive' : 'metric-negative'}">
-                    ${frm.doc.profit_percentage || 0}% Margin
+                    ${(frm.doc.profit_percentage || 0).toFixed(0)}%
                 </span>
             </div>
         </div>
@@ -890,6 +904,12 @@ function generateDashboardHTML(frm) {
             <div class="label">Net Position</div>
             <div class="amount">${formatCurrency((frm.doc.due_receivables || 0) - (frm.doc.due_payables || 0))}</div>
             <div class="metric">Current Balance</div>
+        </div>
+        
+        <div class="overview-card expenses">
+            <div class="label">Additional Expenses</div>
+            <div class="amount">${formatCurrency(frm.doc.total_additional_expenses || 0)}</div>
+            <div class="metric">Auto-processed as paid</div>
         </div>
     </div>
 
@@ -911,7 +931,10 @@ function generateDashboardHTML(frm) {
                     ${(frm.doc.proformas || []).length ? 
                         (frm.doc.proformas || []).map(row => `
                             <div class="doc-list-item">
-                                <div class="scope">${row.scope || ''}</div>
+                                <div class="scope" style="
+                                    background: ${row.scope ? SCOPE_COLORS[(parseInt(row.scope) - 1) % SCOPE_COLORS.length].bg : 'var(--fg-color)'};
+                                    color: ${row.scope ? SCOPE_COLORS[(parseInt(row.scope) - 1) % SCOPE_COLORS.length].text : 'var(--text-muted)'};
+                                ">${row.scope || ''}</div>
                                 <div class="doc-info">
                                     <a href="/app/project-bill/${row.bill}" class="bill">${row.bill}</a>
                                     <div class="amount">${formatCurrency(row.grand_total)}</div>
@@ -934,7 +957,10 @@ function generateDashboardHTML(frm) {
                     ${(frm.doc.invoices || []).length ? 
                         (frm.doc.invoices || []).map(row => `
                             <div class="doc-list-item">
-                                <div class="scope">${row.scope || ''}</div>
+                                <div class="scope" style="
+                                    background: ${row.scope ? SCOPE_COLORS[(parseInt(row.scope) - 1) % SCOPE_COLORS.length].bg : 'var(--fg-color)'};
+                                    color: ${row.scope ? SCOPE_COLORS[(parseInt(row.scope) - 1) % SCOPE_COLORS.length].text : 'var(--text-muted)'};
+                                ">${row.scope || ''}</div>
                                 <div class="doc-info">
                                     <a href="/app/project-bill/${row.bill}" class="bill">${row.bill}</a>
                                     <div class="amount">${formatCurrency(row.grand_total)}</div>
@@ -990,7 +1016,10 @@ function generateDashboardHTML(frm) {
                     ${(frm.doc.lpos || []).length ? 
                         (frm.doc.lpos || []).map(row => `
                             <div class="doc-list-item">
-                                <div class="scope">${row.scope || ''}</div>
+                                <div class="scope" style="
+                                    background: ${row.scope ? SCOPE_COLORS[(parseInt(row.scope) - 1) % SCOPE_COLORS.length].bg : 'var(--fg-color)'};
+                                    color: ${row.scope ? SCOPE_COLORS[(parseInt(row.scope) - 1) % SCOPE_COLORS.length].text : 'var(--text-muted)'};
+                                ">${row.scope || ''}</div>
                                 <div class="doc-info">
                                     <a href="/app/project-bill/${row.bill}" class="bill">${row.bill}</a>
                                     <div class="amount">${formatCurrency(row.grand_total)}</div>
@@ -1023,13 +1052,22 @@ function generateDashboardHTML(frm) {
                         `).join('') : 
                         '<div class="empty-state">No payments made</div>'
                     }
+                    ${frm.doc.total_additional_expenses > 0 ? `
+                        <div class="payment-list-item">
+                            <div class="date" style="font-weight: bold;">AUTO</div>
+                            <div class="payment-info">
+                                <p class="voucher" style="margin: 0">Additional expenses</p>
+                                <div class="amount">${formatCurrency(frm.doc.total_additional_expenses)}</div>
+                            </div>
+                            <div class="payment-arrow arrow-outgoing">↑</div>
+                        </div>
+                    ` : ''}
                 </div>
             </div>
         </div>
     </div>
 
     <!-- Draft Financing Section -->
-    <div class="section-divider"></div>
     <div class="finance-section draft-financing">
         <div class="section-header">
             <h2>Draft Financing</h2>
@@ -1046,7 +1084,10 @@ function generateDashboardHTML(frm) {
                     ${(frm.doc.proforma_drafts || []).length ? 
                         (frm.doc.proforma_drafts || []).map(row => `
                             <div class="doc-list-item">
-                                <div class="scope">${row.scope || ''}</div>
+                                <div class="scope" style="
+                                    background: ${row.scope ? SCOPE_COLORS[(parseInt(row.scope) - 1) % SCOPE_COLORS.length].bg : 'var(--fg-color)'};
+                                    color: ${row.scope ? SCOPE_COLORS[(parseInt(row.scope) - 1) % SCOPE_COLORS.length].text : 'var(--text-muted)'};
+                                ">${row.scope || ''}</div>
                                 <div class="doc-info">
                                     <a href="/app/project-bill/${row.bill}" class="bill">${row.bill}</a>
                                     <div class="amount">${formatCurrency(row.grand_total)}</div>
@@ -1066,7 +1107,10 @@ function generateDashboardHTML(frm) {
                     ${(frm.doc.lpo_drafts || []).length ? 
                         (frm.doc.lpo_drafts || []).map(row => `
                             <div class="doc-list-item">
-                                <div class="scope">${row.scope || ''}</div>
+                                <div class="scope" style="
+                                    background: ${row.scope ? SCOPE_COLORS[(parseInt(row.scope) - 1) % SCOPE_COLORS.length].bg : 'var(--fg-color)'};
+                                    color: ${row.scope ? SCOPE_COLORS[(parseInt(row.scope) - 1) % SCOPE_COLORS.length].text : 'var(--text-muted)'};
+                                ">${row.scope || ''}</div>
                                 <div class="doc-info">
                                     <a href="/app/project-bill/${row.bill}" class="bill">${row.bill}</a>
                                     <div class="amount">${formatCurrency(row.grand_total)}</div>
@@ -1086,7 +1130,10 @@ function generateDashboardHTML(frm) {
                     ${(frm.doc.invoice_drafts || []).length ? 
                         (frm.doc.invoice_drafts || []).map(row => `
                             <div class="doc-list-item">
-                                <div class="scope">${row.scope || ''}</div>
+                                <div class="scope" style="
+                                    background: ${row.scope ? SCOPE_COLORS[(parseInt(row.scope) - 1) % SCOPE_COLORS.length].bg : 'var(--fg-color)'};
+                                    color: ${row.scope ? SCOPE_COLORS[(parseInt(row.scope) - 1) % SCOPE_COLORS.length].text : 'var(--text-muted)'};
+                                ">${row.scope || ''}</div>
                                 <div class="doc-info">
                                     <a href="/app/project-bill/${row.bill}" class="bill">${row.bill}</a>
                                     <div class="amount">${formatCurrency(row.grand_total)}</div>
@@ -1112,7 +1159,10 @@ function generateDashboardHTML(frm) {
                         <div class="doc-category">Submitted Quotations</div>
                         ${(frm.doc.quotations || []).map(row => `
                             <div class="doc-list-item">
-                                <div class="scope">${row.scope || ''}</div>
+                                <div class="scope" style="
+                                    background: ${row.scope ? SCOPE_COLORS[(parseInt(row.scope) - 1) % SCOPE_COLORS.length].bg : 'var(--fg-color)'};
+                                    color: ${row.scope ? SCOPE_COLORS[(parseInt(row.scope) - 1) % SCOPE_COLORS.length].text : 'var(--text-muted)'};
+                                ">${row.scope || ''}</div>
                                 <div class="doc-info">
                                     <a href="/app/project-bill/${row.bill}" class="bill">${row.bill}</a>
                                     <div class="amount">${formatCurrency(row.grand_total)}</div>
@@ -1127,7 +1177,10 @@ function generateDashboardHTML(frm) {
                         <div class="doc-category">Draft Quotations</div>
                         ${(frm.doc.quotation_drafts || []).map(row => `
                             <div class="doc-list-item">
-                                <div class="scope">${row.scope || ''}</div>
+                                <div class="scope" style="
+                                    background: ${row.scope ? SCOPE_COLORS[(parseInt(row.scope) - 1) % SCOPE_COLORS.length].bg : 'var(--fg-color)'};
+                                    color: ${row.scope ? SCOPE_COLORS[(parseInt(row.scope) - 1) % SCOPE_COLORS.length].text : 'var(--text-muted)'};
+                                ">${row.scope || ''}</div>
                                 <div class="doc-info">
                                     <a href="/app/project-bill/${row.bill}" class="bill">${row.bill}</a>
                                     <div class="amount">${formatCurrency(row.grand_total)}</div>
@@ -1153,7 +1206,10 @@ function generateDashboardHTML(frm) {
                         <div class="doc-category">Submitted RFQs</div>
                         ${(frm.doc.rfqs || []).map(row => `
                             <div class="doc-list-item">
-                                <div class="scope">${row.scope || ''}</div>
+                                <div class="scope" style="
+                                    background: ${row.scope ? SCOPE_COLORS[(parseInt(row.scope) - 1) % SCOPE_COLORS.length].bg : 'var(--fg-color)'};
+                                    color: ${row.scope ? SCOPE_COLORS[(parseInt(row.scope) - 1) % SCOPE_COLORS.length].text : 'var(--text-muted)'};
+                                ">${row.scope || ''}</div>
                                 <div class="doc-info">
                                     <a href="/app/project-bill/${row.bill}" class="bill">${row.bill}</a>
                                     <div class="amount">${formatCurrency(row.grand_total)}</div>
@@ -1168,7 +1224,10 @@ function generateDashboardHTML(frm) {
                         <div class="doc-category">Draft RFQs</div>
                         ${(frm.doc.rfq_drafts || []).map(row => `
                             <div class="doc-list-item">
-                                <div class="scope">${row.scope || ''}</div>
+                                <div class="scope" style="
+                                    background: ${row.scope ? SCOPE_COLORS[(parseInt(row.scope) - 1) % SCOPE_COLORS.length].bg : 'var(--fg-color)'};
+                                    color: ${row.scope ? SCOPE_COLORS[(parseInt(row.scope) - 1) % SCOPE_COLORS.length].text : 'var(--text-muted)'};
+                                ">${row.scope || ''}</div>
                                 <div class="doc-info">
                                     <a href="/app/project-bill/${row.bill}" class="bill">${row.bill}</a>
                                     <div class="amount">${formatCurrency(row.grand_total)}</div>
@@ -1181,6 +1240,32 @@ function generateDashboardHTML(frm) {
                     ${(!frm.doc.rfqs?.length && !frm.doc.rfq_drafts?.length) ? 
                         '<div class="empty-state">No RFQs found</div>' : ''
                     }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Additional Expenses Section -->
+    <div class="finance-section additional-expenses">
+        <div class="section-header">
+            <h2>Additional Expenses</h2>
+            <span class="total-badge">Total: ${formatCurrency(frm.doc.total_additional_expenses || 0)}</span>
+        </div>
+        <div class="info-panel mb-3">
+            <p><i class="fa fa-info-circle"></i> Expenses listed here are automatically processed as paid. The total amount is incorporated into the final payable sum and adjusted in the balance calculation.</p>
+        </div>
+        <div class="expenses-grid">
+            ${(frm.doc.additional_items || []).map(item => `
+                <div class="expense-card clickable" data-item-idx="${item.idx}">
+                    <div class="expense-title">${item.item || 'Untitled'}</div>
+                    ${item.description ? `<div class="expense-description">${item.description}</div>` : ''}
+                    <div class="expense-amount">${formatCurrency(item.amount || 0)}</div>
+                </div>
+            `).join('')}
+            <div class="expense-card add-expense clickable" style="background: var(--fg-color); border: 1px dashed var(--gray-400);">
+                <div class="expense-add-content" style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%;">
+                    <i class="fa fa-plus" style="font-size: 20px; color: var(--text-muted);"></i>
+                    <div style="color: var(--text-muted); margin-top: 8px;">Add Expense</div>
                 </div>
             </div>
         </div>
@@ -1307,6 +1392,17 @@ function attachDashboardEventListeners(frm) {
         $('.view-items-btn').on('click', function() {
             showItemsDialog(frm);
         });
+
+        // Add expense handler
+        $('.add-expense').on('click', function() {
+            showAddExpenseDialog(frm);
+        });
+
+        // Expense card click handler
+        $('.expense-card:not(.add-expense)').on('click', function() {
+            const idx = parseInt($(this).data('item-idx'));
+            showExpenseDetailsDialog(frm, idx);
+        });
     }, 100);
 }
 
@@ -1340,6 +1436,19 @@ function show_manage_parties_dialog(frm) {
                             name: ['not in', (frm.doc.parties || []).map(p => p.party)]
                         }
                     };
+                },
+                onchange: function() {
+                    const party = this.get_value();
+                    if (party) {
+                        frappe.db.get_value('Party', party, ['default_type', 'default_section'], (r) => {
+                            if (r.default_type) {
+                                dialog.set_value('type', r.default_type);
+                            }
+                            if (r.default_type === 'Supplier' && r.default_section) {
+                                dialog.set_value('section', r.default_section);
+                            }
+                        });
+                    }
                 }
             },
             {
@@ -1474,7 +1583,7 @@ function showScopeDetailsDialog(frm, scopeNumber) {
                                 <h3 style="margin-bottom: var(--padding-sm); font-size: var(--text-xl);">
                                     ${scope.description || 'Untitled Scope'}
                                 </h3>
-                                <div style="opacity: 0.9;">Scope Number: ${scope.scope_number}</div>
+                                <div>Scope Number: ${scope.scope_number}</div>
                             </div>
                             <div class="dialog-actions" style="display: flex; gap: var(--padding-xs);">
                                 <button class="btn btn-default btn-xs btn-edit-scope" 
@@ -1637,7 +1746,6 @@ function showScopeEditDialog(frm, scope = null) {
                 mandatory_depends_on: 'eval:1'
             },
             {
-                fieldname: 'col_break_1',
                 fieldtype: 'Column Break'
             },
             {
@@ -2105,11 +2213,215 @@ function showItemsDialog(frm) {
     dialog.show();
 }
 
-// Add the function to the dashboard namespace
-rua_company.project_dashboard.showItemsDialog = showItemsDialog;
+// Function to show add expense dialog
+function showAddExpenseDialog(frm) {
+    const dialog = new frappe.ui.Dialog({
+        title: 'Add Expense',
+        fields: [
+            {
+                fieldtype: 'Section Break',
+                label: 'Expense Details'
+            },
+            {
+                fieldname: 'item',
+                fieldtype: 'Data',
+                label: 'Item',
+                mandatory_depends_on: 'eval:1'
+            },
+            {
+                fieldname: 'description',
+                fieldtype: 'Small Text',
+                label: 'Description'
+            },
+            {
+                fieldtype: 'Column Break'
+            },
+            {
+                fieldname: 'width',
+                fieldtype: 'Float',
+                label: 'Width (cm)'
+            },
+            {
+                fieldname: 'height',
+                fieldtype: 'Float',
+                label: 'Height (cm)'
+            },
+            {
+                fieldtype: 'Section Break',
+                label: 'Pricing'
+            },
+            {
+                fieldname: 'qty',
+                fieldtype: 'Float',
+                label: 'Quantity',
+                mandatory_depends_on: 'eval:1',
+                default: 1
+            },
+            {
+                fieldname: 'rate',
+                fieldtype: 'Currency',
+                label: 'Rate (VAT Inclusive)',
+                mandatory_depends_on: 'eval:1',
+                description: 'Please ensure the rate includes VAT'
+            },
+            {
+                fieldtype: 'HTML',
+                options: `
+                    <div class="alert alert-info">
+                        <i class="fa fa-info-circle"></i>
+                        <strong>Note:</strong> The rate should be VAT inclusive.
+                    </div>
+                `
+            }
+        ],
+        primary_action_label: 'Add Expense',
+        primary_action(values) {
+            if (!frm.doc.additional_items) {
+                frm.doc.additional_items = [];
+            }
 
-// Export the main function
-frappe.provide('rua_company.project_dashboard');
+            const amount = values.qty * values.rate; 
+            
+            let row = frappe.model.add_child(frm.doc, 'Additional Items', 'additional_items');
+            Object.assign(row, {
+                ...values,
+                amount: amount
+            });
+            
+            frm.refresh_field('additional_items');
+            frm.dirty();
+            dialog.hide();
+            frm.save();
+            rua_company.project_dashboard.render(frm);
+            frappe.show_alert({
+                message: __('Expense added successfully'),
+                indicator: 'green'
+            });
+        }
+    });
+    
+    dialog.show();
+}
+
+// Function to show expense details dialog
+function showExpenseDetailsDialog(frm, idx) {
+    const expense = frm.doc.additional_items.find(item => item.idx === idx);
+    if (!expense) return;
+
+    const dialog = new frappe.ui.Dialog({
+        title: 'Expense Details',
+        fields: [
+            {
+                fieldtype: 'Section Break',
+                label: 'Expense Details'
+            },
+            {
+                fieldname: 'item',
+                fieldtype: 'Data',
+                label: 'Item',
+                mandatory_depends_on: 'eval:1',
+                default: expense.item
+            },
+            {
+                fieldname: 'description',
+                fieldtype: 'Small Text',
+                label: 'Description',
+                default: expense.description
+            },
+            {
+                fieldtype: 'Column Break'
+            },
+            {
+                fieldname: 'width',
+                fieldtype: 'Float',
+                label: 'Width (cm)',
+                default: expense.width
+            },
+            {
+                fieldname: 'height',
+                fieldtype: 'Float',
+                label: 'Height (cm)',
+                default: expense.height
+            },
+            {
+                fieldtype: 'Section Break',
+                label: 'Pricing'
+            },
+            {
+                fieldname: 'qty',
+                fieldtype: 'Float',
+                label: 'Quantity',
+                mandatory_depends_on: 'eval:1',
+                default: expense.qty
+            },
+            {
+                fieldname: 'rate',
+                fieldtype: 'Currency',
+                label: 'Rate (VAT Inclusive)',
+                mandatory_depends_on: 'eval:1',
+                default: expense.rate,
+                description: 'Please ensure the rate includes VAT'
+            },
+            {
+                fieldtype: 'HTML',
+                options: `
+                    <div class="alert alert-info">
+                        <i class="fa fa-info-circle"></i>
+                        <strong>Note:</strong> The rate should be VAT inclusive.
+                    </div>
+                `
+            }
+        ],
+        primary_action_label: 'Save Changes',
+        primary_action(values) {
+            const amount = values.qty * values.rate;
+            
+            // Find and update the expense
+            const expense_idx = frm.doc.additional_items.findIndex(item => item.idx === idx);
+            if (expense_idx !== -1) {
+                Object.assign(frm.doc.additional_items[expense_idx], {
+                    ...values,
+                    amount: amount
+                });
+                
+                frm.refresh_field('additional_items');
+                frm.dirty();
+                dialog.hide();
+                frm.save();
+                rua_company.project_dashboard.render(frm);
+                frappe.show_alert({
+                    message: __('Expense updated successfully'),
+                    indicator: 'green'
+                });
+            }
+        }
+    });
+
+    // Add delete button
+    dialog.add_custom_action('Delete', () => {
+        frappe.confirm(
+            __('Are you sure you want to delete this expense?'),
+            () => {
+                frm.doc.additional_items = frm.doc.additional_items.filter(item => item.idx !== idx);
+                frm.refresh_field('additional_items');
+                frm.dirty();
+                dialog.hide();
+                frm.save();
+                rua_company.project_dashboard.render(frm);
+                frappe.show_alert({
+                    message: __('Expense deleted'),
+                    indicator: 'green'
+                });
+            }
+        );
+    }, 'red');
+    
+    dialog.show();
+}
+
+// Add the functions to the dashboard namespace
+rua_company.project_dashboard.showAddExpenseDialog = showAddExpenseDialog;
+rua_company.project_dashboard.showExpenseDetailsDialog = showExpenseDetailsDialog;
 
 // Track attached listeners to prevent duplicates
 let listenersAttached = false;

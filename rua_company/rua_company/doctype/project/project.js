@@ -14,6 +14,51 @@ frappe.ui.form.on("Project", {
                 frm.save()
             }, 'Enter Project Name', 'Continue');
         }
+        
+        // Handle items table visibility based on scopes
+        const hasScopes = frm.doc.scopes && frm.doc.scopes.length > 0;
+        
+        // Get the items field wrapper
+        const itemsWrapper = frm.fields_dict.items.wrapper;
+        
+        if (!hasScopes) {
+            // Hide the items table
+            $(itemsWrapper).addClass('hidden');
+            
+            // Show the message if it doesn't exist
+            if (!itemsWrapper.querySelector('.no-scope-message')) {
+                const message = $(`
+                    <div class="no-scope-message" style="
+                        padding: 2rem;
+                        text-align: center;
+                        background-color: var(--bg-light-gray);
+                        border-radius: 0.5rem;
+                        margin: 1rem 0;
+                    ">
+                        <div style="
+                            font-size: 4rem;
+                            color: var(--text-muted);
+                            margin-bottom: 1rem;
+                        ">
+                            <i class="fa fa-clipboard"></i>
+                        </div>
+                        <div style="
+                            font-size: 1.2rem;
+                            color: var(--text-muted);
+                            margin-bottom: 0.5rem;
+                        ">
+                            Define a scope to start adding items.
+                        </div>
+                    </div>
+                `);
+                $(itemsWrapper).after(message);
+            }
+        } else {
+            // Show the items table and remove the message
+            $(itemsWrapper).removeClass('hidden');
+            $('.no-scope-message').remove();
+        }
+        
 		frm.page.clear_actions_menu();
 
         // Add Generate dropdown items with icons
@@ -313,6 +358,30 @@ function apply_color_coding(frm) {
 
 // Handle items table scope number and read-only state
 frappe.ui.form.on('Project Items', {
+    before_items_remove: function(frm, cdt, cdn) {
+        const row = locals[cdt][cdn];
+        // Store the scope number in the frm object for use after removal
+        frm.removed_item_scope = row.scope_number;
+    },
+    
+    items_remove: function(frm, cdt, cdn) {
+        apply_color_coding(frm);
+        
+        // If we have a stored scope number, trigger calculations for all items in that scope
+        if (frm.removed_item_scope) {
+            const scope_items = frm.doc.items.filter(item => item.scope_number === frm.removed_item_scope);
+            if (scope_items.length > 0) {
+                // Use the first remaining item to trigger calculations for the whole scope
+                trigger_calculations(frm, scope_items[0]);
+            } else {
+                // If no items left in this scope, update the scope totals to zero
+                update_scope_totals(frm, frm.removed_item_scope);
+            }
+            // Clear the stored scope
+            delete frm.removed_item_scope;
+        }
+    },
+    
     items_add: function(frm, cdt, cdn) {
         let scopes = frm.doc.scopes || [];
         if (scopes.length === 0) {
@@ -343,11 +412,7 @@ frappe.ui.form.on('Project Items', {
         frm.fields_dict.items.grid.refresh();
         apply_color_coding(frm);
         trigger_calculations(frm, row);
-    },
-    
-    items_remove: function(frm, cdt, cdn) {
-        apply_color_coding(frm);
-        frm.set_intro('A row has been removed from the items table. Please save your changes to re-execute calculations.', 'red');
+        
     },
     
     scope_number: function(frm, cdt, cdn) {
@@ -660,7 +725,14 @@ function show_import_dialog(frm) {
                         message: __('Successfully imported {0} items', [r.message.items.length]),
                         indicator: 'green'
                     });
-                    frm.reload_doc();
+                    frm.reload_doc().then(() => {
+                        // After reload, trigger calculations for all items in the imported scope
+                        const scopeItems = frm.doc.items.filter(item => item.scope_number === scope.scope_number);
+                        scopeItems.forEach(item => {
+                            trigger_calculations(frm, item);
+                        });
+                        frm.refresh();
+                    });
                 }
             }
         });
@@ -670,19 +742,26 @@ function show_import_dialog(frm) {
     const scope_container = dialog.fields_dict.scope_select_html.$wrapper.find('.scope-select');
     scope_container.empty();
     
-    // Add instruction text with better styling
-    scope_container.append(`
-        <div class="scope-instruction mb-3" style="font-size: 14px; color: var(--text-muted);">
-            Select a scope to import items into:
-        </div>
-        <div class="scope-buttons d-flex flex-wrap gap-2" style="margin: -4px;">
-        </div>
-    `);
+    // Add instruction text only if there are multiple scopes
+    if (frm.doc.scopes.length > 1) {
+        scope_container.append(`
+            <div class="scope-instruction mb-3" style="font-size: 14px; color: var(--text-muted);">
+                Select a scope to import items into:
+            </div>
+            <div class="scope-buttons d-flex flex-wrap gap-2" style="margin: -4px;">
+            </div>
+        `);
+    } else {
+        scope_container.append(`
+            <div class="scope-buttons d-flex flex-wrap gap-2" style="margin: -4px;">
+            </div>
+        `);
+    }
     
     const buttons_container = scope_container.find('.scope-buttons');
     
     // Create buttons for each scope
-    frm.doc.scopes.forEach(scope => {
+    frm.doc.scopes.forEach((scope, index) => {
         const color = SCOPE_COLORS[(scope.scope_number - 1) % SCOPE_COLORS.length];
         
         const btn = $(`
@@ -698,44 +777,54 @@ function show_import_dialog(frm) {
         const $button = btn.find('.btn-scope');
         
         $button.on('click', function() {
-            // Remove active class from all buttons
-            buttons_container.find('.btn-scope').removeClass('btn-primary').addClass('btn-default')
-                .css({
-                    'background-color': '',
-                });
-            
-            // Add active class to clicked button
-            $(this).removeClass('btn-default')
-                .css({
-                    'background-color': color.bg,
-                });
-                
-            // Store selected scope
-            selected_scope = scope;
-            
-            // Show download template button
-            if (!dialog.$wrapper.find('.download-template').length) {
-                const download_btn = $(`
-                    <button class="btn btn-sm btn-warning download-template" 
-                            style="margin-right: 15px;">
-                        Download Template
-                    </button>
-                `);
-                download_btn.on('click', () => {
-                    download_import_template(frm, selected_scope);
-                });
-                dialog.$wrapper.find('.modal-header').append(download_btn);
-            }
-
-            // If file is already uploaded, trigger import
-            const file = dialog.get_value('upload_file');
-            if (file) {
-                import_excel_data(file, scope, dialog, frm);
-            }
+            selectScope($(this), scope);
         });
         
         buttons_container.append(btn);
+        
+        // If there's only one scope, automatically select it
+        if (frm.doc.scopes.length === 1) {
+            selectScope($button, scope);
+        }
     });
+    
+    // Function to handle scope selection
+    function selectScope($button, scope) {
+        // Remove active class from all buttons
+        buttons_container.find('.btn-scope').removeClass('btn-primary').addClass('btn-default')
+            .css({
+                'background-color': '',
+            });
+        
+        // Add active class to clicked button
+        $button.removeClass('btn-default')
+            .css({
+                'background-color': SCOPE_COLORS[(scope.scope_number - 1) % SCOPE_COLORS.length].bg,
+            });
+            
+        // Store selected scope
+        selected_scope = scope;
+        
+        // Show download template button
+        if (!dialog.$wrapper.find('.download-template').length) {
+            const download_btn = $(`
+                <button class="btn btn-sm btn-warning download-template" 
+                        style="margin-right: 15px;">
+                    Download Template
+                </button>
+            `);
+            download_btn.on('click', () => {
+                download_import_template(frm, selected_scope);
+            });
+            dialog.$wrapper.find('.modal-header').append(download_btn);
+        }
+
+        // If file is already uploaded, trigger import
+        const file = dialog.get_value('upload_file');
+        if (file) {
+            import_excel_data(file, scope, dialog, frm);
+        }
+    }
 
     dialog.show();
 }
@@ -941,5 +1030,4 @@ function update_scope_totals(frm, scope_number) {
     frappe.model.set_value(scope.doctype, scope.name, 'total_profit', totals.total_profit);
     frappe.model.set_value(scope.doctype, scope.name, 'total_items', totals.total_items);
 }
-
 //#endregion
