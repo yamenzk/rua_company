@@ -15,8 +15,6 @@ import re
 
 class Project(Document):
     def validate(self):
-        self.calculate_all_values()
-        
         # Handle serial number for In Progress projects
         if self.status == "In Progress" and self.serial_number == 0:
             # Get the highest serial number
@@ -30,12 +28,14 @@ class Project(Document):
             # Assign next serial number
             self.serial_number = (highest_serial or 0) + 1
     
+    def before_save(self):
+        self.calculate_all_values()
     
-            
     def get_party(self, party_name):
         """Get party details from project"""
         return next((p for p in self.parties if p.party == party_name), None)
     
+    #region "Calculations"
     def calculate_all_values(self):
         # Get unique scope numbers
         scope_numbers = set(item.scope_number for item in self.items if item.scope_number)
@@ -80,10 +80,10 @@ class Project(Document):
     
     def calculate_item_values(self, item, scope, ratio):
         # Calculate area and glass values
-        if item.width and item.height:
+        if item.width >= 0 and item.height >= 0:
             item.area = (item.width * item.height) / 10000
             
-            if item.glass_unit:
+            if item.glass_unit >= 0:
                 glass_price = item.glass_unit * item.area * (1 + (scope.vat or 0) / 100)
                 item.glass_price = glass_price
                 item.total_glass = glass_price * (item.qty or 0)
@@ -151,7 +151,9 @@ class Project(Document):
             self.profit_percentage = (flt(self.project_profit) / flt(self.total_payable)) * 100
         else:
             self.profit_percentage = 0
+    #endregion
 
+#region Excel Import
 
 @frappe.whitelist()
 def get_import_template(scope):
@@ -279,6 +281,86 @@ def get_import_template(scope):
         'filename': filename,
         'content': content
     }
+
+@frappe.whitelist()
+def import_items_from_excel(file_url, scope):
+    try:
+        scope = json.loads(scope)
+        
+        # Get the file document
+        file_doc = frappe.get_doc("File", {"file_url": file_url})
+        file_path = file_doc.get_full_path()
+        
+        # Read the Excel file
+        wb = openpyxl.load_workbook(filename=file_path, data_only=True)
+        ws = wb.active
+        
+        items = []
+        # Start from row 9 (right after headers)
+        for row in ws.iter_rows(min_row=9):
+            # Skip empty rows
+            if not any(cell.value for cell in row):
+                continue
+                
+            try:
+                # Get glass unit and profit from scope if not provided in Excel
+                excel_glass_unit = row[5].value
+                excel_profit = row[11].value
+                
+                glass_unit = excel_glass_unit if excel_glass_unit not in [None, ''] else scope.get('glass_sqm_price')
+                profit_percentage = float(excel_profit) if excel_profit not in [None, ''] else float(scope.get('profit', 0))
+                
+                item_data = {
+                    'doctype': 'Project Items',
+                    'parenttype': 'Project',
+                    'parentfield': 'items',
+                    'parent': scope.get('parent'),
+                    'item': row[0].value,
+                    'description': row[1].value or '',
+                    'qty': float(row[2].value or 0),
+                    'width': float(row[3].value or 0),
+                    'height': float(row[4].value or 0),
+                    'glass_unit': glass_unit,
+                    'curtain_wall': row[6].value or 0,
+                    'insertion_1': row[7].value or 0,
+                    'insertion_2': row[8].value or 0,
+                    'insertion_3': row[9].value or 0,
+                    'insertion_4': row[10].value or 0,
+                    'profit_percentage': profit_percentage,
+                    'scope_number': scope.get('scope_number')
+                }
+                
+                # Validate required fields
+                if not all([item_data['item'], item_data['qty'], item_data['width'], item_data['height']]):
+                    raise ValueError(f"Missing required fields in row {row[0].row}")
+                    
+                items.append(item_data)
+            except (ValueError, TypeError) as e:
+                frappe.throw(f"Error in row {row[0].row}: {str(e)}. Please check that all numeric fields contain valid numbers.")
+        
+        if not items:
+            frappe.throw("No valid items found in the Excel file")
+            
+        # Get the project document
+        project = frappe.get_doc('Project', scope.get('parent'))
+        
+        # Add items to the project
+        for item in items:
+            project.append('items', item)
+        
+        # Save the project
+        project.save()
+        
+        return {
+            "message": f"Successfully imported {len(items)} items",
+            "items": items
+        }
+    except Exception as e:
+        frappe.throw(f"Error processing Excel file: {str(e)}")
+
+#endregion
+
+#region Document Generation
 
 @frappe.whitelist()
 def make_project_bill(source_name, target_doc=None):
@@ -430,82 +512,6 @@ def make_payment_voucher(source_name, target_doc=None):
     return target
 
 @frappe.whitelist()
-def import_items_from_excel(file_url, scope):
-    try:
-        scope = json.loads(scope)
-        
-        # Get the file document
-        file_doc = frappe.get_doc("File", {"file_url": file_url})
-        file_path = file_doc.get_full_path()
-        
-        # Read the Excel file
-        wb = openpyxl.load_workbook(filename=file_path, data_only=True)
-        ws = wb.active
-        
-        items = []
-        # Start from row 9 (right after headers)
-        for row in ws.iter_rows(min_row=9):
-            # Skip empty rows
-            if not any(cell.value for cell in row):
-                continue
-                
-            try:
-                # Get glass unit and profit from scope if not provided in Excel
-                excel_glass_unit = row[5].value
-                excel_profit = row[11].value
-                
-                glass_unit = excel_glass_unit if excel_glass_unit not in [None, ''] else scope.get('glass_sqm_price')
-                profit_percentage = float(excel_profit) if excel_profit not in [None, ''] else float(scope.get('profit', 0))
-                
-                item_data = {
-                    'doctype': 'Project Items',
-                    'parenttype': 'Project',
-                    'parentfield': 'items',
-                    'parent': scope.get('parent'),
-                    'item': row[0].value,
-                    'description': row[1].value or '',
-                    'qty': float(row[2].value or 0),
-                    'width': float(row[3].value or 0),
-                    'height': float(row[4].value or 0),
-                    'glass_unit': glass_unit,
-                    'curtain_wall': row[6].value or 0,
-                    'insertion_1': row[7].value or 0,
-                    'insertion_2': row[8].value or 0,
-                    'insertion_3': row[9].value or 0,
-                    'insertion_4': row[10].value or 0,
-                    'profit_percentage': profit_percentage,
-                    'scope_number': scope.get('scope_number')
-                }
-                
-                # Validate required fields
-                if not all([item_data['item'], item_data['qty'], item_data['width'], item_data['height']]):
-                    raise ValueError(f"Missing required fields in row {row[0].row}")
-                    
-                items.append(item_data)
-            except (ValueError, TypeError) as e:
-                frappe.throw(f"Error in row {row[0].row}: {str(e)}. Please check that all numeric fields contain valid numbers.")
-        
-        if not items:
-            frappe.throw("No valid items found in the Excel file")
-            
-        # Get the project document
-        project = frappe.get_doc('Project', scope.get('parent'))
-        
-        # Add items to the project
-        for item in items:
-            project.append('items', item)
-        
-        # Save the project
-        project.save()
-        
-        return {
-            "message": f"Successfully imported {len(items)} items",
-            "items": items
-        }
-    except Exception as e:
-        frappe.throw(f"Error processing Excel file: {str(e)}")
-
-@frappe.whitelist()
 def get_party_outstanding_amounts(project, parties):
     """Get outstanding amounts for multiple parties"""
     parties = frappe.parse_json(parties)
@@ -560,6 +566,8 @@ def get_party_outstanding_amounts(project, parties):
         result[party] = total_billed - total_paid
     
     return result
+
+#endregion
 
 @frappe.whitelist()
 def refresh_all_tables(project):

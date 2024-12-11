@@ -21,6 +21,60 @@ const formatDate = (dateStr) => {
 function generateDashboardHTML(frm) {
     const dashboardContainer = document.getElementById('actual_billing_dash') || createDashboardContainer(frm);
     
+    // Generate scopes HTML
+    const scopesHTML = frm.doc.scopes ? frm.doc.scopes.map((scope, index) => {
+        const colorSet = SCOPE_COLORS[index % SCOPE_COLORS.length];
+        const scopeItems = frm.doc.items.filter(item => item.scope_number === scope.scope_number);
+        const totalAmount = scopeItems.reduce((sum, item) => sum + (item.overall_price || 0), 0);
+        const itemCount = scopeItems.length;
+        
+        return `
+            <div class="scope-item clickable" data-scope-number="${scope.scope_number}" style="background-color: ${colorSet.bg}; color: ${colorSet.text}">
+                <div class="scope-number" style="background-color: ${colorSet.text}; color: ${colorSet.bg}">
+                    ${scope.scope_number}
+                </div>
+                <div class="scope-details">
+                    <div class="scope-name">${scope.description || 'Untitled Scope'}</div>
+                    <div class="scope-stats">
+                        <div class="scope-stat">
+                            <i class="fa fa-cube"></i>
+                            ${itemCount} items
+                        </div>
+                        <div class="scope-stat">
+                            <i class="fa fa-money"></i>
+                            ${formatCurrency(totalAmount)}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('') : '';
+
+    const addScopeCard = `
+        <div class="scope-item add-scope clickable" style="background: var(--fg-color); border: 1px dashed var(--gray-400);">
+            <div class="scope-add-content">
+                <i class="fa fa-plus" style="font-size: 20px; color: var(--text-muted);"></i>
+                <div style="color: var(--text-muted);">Add Scope</div>
+            </div>
+        </div>
+    `;
+
+    const projectImage = frm.doc.image ? 
+        `<img src="${frm.doc.image}" alt="${frm.doc.name}"/>` : 
+        `<i class="fa fa-building-o fa-3x text-muted"></i>`;
+
+    // Project Image Section
+    const projectImageSection = `
+        <div class="project-image-section">
+            <div class="project-image clickable">
+                ${projectImage}
+            </div>
+            <button class="btn btn-default btn-sm btn-block mt-2 view-items-btn">
+                <i class="fa fa-list"></i> View Items
+            </button>
+        </div>
+    `;
+
     const dashboardHTML = `
 <style>
 .clickable {
@@ -180,6 +234,11 @@ function generateDashboardHTML(frm) {
     border: 1px solid var(--border-color);
     border-radius: var(--border-radius-lg);
     overflow: hidden;
+}
+
+.grid-body input.form-control{
+    background-color: unset;
+    color: unset;
 }
 
 .summary-card {
@@ -414,7 +473,7 @@ function generateDashboardHTML(frm) {
 
 .project-header {
     display: grid;
-    grid-template-columns: auto 1fr;
+    grid-template-columns: auto 1fr auto;
     gap: var(--padding-lg);
     margin-bottom: var(--padding-xl);
     background: var(--card-bg);
@@ -423,11 +482,20 @@ function generateDashboardHTML(frm) {
     padding: var(--padding-lg);
 }
 
+.project-image-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--padding-sm);
+    margin-bottom: var(--padding-lg);
+}
+
 .project-image {
     width: 180px;
     height: 180px;
     border-radius: var(--border-radius);
-    background-color: var(--fg-color);
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -438,6 +506,29 @@ function generateDashboardHTML(frm) {
     width: 100%;
     height: 100%;
     object-fit: cover;
+}
+
+.view-items-btn {
+    width: 180px;
+    margin-top: var(--padding-xs);
+}
+
+@media (max-width: 991px) {
+    .project-image-section {
+        width: 100%;
+        margin-bottom: var(--padding-lg);
+    }
+    
+    .project-image {
+        width: 100%;
+        max-width: 300px;
+        height: 200px;
+    }
+
+    .view-items-btn {
+        width: 100%;
+        max-width: 300px;
+    }
 }
 
 .project-details {
@@ -525,7 +616,7 @@ function generateDashboardHTML(frm) {
     opacity: 0.8;
 }
 
-.project-name, .project-location, .project-image {
+.project-name, .project-location, .project-image-section {
     cursor: pointer;
 }
 
@@ -593,11 +684,88 @@ function generateDashboardHTML(frm) {
         grid-template-columns: 1fr;
     }
     
-    .project-image {
+    .project-image-section {
         width: 100%;
         height: 200px;
     }
 }
+
+.project-scopes {
+    border-left: 1px solid var(--border-color);
+    padding-left: var(--padding-lg);
+}
+
+.scopes-title {
+    font-size: var(--text-lg);
+    font-weight: 600;
+    color: var(--text-color);
+    margin-bottom: var(--padding-md);
+}
+
+.scopes-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--padding-sm);
+}
+
+.scope-item {
+    display: flex;
+    align-items: center;
+    gap: var(--padding-sm);
+    padding: var(--padding-md);
+    border-radius: var(--border-radius-lg);
+    transition: all 0.2s;
+}
+
+.scope-number {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--border-radius-full);
+    font-weight: 600;
+    font-size: var(--text-sm);
+}
+
+.add-scope{
+    justify-content: center;
+    align-items: center;
+}
+
+.scope-add-content{
+    text-align: center;
+}
+
+.scope-details {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.scope-name {
+    font-weight: 500;
+    font-size: var(--text-base);
+}
+
+.scope-stats {
+    display: flex;
+    gap: var(--padding-md);
+    font-size: var(--text-sm);
+}
+
+.scope-stat {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.scope-stat i {
+    font-size: var(--text-sm);
+    opacity: 0.7;
+}
+
 .notice-container {
 }
 
@@ -660,12 +828,7 @@ function generateDashboardHTML(frm) {
 </style>
 <div class="finance-dashboard">
 <div class="project-header">
-    <div class="project-image clickable">
-        ${frm.doc.image ? 
-            `<img src="${frm.doc.image}" alt="${frm.doc.name}"/>` : 
-            `<i class="fa fa-building-o fa-3x text-muted"></i>`
-        }
-    </div>
+    ${projectImageSection}
     <div class="project-details">
         <div class="project-meta">
             <div class="project-name clickable">${frm.doc.name}</div>
@@ -693,6 +856,13 @@ function generateDashboardHTML(frm) {
             <div class="party-tag add-party clickable">
                 <i class="fa fa-plus"></i>
             </div>
+        </div>
+    </div>
+    <div class="project-scopes">
+        <div class="scopes-title">Project Scopes</div>
+        <div class="scopes-list">
+            ${scopesHTML}
+            ${addScopeCard}
         </div>
     </div>
 </div>
@@ -1119,6 +1289,24 @@ function attachDashboardEventListeners(frm) {
                 show_manage_parties_dialog(frm);
             });
         }
+
+        // Scope click handlers
+        $('.scope-item:not(.add-scope)').on('click', function(e) {
+            if (!$(e.target).closest('.scope-actions').length) {
+                const scopeNumber = parseInt($(this).data('scope-number'));
+                showScopeDetailsDialog(frm, scopeNumber);
+            }
+        });
+
+        // Add scope handler
+        $('.add-scope').on('click', function() {
+            showScopeEditDialog(frm);
+        });
+
+        // View items button handler
+        $('.view-items-btn').on('click', function() {
+            showItemsDialog(frm);
+        });
     }, 100);
 }
 
@@ -1257,6 +1445,668 @@ function show_manage_parties_dialog(frm) {
 
     dialog.show();
 }
+
+// Function to show scope details dialog
+function showScopeDetailsDialog(frm, scopeNumber) {
+    const scope = frm.doc.scopes.find(s => s.scope_number === scopeNumber);
+    if (!scope) return;
+
+    const colorSet = SCOPE_COLORS[(scopeNumber - 1) % SCOPE_COLORS.length];
+    const dialog = new frappe.ui.Dialog({
+        title: `Scope ${scope.scope_number} Details`,
+        fields: [
+            {
+                fieldtype: 'HTML',
+                fieldname: 'scope_details',
+                options: `
+                    <div style="padding: var(--padding-md);">
+                        <div style="
+                            background: ${colorSet.bg}; 
+                            color: ${colorSet.text};
+                            padding: var(--padding-lg);
+                            border-radius: var(--border-radius-lg);
+                            margin-bottom: var(--padding-lg);
+                            display: flex;
+                            justify-content: space-between;
+                            align-items: flex-start;
+                        ">
+                            <div>
+                                <h3 style="margin-bottom: var(--padding-sm); font-size: var(--text-xl);">
+                                    ${scope.description || 'Untitled Scope'}
+                                </h3>
+                                <div style="opacity: 0.9;">Scope Number: ${scope.scope_number}</div>
+                            </div>
+                            <div class="dialog-actions" style="display: flex; gap: var(--padding-xs);">
+                                <button class="btn btn-default btn-xs btn-edit-scope" 
+                                    style="background: ${colorSet.text}; color: ${colorSet.bg};">
+                                    <i class="fa fa-pencil"></i> Edit
+                                </button>
+                                <button class="btn btn-default btn-xs btn-delete-scope"
+                                    style="background: ${colorSet.text}; color: ${colorSet.bg};">
+                                    <i class="fa fa-trash"></i> Delete
+                                </button>
+                            </div>
+                        </div>
+                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--padding-md);">
+                            <div class="scope-detail-card">
+                                <div class="detail-label">Glass SQM Price</div>
+                                <div class="detail-value">${formatCurrency(scope.glass_sqm_price)}</div>
+                            </div>
+                            <div class="scope-detail-card">
+                                <div class="detail-label">Labour Charges</div>
+                                <div class="detail-value">${formatCurrency(scope.labour_charges)}</div>
+                            </div>
+                            <div class="scope-detail-card">
+                                <div class="detail-label">Aluminum Weight</div>
+                                <div class="detail-value">${scope.aluminum_weight || 0} kg</div>
+                            </div>
+                            <div class="scope-detail-card">
+                                <div class="detail-label">SDF</div>
+                                <div class="detail-value">${scope.sdf || 0}</div>
+                            </div>
+                            <div class="scope-detail-card">
+                                <div class="detail-label">Profit %</div>
+                                <div class="detail-value">${scope.profit || 0}%</div>
+                            </div>
+                            <div class="scope-detail-card">
+                                <div class="detail-label">Rounding</div>
+                                <div class="detail-value">${scope.rounding || 0}</div>
+                            </div>
+                            <div class="scope-detail-card">
+                                <div class="detail-label">Ratio</div>
+                                <div class="detail-value">${scope.ratio || 0}</div>
+                            </div>
+                            <div class="scope-detail-card">
+                                <div class="detail-label">VAT %</div>
+                                <div class="detail-value">${scope.vat || 0}%</div>
+                            </div>
+                        </div>
+
+                        <div style="
+                            margin-top: var(--padding-xl);
+                            display: grid;
+                            grid-template-columns: repeat(3, 1fr);
+                            gap: var(--padding-md);
+                        ">
+                            <div class="scope-summary-card">
+                                <div class="summary-label">Total Items</div>
+                                <div class="summary-value">${scope.total_items || 0}</div>
+                            </div>
+                            <div class="scope-summary-card">
+                                <div class="summary-label">Total Price</div>
+                                <div class="summary-value positive">${formatCurrency(scope.total_price)}</div>
+                            </div>
+                            <div class="scope-summary-card">
+                                <div class="summary-label">Total Cost</div>
+                                <div class="summary-value">${formatCurrency(scope.total_cost)}</div>
+                            </div>
+                            <div class="scope-summary-card" style="grid-column: span 3;">
+                                <div class="summary-label">Total Profit</div>
+                                <div class="summary-value positive">${formatCurrency(scope.total_profit)}</div>
+                            </div>
+                        </div>
+                    </div>
+                `
+            }
+        ],
+        size: 'large'
+    });
+
+    dialog.$wrapper.find('.modal-dialog').css('max-width', '700px');
+    
+    // Add custom styles to the dialog
+    dialog.$wrapper.append(`
+        <style>
+            .scope-detail-card {
+                background: var(--card-bg);
+                border: 1px solid var(--border-color);
+                border-radius: var(--border-radius-md);
+                padding: var(--padding-sm);
+            }
+            .detail-label {
+                font-size: var(--text-sm);
+                color: var(--text-muted);
+                margin-bottom: 2px;
+            }
+            .detail-value {
+                font-size: var(--text-base);
+                font-weight: 500;
+            }
+            .scope-summary-card {
+                background: var(--fg-color);
+                border: 1px solid var(--border-color);
+                border-radius: var(--border-radius-md);
+                padding: var(--padding-md);
+            }
+            .summary-label {
+                font-size: var(--text-sm);
+                color: var(--text-muted);
+                margin-bottom: 4px;
+            }
+            .summary-value {
+                font-size: var(--text-lg);
+                font-weight: 600;
+            }
+            .summary-value.positive {
+                color: var(--green-600);
+            }
+        </style>
+    `);
+
+    dialog.show();
+
+    // Add event handlers for edit and delete buttons
+    dialog.$wrapper.find('.btn-edit-scope').on('click', () => {
+        dialog.hide();
+        showScopeEditDialog(frm, scope);
+    });
+
+    dialog.$wrapper.find('.btn-delete-scope').on('click', () => {
+        dialog.hide();
+        deleteScope(frm, scope.scope_number);
+    });
+}
+
+// Function to show scope edit dialog
+function showScopeEditDialog(frm, scope = null) {
+    const dialog = new frappe.ui.Dialog({
+        title: scope ? `Edit Scope ${scope.scope_number}` : 'Add New Scope',
+        fields: [
+            {
+                fieldname: 'description',
+                fieldtype: 'Data',
+                label: 'Description',
+                mandatory_depends_on: 'eval:1'
+            },
+            {
+                fieldname: 'glass_sqm_price',
+                fieldtype: 'Currency',
+                label: 'Glass SQM Price',
+                mandatory_depends_on: 'eval:1'
+            },
+            {
+                fieldname: 'labour_charges',
+                fieldtype: 'Currency',
+                label: 'Labour Charges',
+                mandatory_depends_on: 'eval:1'
+            },
+            {
+                fieldname: 'aluminum_weight',
+                fieldtype: 'Float',
+                label: 'Aluminum Weight',
+                mandatory_depends_on: 'eval:1'
+            },
+            {
+                fieldname: 'col_break_1',
+                fieldtype: 'Column Break'
+            },
+            {
+                fieldname: 'sdf',
+                fieldtype: 'Float',
+                label: 'SDF',
+                mandatory_depends_on: 'eval:1'
+            },
+            {
+                fieldname: 'profit',
+                fieldtype: 'Percent',
+                label: 'Profit',
+                mandatory_depends_on: 'eval:1',
+                default: 35
+            },
+            {
+                fieldname: 'vat',
+                fieldtype: 'Percent',
+                label: 'VAT',
+                default: 5,
+                read_only: 1
+            },
+            {
+                fieldname: 'rounding',
+                fieldtype: 'Select',
+                label: 'Rounding',
+                options: [
+                    'No Rounding',
+                    'Round up to nearest 5'
+                ],
+                default: 'Round up to nearest 5'
+            }
+        ],
+        primary_action_label: scope ? 'Save Changes' : 'Add Scope',
+        primary_action(values) {
+            if (scope) {
+                // Check if there are items using this scope
+                const items_with_scope = frm.doc.items ? 
+                    frm.doc.items.filter(item => item.scope_number === scope.scope_number) : [];
+                
+                const update_scope = () => {
+                    // Update existing scope
+                    const scope_idx = frm.doc.scopes.findIndex(s => s.scope_number === scope.scope_number);
+                    if (scope_idx !== -1) {
+                        Object.assign(frm.doc.scopes[scope_idx], values);
+                        
+                        // Update all items using this scope
+                        if (frm.doc.items) {
+                            frm.doc.items.forEach(item => {
+                                if (item.scope_number === scope.scope_number) {
+                                    item.glass_unit = values.glass_sqm_price;
+                                    item.profit_percentage = values.profit;
+                                }
+                            });
+                            frm.refresh_field('items');
+                        }
+                        
+                        frm.refresh_field('scopes');
+                        frm.dirty();
+                        dialog.hide();
+                        frm.save();
+                        rua_company.project_dashboard.render(frm);
+                        frappe.show_alert({
+                            message: __('Scope {0} updated', [scope.scope_number]),
+                            indicator: 'green'
+                        });
+                    }
+                };
+                
+                if (items_with_scope.length > 0) {
+                    frappe.confirm(
+                        __('This scope is being used by {0} items. Updating this scope will also update these items. Are you sure you want to continue?', [items_with_scope.length]),
+                        () => {
+                            update_scope();
+                        }
+                    );
+                } else {
+                    update_scope();
+                }
+            } else {
+                // Add new scope
+                if (!frm.doc.scopes) {
+                    frm.doc.scopes = [];
+                }
+                
+                const next_scope_number = frm.doc.scopes.length > 0 
+                    ? Math.max(...frm.doc.scopes.map(s => s.scope_number)) + 1 
+                    : 1;
+                
+                let row = frappe.model.add_child(frm.doc, 'Project Scope', 'scopes');
+                Object.assign(row, values, { scope_number: next_scope_number });
+                
+                frm.refresh_field('scopes');
+                frm.dirty();
+                dialog.hide();
+                frm.save();
+                rua_company.project_dashboard.render(frm);
+                frappe.show_alert({
+                    message: __('Scope {0} added', [next_scope_number]),
+                    indicator: 'green'
+                });
+            }
+        }
+    });
+    
+    // If editing, populate the fields with existing scope data
+    if (scope) {
+        dialog.set_values({
+            description: scope.description,
+            glass_sqm_price: scope.glass_sqm_price,
+            labour_charges: scope.labour_charges,
+            aluminum_weight: scope.aluminum_weight,
+            sdf: scope.sdf,
+            profit: scope.profit,
+            vat: scope.vat,
+            rounding: scope.rounding || 'Round up to nearest 5'
+        });
+    }
+    
+    dialog.show();
+}
+
+// Function to delete scope
+function deleteScope(frm, scopeNumber) {
+    const scope = frm.doc.scopes.find(s => s.scope_number === scopeNumber);
+    if (!scope) return;
+
+    // Check if scope is in use
+    const items_with_scope = frm.doc.items ? 
+        frm.doc.items.filter(item => item.scope_number === scope.scope_number) : [];
+    
+    if (items_with_scope.length > 0) {
+        frappe.msgprint(__('Cannot delete scope {0} as it is being used by {1} items', 
+            [scope.scope_number, items_with_scope.length]));
+        return;
+    }
+    
+    frappe.confirm(
+        __('Are you sure you want to delete scope {0}?', [scope.scope_number]),
+        () => {
+            frm.doc.scopes = frm.doc.scopes.filter(s => s.scope_number !== scope.scope_number);
+            frm.refresh_field('scopes');
+            frm.dirty();
+            frm.save();
+            rua_company.project_dashboard.render(frm);
+            frappe.show_alert({
+                message: __('Scope {0} removed', [scope.scope_number]),
+                indicator: 'green'
+            });
+        }
+    );
+}
+
+// Function to show items dialog
+function showItemsDialog(frm) {
+    let currentScope = 'all';
+    
+    let dialog = new frappe.ui.Dialog({
+        title: 'Project Items',
+        size: 'extra-large',
+        fields: [
+            {
+                fieldname: 'filters_section',
+                fieldtype: 'Section Break',
+                label: 'Filters'
+            },
+            {
+                fieldname: 'scope_chips_html',
+                fieldtype: 'HTML'
+            },
+            {
+                fieldname: 'search',
+                fieldtype: 'Data',
+                label: 'Search Items',
+                placeholder: 'Search by item or description...'
+            },
+            {
+                fieldname: 'items_html',
+                fieldtype: 'HTML'
+            }
+        ]
+    });
+
+    // Function to render scope filter chips
+    function renderScopeChips() {
+        const scopeChips = ['all', ...frm.doc.scopes.map(s => s.scope_number)];
+        const chipsHTML = `
+            <div class="scope-chips">
+                ${scopeChips.map((scope, index) => {
+                    const isAll = scope === 'all';
+                    const colorSet = isAll ? {bg: 'var(--fg-color)', text: 'var(--text-color)'} 
+                                        : SCOPE_COLORS[(parseInt(scope) - 1) % SCOPE_COLORS.length];
+                    const isActive = currentScope === scope;
+                    return `
+                        <div class="scope-chip ${isActive ? 'active' : ''}" 
+                             data-scope="${scope}"
+                             style="background: ${colorSet.bg}; 
+                                    color: ${colorSet.text};
+                                    border: 2px solid ${isActive ? colorSet.text : 'transparent'};
+                                    box-shadow: ${isActive ? `0 2px 6px ${colorSet.bg}` : 'none'};
+                                    transform: ${isActive ? 'translateY(-2px)' : 'none'}">
+                            ${isAll ? 'All Scopes' : `Scope ${scope}`}
+                        </div>
+                    `;
+                }).join('')}
+            </div>
+        `;
+        dialog.fields_dict.scope_chips_html.$wrapper.html(chipsHTML);
+    }
+
+    // Function to render items table
+    function renderItemsTable(items) {
+        const headers = [
+            { label: 'Item Details', cols: ['Item', 'Description'], color: 'blue' },
+            { label: 'Dimensions', cols: ['Width', 'Height'], color: 'purple' },
+            { label: 'Glass', cols: ['Unit', 'Price', 'Total'], color: 'green' },
+            { label: 'Aluminum', cols: ['Unit', 'Price', 'Total'], color: 'orange' },
+            { label: 'Total', cols: ['Overall Price'], color: 'red' }
+        ];
+
+        // Group items by scope
+        const groupedItems = {};
+        items.forEach(item => {
+            if (!groupedItems[item.scope_number]) {
+                groupedItems[item.scope_number] = [];
+            }
+            groupedItems[item.scope_number].push(item);
+        });
+
+        const tableHTML = `
+            <div class="items-table-container">
+                <table class="table table-bordered items-table" style="margin: 0">
+                    <thead>
+                        <tr class="header-group">
+                            ${headers.map(group => `
+                                <th colspan="${group.cols.length}" class="text-center"
+                                    style="background: var(--bg-${group.color}); color: var(--text-on-${group.color});">
+                                    ${group.label}
+                                </th>
+                            `).join('')}
+                        </tr>
+                        <tr>
+                            ${headers.map(group => 
+                                group.cols.map(col => `
+                                    <th style="background: var(--subtle-accent);">
+                                        ${col}
+                                    </th>
+                                `).join('')
+                            ).join('')}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${Object.entries(groupedItems).map(([scopeNumber, scopeItems]) => {
+                            const scope = frm.doc.scopes.find(s => s.scope_number === scopeNumber);
+                            const colorSet = SCOPE_COLORS[(parseInt(scopeNumber) - 1) % SCOPE_COLORS.length];
+                            return `
+                                <tr class="scope-header">
+                                    <td colspan="${headers.reduce((sum, h) => sum + h.cols.length, 0)}"
+                                        style="background: ${colorSet.bg}; color: ${colorSet.text}; font-weight: 600;">
+                                        Scope ${scopeNumber}
+                                    </td>
+                                </tr>
+                                ${scopeItems.map(item => `
+                                    <tr class="item-row" style="background: ${colorSet.bg}10;">
+                                        <td class="item-cell">${item.item || ''}</td>
+                                        <td class="desc-cell">${item.description || ''}</td>
+                                        <td class="text-center">${item.width || 0}cm</td>
+                                        <td class="text-center">${item.height || 0}cm</td>
+                                        <td>${formatCurrency(item.glass_unit)}</td>
+                                        <td class="text-right">${formatCurrency(item.glass_price)}</td>
+                                        <td class="text-right">${formatCurrency(item.total_glass)}</td>
+                                        <td>${formatCurrency(item.aluminum_unit)}</td>
+                                        <td class="text-right">${formatCurrency(item.aluminum_price)}</td>
+                                        <td class="text-right">${formatCurrency(item.total_aluminum)}</td>
+                                        <td class="text-right total-cell">${formatCurrency(item.overall_price)}</td>
+                                    </tr>
+                                    <tr class="formula-row" style="background: ${colorSet.bg}05;">
+                                        <td colspan="2"></td>
+                                        <td colspan="2" class="formula-cell glass-formula area-formula">
+                                        Area: ${item.area || 0}sqm
+                                        </td>
+                                        <td colspan="6" class="formula-cell glass-formula actual-formula">
+                                            [Actual Unit (Inc. Labour): ${formatCurrency(item.actual_unit)}] + [Profit: ${formatCurrency(item.total_profit)}] = [Actual Unit Rate: ${formatCurrency(item.actual_unit_rate)}] × [QTY: ${item.qty}]
+                                        </td>
+                                        <td></td>
+                                    </tr>
+                                `).join('')}
+                            `;
+                        }).join('')}
+                    </tbody>
+                </table>
+            </div>
+        `;
+
+        dialog.fields_dict.items_html.$wrapper.html(tableHTML);
+    }
+
+    // Function to filter items
+    function filterItems() {
+        const searchText = (dialog.get_value('search') || '').toLowerCase();
+        let filteredItems = frm.doc.items;
+
+        if (currentScope !== 'all') {
+            filteredItems = filteredItems.filter(item => item.scope_number === currentScope);
+        }
+
+        if (searchText) {
+            filteredItems = filteredItems.filter(item => 
+                (item.item && item.item.toLowerCase().includes(searchText)) ||
+                (item.description && item.description.toLowerCase().includes(searchText))
+            );
+        }
+
+        renderItemsTable(filteredItems);
+    }
+
+    // Add event listeners
+    dialog.fields_dict.search.df.onchange = filterItems;
+
+    // Add custom styles
+    dialog.$wrapper.append(`
+        <style>
+            .scope-chips {
+                display: flex;
+                flex-wrap: wrap;
+                gap: var(--padding-xs);
+                padding: var(--padding-sm) 0;
+            }
+            
+            .scope-chip {
+                padding: 6px 16px;
+                border-radius: 20px;
+                cursor: pointer;
+                font-size: var(--text-sm);
+                transition: all 0.2s;
+                font-weight: 500;
+            }
+            
+            .scope-chip:hover {
+                opacity: 0.9;
+                transform: translateY(-1px);
+            }
+
+            .scope-chip.active {
+                font-weight: 600;
+            }
+            
+            .items-table-container {
+                max-height: 60vh;
+                overflow-y: auto;
+                border-radius: var(--border-radius-lg);
+                background: var(--card-bg);
+            }
+            
+            .items-table {
+                margin-bottom: 0;
+                border-collapse: separate;
+                border-spacing: 0;
+            }
+            
+            .items-table th {
+                position: sticky;
+                top: 0;
+                z-index: 1;
+                font-weight: 600;
+                white-space: nowrap;
+                padding: var(--padding-sm);
+                border-color: var(--table-border-color);
+            }
+            
+            .items-table .header-group th {
+                top: 0;
+                padding: 12px;
+                font-weight: 600;
+                text-transform: uppercase;
+                font-size: var(--text-sm);
+                letter-spacing: 0.5px;
+                border-color: var(--table-border-color);
+            }
+
+            .items-table .header-group th:first-child {
+                border-top-left-radius: var(--border-radius-lg);
+            }
+
+            .items-table .header-group th:last-child {
+                border-top-right-radius: var(--border-radius-lg);
+            }
+            
+            .scope-header td {
+                padding: 10px var(--padding-lg);
+                border-color: var(--table-border-color);
+            }
+            
+            .items-table td {
+                padding: var(--padding-sm);
+                vertical-align: middle;
+                border-color: var(--table-border-color);
+            }
+            
+            .formula-row td {
+                border-top: none;
+                padding-top: 0;
+                padding-bottom: var(--padding-sm);
+            }
+
+            .formula-cell {
+                color: var(--text-muted);
+                font-size: var(--text-xs);
+                font-family: var(--font-family-monospace);
+                background: var(--subtle-fg);
+                margin: 0 var(--padding-xs);
+            }
+
+            .area-formula {
+                color: var(--text-muted);
+                padding: var(--padding-xs) var(--padding-sm);
+                text-align: center;
+                font-weight: bold;
+                background-color: var(--bg-purple);
+                color: var(--text-on-purple)
+            }
+
+            .actual-formula {
+                color: var(--text-muted);
+                padding: var(--padding-xs) var(--padding-sm);
+            }
+            
+            .item-cell {
+                font-weight: 500;
+                min-width: 120px;
+            }
+            
+            .desc-cell {
+                min-width: 200px;
+                color: var(--text-muted);
+            }
+            
+            .total-cell {
+                font-weight: 600;
+                color: var(--text-color);
+            }
+            
+            .text-right {
+                text-align: right;
+            }
+            
+            .text-center {
+                text-align: center;
+            }
+        </style>
+    `);
+
+    // Initialize
+    renderScopeChips();
+    filterItems();
+
+    // Add click handler for scope chips
+    dialog.$wrapper.on('click', '.scope-chip', function() {
+        currentScope = $(this).data('scope');
+        dialog.$wrapper.find('.scope-chip').removeClass('active');
+        $(this).addClass('active');
+        filterItems();
+    });
+
+    dialog.show();
+}
+
+// Add the function to the dashboard namespace
+rua_company.project_dashboard.showItemsDialog = showItemsDialog;
 
 // Export the main function
 frappe.provide('rua_company.project_dashboard');

@@ -79,16 +79,6 @@ frappe.ui.form.on("Project", {
                 }
             );
             frm.fields_dict["items"].grid.grid_buttons.find('.btn-custom').removeClass('btn-default btn-secondary').addClass('btn-success');
-            frm.fields_dict['scopes'].grid.add_custom_button(
-                __('Manage Scopes'),
-                function() {
-                    show_manage_scopes_dialog(frm);
-                }
-            );
-            frm.fields_dict["scopes"].grid.grid_buttons.find('.btn-custom').removeClass('btn-default btn-secondary').addClass('btn-info');
-            
-            // Show the grid footer in scopes section
-            $(frm.fields_dict['scopes'].grid.wrapper).find('.grid-footer').css('display', 'flex');
         }
         
 		if (frm.doc.docstatus === 0) {
@@ -194,14 +184,7 @@ frappe.ui.form.on("Project", {
 				});
 			}
 		}
-		frm.set_query('scope_number', 'items', function() {
-            return {
-                filters: {
-                    'parent': frm.doc.name
-                }
-            };
-        });
-        
+
         // Apply color coding to scopes and items grids
         if (frm.doc.scopes && frm.doc.scopes.length > 1) {
             apply_color_coding(frm);
@@ -209,23 +192,6 @@ frappe.ui.form.on("Project", {
 
 	},
     
-    after_save: function(frm) {
-        // Ensure button is added after save
-        setTimeout(() => {
-            const grid = frm.fields_dict.items.grid;
-            if (grid && grid.$wrapper) {
-                if (!grid.$wrapper.find('.import-from-excel').length) {
-                    const import_btn = $(`
-                        <button class="btn btn-sm btn-warning import-from-excel ml-2">
-                            Import from Excel
-                        </button>
-                    `);
-                    import_btn.on('click', () => show_import_dialog(frm));
-                    grid.$wrapper.find('.grid-footer .grid-footer-toolbar').append(import_btn);
-                }
-            }
-        }, 1000);
-    },
     
     download_import_template: function(frm, scope) {
         frappe.call({
@@ -252,35 +218,17 @@ frappe.ui.form.on("Project", {
 
 });
 
-// Define scope colors for light and dark modes
-const SCOPE_COLORS = {
-    light: [
-        '#fff3e0', // Light Orange
-        '#e3f2fd', // Light Blue
-        '#f3e5f5', // Light Purple
-        '#e8f5e9', // Light Green
-        '#fff9c4', // Light Yellow
-        '#e0f7fa', // Light Cyan
-        '#fce4ec', // Light Pink
-        '#f1f8e9'  // Light Lime
-    ],
-    dark: [
-        '#4a3000', // Dark Orange
-        '#002f5c', // Dark Blue
-        '#3f2150', // Dark Purple
-        '#1b4d2e', // Dark Green
-        '#4d4000', // Dark Yellow
-        '#006064', // Dark Cyan
-        '#4a1f2f', // Dark Pink
-        '#2c4c00'  // Dark Lime
-    ]
-};
-
-// Function to get current theme mode
-function getCurrentThemeMode() {
-    return document.documentElement.getAttribute('data-theme-mode') === 'dark' || 
-           document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
-}
+// Define scope colors using Frappe design system variables
+const SCOPE_COLORS = [
+    { bg: 'var(--bg-orange)', text: 'var(--text-on-orange)' },
+    { bg: 'var(--bg-blue)', text: 'var(--text-on-blue)' },
+    { bg: 'var(--bg-purple)', text: 'var(--text-on-purple)' },
+    { bg: 'var(--bg-green)', text: 'var(--text-on-green)' },
+    { bg: 'var(--bg-yellow)', text: 'var(--text-on-yellow)' },
+    { bg: 'var(--bg-cyan)', text: 'var(--text-on-cyan)' },
+    { bg: 'var(--bg-pink)', text: 'var(--text-on-pink)' },
+    { bg: 'var(--bg-gray)', text: 'var(--text-on-gray)' }
+];
 
 // Function to apply color coding
 function apply_color_coding(frm) {
@@ -293,6 +241,8 @@ function apply_color_coding(frm) {
                       $(row.wrapper).find('[data-name="'+row.doc.name+'"]');
             $row.css({
                 'background-color': '',
+                'color': '',
+                'border-color': ''
             });
         });
         
@@ -302,28 +252,35 @@ function apply_color_coding(frm) {
                       $(row.wrapper).find('[data-name="'+row.doc.name+'"]');
             $row.css({
                 'background-color': '',
+                'color': '',
+                'border-color': ''
             });
         });
         return;
     }
 
     setTimeout(() => {
-        const themeMode = getCurrentThemeMode();
-        const colors = SCOPE_COLORS[themeMode];
-
         // Color the scopes grid
         if (frm.fields_dict['scopes'].grid.grid_rows) {
             frm.fields_dict['scopes'].grid.grid_rows.forEach((row, index) => {
                 const scopeNum = row.doc.scope_number;
                 if (scopeNum) {
-                    const color = colors[(scopeNum - 1) % colors.length];
+                    const colorSet = SCOPE_COLORS[(scopeNum - 1) % SCOPE_COLORS.length];
                     const $row = $(row.row).length ? $(row.row) : 
                                $(row.wrapper).find('.grid-row').length ? $(row.wrapper).find('.grid-row') :
                                $(row.wrapper).find('[data-name="'+row.doc.name+'"]');
                                
                     $row.css({
-                        'background-color': color,
+                        'background-color': colorSet.bg,
+                        'color': colorSet.text
                     });
+                    
+                    // Apply border color to cells
+                    $row.find('.col').css({
+                        'border-right': '0'
+                    });
+
+                    
                 }
             });
         }
@@ -333,13 +290,19 @@ function apply_color_coding(frm) {
             frm.fields_dict['items'].grid.grid_rows.forEach(row => {
                 const scopeNum = row.doc.scope_number;
                 if (scopeNum) {
-                    const color = colors[(scopeNum - 1) % colors.length];
+                    const colorSet = SCOPE_COLORS[(scopeNum - 1) % SCOPE_COLORS.length];
                     const $row = $(row.row).length ? $(row.row) : 
                                $(row.wrapper).find('.grid-row').length ? $(row.wrapper).find('.grid-row') :
                                $(row.wrapper).find('[data-name="'+row.doc.name+'"]');
                                
                     $row.css({
-                        'background-color': color,
+                        'background-color': colorSet.bg,
+                        'color': colorSet.text
+                    });
+                    
+                    // Apply border color to cells
+                    $row.find('.col').css({
+                        'border-right': '0'
                     });
                 }
             });
@@ -347,283 +310,6 @@ function apply_color_coding(frm) {
     }, 100);
 }
 
-// Add theme change listener
-$(document).ready(function() {
-    const observer = new MutationObserver(function(mutations) {
-        mutations.forEach(function(mutation) {
-            if (mutation.attributeName === 'data-theme-mode' || mutation.attributeName === 'data-theme') {
-                // Re-apply color coding to all visible forms
-                cur_frm && cur_frm.doc && apply_color_coding(cur_frm);
-            }
-        });
-    });
-
-    observer.observe(document.documentElement, {
-        attributes: true,
-        attributeFilter: ['data-theme-mode', 'data-theme']
-    });
-});
-
-// Function to refresh existing scopes
-function refresh_existing_scopes(dialog, frm) {
-    const wrapper = dialog.fields_dict.existing_scopes_html.$wrapper;
-    wrapper.empty();
-    
-    if (!frm.doc.scopes || frm.doc.scopes.length === 0) {
-        wrapper.append('<div class="text-muted">No scopes added yet</div>');
-        return;
-    }
-    
-    const table = $(`
-        <table class="table table-bordered">
-            <thead>
-                <tr>
-                    <th>Scope</th>
-                    <th>Description</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody></tbody>
-        </table>
-    `);
-    
-    const themeMode = getCurrentThemeMode();
-    const colors = SCOPE_COLORS[themeMode];
-    
-    frm.doc.scopes.forEach(scope => {
-        const color = colors[(scope.scope_number - 1) % colors.length];
-        const row = $(`
-            <tr>
-                <td>${scope.scope_number}</td>
-                <td>${scope.description || ''}</td>
-                <td>
-                    <button class="btn btn-warning btn-xs btn-edit-scope mr-2" 
-                            data-scope-number="${scope.scope_number}">
-                        Edit
-                    </button>
-                    <button class="btn btn-danger btn-xs btn-delete-scope" 
-                            data-scope-number="${scope.scope_number}">
-                        Delete
-                    </button>
-                </td>
-            </tr>
-        `);
-        
-        // Apply color coding to the row
-        row.css({
-            'background-color': color,
-        });
-        
-        // Edit button handler
-        row.find('.btn-edit-scope').on('click', () => {
-            dialog.hide();
-            show_manage_scopes_dialog(frm, scope);
-        });
-        
-        // Delete button handler
-        row.find('.btn-delete-scope').on('click', () => {
-            // Check if scope is in use
-            const items_with_scope = frm.doc.items ? 
-                frm.doc.items.filter(item => item.scope_number === scope.scope_number) : [];
-            
-            if (items_with_scope.length > 0) {
-                frappe.msgprint(__('Cannot delete scope {0} as it is being used by {1} items', 
-                    [scope.scope_number, items_with_scope.length]));
-                return;
-            }
-            
-            frappe.confirm(
-                __('Are you sure you want to delete scope {0}?', [scope.scope_number]),
-                () => {
-                    frm.doc.scopes = frm.doc.scopes.filter(s => s.scope_number !== scope.scope_number);
-                    frm.refresh_field('scopes');
-                    frm.dirty();
-                    dialog.hide();
-                    apply_color_coding(frm);
-                    frm.save();
-                    frappe.show_alert({
-                        message: __('Scope {0} removed.', [scope.scope_number]),
-                        indicator: 'green'
-                    });
-                }
-            );
-        });
-        
-        table.find('tbody').append(row);
-    });
-    
-    wrapper.append(table);
-}
-
-// Calculate area and basic glass calculations
-function calculate_glass_values(frm, row, scope) {
-    // Calculate area
-    if (row.width && row.height) {
-        const area = (row.width * row.height) / 10000;
-        frappe.model.set_value(row.doctype, row.name, 'area', area);
-        
-        // Calculate glass price and total glass
-        if (row.glass_unit && scope) {
-            const glass_price = row.glass_unit * area * (1 + (scope.vat / 100));
-            frappe.model.set_value(row.doctype, row.name, 'glass_price', glass_price);
-            
-            if (row.qty) {
-                frappe.model.set_value(row.doctype, row.name, 'total_glass', glass_price * row.qty);
-            }
-        }
-    }
-}
-
-// Calculate aluminum price
-function calculate_aluminum_price(frm, row) {
-    const aluminum_price = (row.curtain_wall || 0) + 
-                         (row.insertion_1 || 0) + 
-                         (row.insertion_2 || 0) + 
-                         (row.insertion_3 || 0) + 
-                         (row.insertion_4 || 0);
-    
-    return frappe.model.set_value(row.doctype, row.name, 'aluminum_price', aluminum_price)
-        .then(() => aluminum_price);
-}
-
-// Calculate aluminum ratio for a specific scope
-function calculate_aluminum_ratio(frm, scope_number) {
-    const items = frm.doc.items || [];
-    const scope = (frm.doc.scopes || []).find(s => s.scope_number === scope_number);
-    
-    if (!scope) return 1;
-    
-    // Get all items for this scope
-    const scope_items = items.filter(item => item.scope_number === scope_number);
-    
-    // Calculate x (sum of VAT amounts)
-    const x = scope_items.reduce((sum, item) => {
-        return sum + ((item.aluminum_price || 0) * (scope.vat / 100));
-    }, 0);
-    
-    // Calculate y (sum of aluminum_price * qty)
-    const y = scope_items.reduce((sum, item) => {
-        return sum + ((item.aluminum_price || 0) * (item.qty || 0));
-    }, 0);
-    
-    // Calculate total
-    const total = ((scope.aluminum_weight || 0) * (scope.sdf || 0)) + y + x;
-    
-    // Calculate ratio and round to 3 decimal places
-    const ratio = y > 0 ? Number((total / y).toFixed(3)) : 1;
-    
-    // Store the ratio in the scope
-    frappe.model.set_value(scope.doctype, scope.name, 'ratio', ratio);
-    
-    return ratio;
-}
-
-// Calculate remaining values
-function calculate_remaining_values(frm, row, ratio) {
-    if (row.aluminum_price) {
-        // Calculate aluminum unit and total
-        const aluminum_unit = row.aluminum_price * ratio;
-        return frappe.model.set_value(row.doctype, row.name, 'aluminum_unit', aluminum_unit)
-            .then(() => {
-                if (row.qty) {
-                    return frappe.model.set_value(row.doctype, row.name, 'total_aluminum', aluminum_unit * row.qty);
-                }
-            })
-            .then(() => {
-                // Calculate actual unit
-                if (row.glass_price) {
-                    // Find the corresponding scope to get labour_charges
-                    const scope = frm.doc.scopes.find(s => s.scope_number === row.scope_number);
-                    const labour_charges = scope ? (scope.labour_charges || 0) : 0;
-                    
-                    const actual_unit = aluminum_unit + row.glass_price + labour_charges;
-                    return frappe.model.set_value(row.doctype, row.name, 'actual_unit', actual_unit)
-                        .then(() => {
-                            // Calculate profit and costs
-                            if (row.profit_percentage) {
-                                const total_profit = actual_unit * (row.profit_percentage / 100);
-                                return frappe.model.set_value(row.doctype, row.name, 'total_profit', total_profit)
-                                    .then(() => {
-                                        if (row.qty) {
-                                            return frappe.model.set_value(row.doctype, row.name, 'total_cost', actual_unit * row.qty);
-                                        }
-                                    })
-                                    .then(() => {
-                                        const actual_unit_rate = total_profit + actual_unit;
-                                        return frappe.model.set_value(row.doctype, row.name, 'actual_unit_rate', actual_unit_rate)
-                                            .then(() => {
-                                                if (row.qty) {
-                                                    let overall_price = actual_unit_rate * row.qty;
-                                                    
-                                                    // Find the corresponding scope
-                                                    const scope = frm.doc.scopes.find(s => s.scope_number === row.scope_number);
-                                                    
-                                                    // Apply rounding if specified in scope
-                                                    if (scope && scope.rounding === "Round up to nearest 5") {
-                                                        overall_price = roundToNearest5(overall_price);
-                                                    }
-                                                    
-                                                    return frappe.model.set_value(row.doctype, row.name, 'overall_price', overall_price);
-                                                }
-                                            });
-                                    });
-                            }
-                        });
-                }
-            });
-    }
-    return Promise.resolve();
-}
-
-// Calculate scope totals
-function update_scope_totals(frm, scope_number) {
-    const scope = (frm.doc.scopes || []).find(s => s.scope_number === scope_number);
-    if (!scope) return;
-
-    const scope_items = (frm.doc.items || []).filter(item => item.scope_number === scope_number);
-    
-    // Calculate totals
-    const totals = scope_items.reduce((acc, item) => {
-        return {
-            total_price: acc.total_price + (item.overall_price || 0),
-            total_cost: acc.total_cost + (item.total_cost || 0),
-            total_profit: acc.total_profit + (item.total_profit * item.qty || 0),
-            total_items: acc.total_items + (item.qty || 0)
-        };
-    }, { total_price: 0, total_cost: 0, total_profit: 0, total_items: 0 });
-
-    // Update scope with new totals
-    frappe.model.set_value(scope.doctype, scope.name, 'total_price', totals.total_price);
-    frappe.model.set_value(scope.doctype, scope.name, 'total_cost', totals.total_cost);
-    frappe.model.set_value(scope.doctype, scope.name, 'total_profit', totals.total_profit);
-    frappe.model.set_value(scope.doctype, scope.name, 'total_items', totals.total_items);
-}
-
-// Main calculation function
-function trigger_calculations(frm, row) {
-    const scope = (frm.doc.scopes || []).find(s => s.scope_number === row.scope_number);
-    if (!scope) return;
-    
-    calculate_glass_values(frm, row, scope);
-    calculate_aluminum_price(frm, row)
-        .then(aluminum_price => {
-            // Calculate ratio for all items with the same scope
-            const ratio = calculate_aluminum_ratio(frm, row.scope_number);
-            
-            // Update all items with the same scope number
-            const promises = (frm.doc.items || []).map(item => {
-                if (item.scope_number === row.scope_number) {
-                    return calculate_remaining_values(frm, item, ratio);
-                }
-                return Promise.resolve();
-            });
-
-            // After all calculations are done, update scope totals
-            Promise.all(promises).then(() => {
-                update_scope_totals(frm, row.scope_number);
-            });
-        });
-}
 
 // Handle items table scope number and read-only state
 frappe.ui.form.on('Project Items', {
@@ -720,28 +406,6 @@ frappe.ui.form.on('Project Items', {
     }
 });
 
-function download_import_template(frm, scope) {
-    frappe.call({
-        method: 'rua_company.rua_company.doctype.project.project.get_import_template',
-        args: {
-            scope: JSON.stringify(scope)
-        },
-        callback: function(r) {
-            if (r.message) {
-                const blob = b64toBlob(r.message.content, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.style.display = 'none';
-                a.href = url;
-                a.download = r.message.filename;
-                document.body.appendChild(a);
-                a.click();
-                window.URL.revokeObjectURL(url);
-                a.remove();
-            }
-        }
-    });
-}
 
 function create_project_bill(frm, bill_type) {
     // Get filtered parties based on bill type
@@ -928,6 +592,8 @@ function create_bill_with_scope(frm, bill_type, scope, args = {}) {
     });
 }
 
+
+//#region Excel Import
 function b64toBlob(b64Data, contentType = '', sliceSize = 512) {
     const byteCharacters = atob(b64Data);
     const byteArrays = [];
@@ -945,10 +611,6 @@ function b64toBlob(b64Data, contentType = '', sliceSize = 512) {
     }
 
     return new Blob(byteArrays, { type: contentType });
-}
-
-function roundToNearest5(num) {
-    return Math.ceil(num / 5) * 5;
 }
 
 function show_import_dialog(frm) {
@@ -1021,8 +683,7 @@ function show_import_dialog(frm) {
     
     // Create buttons for each scope
     frm.doc.scopes.forEach(scope => {
-        const themeMode = getCurrentThemeMode();
-        const color = SCOPE_COLORS[themeMode][(scope.scope_number - 1) % SCOPE_COLORS[themeMode].length];
+        const color = SCOPE_COLORS[(scope.scope_number - 1) % SCOPE_COLORS.length];
         
         const btn = $(`
             <div class="scope-button-wrapper" style="margin: 4px;">
@@ -1046,7 +707,7 @@ function show_import_dialog(frm) {
             // Add active class to clicked button
             $(this).removeClass('btn-default')
                 .css({
-                    'background-color': color,
+                    'background-color': color.bg,
                 });
                 
             // Store selected scope
@@ -1079,279 +740,206 @@ function show_import_dialog(frm) {
     dialog.show();
 }
 
-function show_manage_scopes_dialog(frm, edit_scope = null) {
-    const dialog = new frappe.ui.Dialog({
-        title: edit_scope ? `Edit Scope ${edit_scope.scope_number}` : 'Manage Scopes',
-        fields: [
-            {
-                fieldname: 'existing_scopes_section',
-                fieldtype: 'Section Break',
-                label: 'Existing Scopes',
-                hidden: !!edit_scope
-            },
-            {
-                fieldname: 'existing_scopes_html',
-                fieldtype: 'HTML',
-                hidden: !!edit_scope
-            },
-            {
-                fieldname: 'new_scope_section',
-                fieldtype: 'Section Break',
-                label: edit_scope ? '' : 'Add New Scope'
-            },
-            {
-                fieldname: 'description',
-                fieldtype: 'Data',
-                label: 'Description',
-                mandatory_depends_on: 'eval:1'
-            },
-            {
-                fieldname: 'glass_sqm_price',
-                fieldtype: 'Currency',
-                label: 'Glass SQM Price',
-                mandatory_depends_on: 'eval:1'
-            },
-            {
-                fieldname: 'labour_charges',
-                fieldtype: 'Currency',
-                label: 'Labour Charges',
-                mandatory_depends_on: 'eval:1'
-            },
-            {
-                fieldname: 'aluminum_weight',
-                fieldtype: 'Float',
-                label: 'Aluminum Weight',
-                mandatory_depends_on: 'eval:1'
-            },
-            {
-                fieldname: 'col_break_1',
-                fieldtype: 'Column Break'
-            },
-            {
-                fieldname: 'sdf',
-                fieldtype: 'Float',
-                label: 'SDF',
-                mandatory_depends_on: 'eval:1'
-            },
-            {
-                fieldname: 'profit',
-                fieldtype: 'Percent',
-                label: 'Profit',
-                mandatory_depends_on: 'eval:1',
-                default: 35
-            },
-            {
-                fieldname: 'vat',
-                fieldtype: 'Percent',
-                label: 'VAT',
-                default: 5,
-                read_only: 1
-            },
-            {
-                fieldname: 'rounding',
-                fieldtype: 'Select',
-                label: 'Rounding',
-                options: [
-                    'No Rounding',
-                    'Round up to nearest 5'
-                ],
-                default: 'Round up to nearest 5'
-            }
-        ],
-        primary_action_label: edit_scope ? 'Save Changes' : 'Add Scope',
-        primary_action(values) {
-            if (edit_scope) {
-                // Check if there are items using this scope
-                const items_with_scope = frm.doc.items ? 
-                    frm.doc.items.filter(item => item.scope_number === edit_scope.scope_number) : [];
-                
-                const update_scope = () => {
-                    // Update existing scope
-                    const scope_idx = frm.doc.scopes.findIndex(s => s.scope_number === edit_scope.scope_number);
-                    if (scope_idx !== -1) {
-                        Object.assign(frm.doc.scopes[scope_idx], {
-                            description: values.description,
-                            glass_sqm_price: values.glass_sqm_price,
-                            labour_charges: values.labour_charges,
-                            aluminum_weight: values.aluminum_weight,
-                            sdf: values.sdf,
-                            profit: values.profit,
-                            vat: values.vat,
-                            rounding: values.rounding
-                        });
-                        
-                        // Update all items using this scope
-                        if (frm.doc.items) {
-                            frm.doc.items.forEach(item => {
-                                if (item.scope_number === edit_scope.scope_number) {
-                                    item.glass_unit = values.glass_sqm_price;
-                                    item.profit_percentage = values.profit;
-                                }
-                            });
-                            frm.refresh_field('items');
-                        }
-                        
-                        frm.refresh_field('scopes');
-                        frm.dirty();
-                        dialog.hide();
-                        frm.save();
-                        frappe.show_alert({
-                            message: __('Scope {0} updated.', [edit_scope.scope_number]),
-                            indicator: 'green'
-                        });
-                    }
-                };
-                
-                if (items_with_scope.length > 0) {
-                    frappe.confirm(
-                        __('This scope is being used by {0} items. Updating this scope will also update these items. Are you sure you want to continue?', [items_with_scope.length]),
-                        () => {
-                            update_scope();
-                        }
-                    );
-                } else {
-                    update_scope();
-                }
-            } else {
-                // Add new scope
-                if (!frm.doc.scopes) {
-                    frm.doc.scopes = [];
-                }
-                
-                const next_scope_number = frm.doc.scopes.length > 0 
-                    ? Math.max(...frm.doc.scopes.map(s => s.scope_number)) + 1 
-                    : 1;
-                
-                let row = frappe.model.add_child(frm.doc, 'Project Scope', 'scopes');
-                row.scope_number = next_scope_number;
-                row.description = values.description;
-                row.glass_sqm_price = values.glass_sqm_price;
-                row.labour_charges = values.labour_charges;
-                row.aluminum_weight = values.aluminum_weight;
-                row.sdf = values.sdf;
-                row.profit = values.profit;
-                row.vat = values.vat;
-                row.rounding = values.rounding;
-                
-                frm.refresh_field('scopes');
-                frm.dirty();
-                dialog.hide();
-                apply_color_coding(frm);
-                frm.save();
-                frappe.show_alert({
-                    message: __('Scope {0} added.', [next_scope_number]),
-                    indicator: 'green'
-                });
+function download_import_template(frm, scope) {
+    frappe.call({
+        method: 'rua_company.rua_company.doctype.project.project.get_import_template',
+        args: {
+            scope: JSON.stringify(scope)
+        },
+        callback: function(r) {
+            if (r.message) {
+                const blob = b64toBlob(r.message.content, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = url;
+                a.download = r.message.filename;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                a.remove();
             }
         }
     });
-    
-    // If editing, populate the fields with existing scope data
-    if (edit_scope) {
-        dialog.set_values({
-            description: edit_scope.description,
-            glass_sqm_price: edit_scope.glass_sqm_price,
-            labour_charges: edit_scope.labour_charges,
-            aluminum_weight: edit_scope.aluminum_weight,
-            sdf: edit_scope.sdf,
-            profit: edit_scope.profit,
-            vat: edit_scope.vat,
-            rounding: edit_scope.rounding || 'Round up to nearest 5'
-        });
-    }
-    
-    function refresh_existing_scopes(dialog, frm) {
-        const wrapper = dialog.fields_dict.existing_scopes_html.$wrapper;
-        wrapper.empty();
-        
-        if (!frm.doc.scopes || frm.doc.scopes.length === 0) {
-            wrapper.append('<div class="text-muted">No scopes added yet</div>');
-            return;
-        }
-        
-        const table = $(`
-            <table class="table table-bordered">
-                <thead>
-                    <tr>
-                        <th>Scope</th>
-                        <th>Description</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody></tbody>
-            </table>
-        `);
-        
-        const themeMode = getCurrentThemeMode();
-        const colors = SCOPE_COLORS[themeMode];
-        
-        frm.doc.scopes.forEach(scope => {
-            const color = colors[(scope.scope_number - 1) % colors.length];
-            const row = $(`
-                <tr>
-                    <td>${scope.scope_number}</td>
-                    <td>${scope.description || ''}</td>
-                    <td>
-                        <button class="btn btn-warning btn-xs btn-edit-scope mr-2" 
-                                data-scope-number="${scope.scope_number}">
-                            Edit
-                        </button>
-                        <button class="btn btn-danger btn-xs btn-delete-scope" 
-                                data-scope-number="${scope.scope_number}">
-                            Delete
-                        </button>
-                    </td>
-                </tr>
-            `);
-            
-            // Apply color coding to the row
-            row.css({
-                'background-color': color,
-            });
-            
-            // Edit button handler
-            row.find('.btn-edit-scope').on('click', () => {
-                dialog.hide();
-                show_manage_scopes_dialog(frm, scope);
-            });
-            
-            // Delete button handler
-            row.find('.btn-delete-scope').on('click', () => {
-                // Check if scope is in use
-                const items_with_scope = frm.doc.items ? 
-                    frm.doc.items.filter(item => item.scope_number === scope.scope_number) : [];
-                
-                if (items_with_scope.length > 0) {
-                    frappe.msgprint(__('Cannot delete scope {0} as it is being used by {1} items', 
-                        [scope.scope_number, items_with_scope.length]));
-                    return;
-                }
-                
-                frappe.confirm(
-                    __('Are you sure you want to delete scope {0}?', [scope.scope_number]),
-                    () => {
-                        frm.doc.scopes = frm.doc.scopes.filter(s => s.scope_number !== scope.scope_number);
-                        frm.refresh_field('scopes');
-                        frm.dirty();
-                        dialog.hide();
-                        apply_color_coding(frm);
-                        frm.save();
-                        frappe.show_alert({
-                            message: __('Scope {0} removed.', [scope.scope_number]),
-                            indicator: 'green'
-                        });
-                    }
-                );
-            });
-            
-            table.find('tbody').append(row);
-        });
-        
-        wrapper.append(table);
-    }
-    
-    if (!edit_scope) {
-        refresh_existing_scopes(dialog, frm);
-    }
-    dialog.show();
 }
+
+//#endregion
+
+//#region Project Items Calculations
+
+// Main calculation function
+function trigger_calculations(frm, row) {
+    const scope = (frm.doc.scopes || []).find(s => s.scope_number === row.scope_number);
+    if (!scope) return;
+    
+    calculate_glass_values(frm, row, scope);
+    calculate_aluminum_price(frm, row)
+        .then(aluminum_price => {
+            // Calculate ratio for all items with the same scope
+            const ratio = calculate_aluminum_ratio(frm, row.scope_number);
+            
+            // Update all items with the same scope number
+            const promises = (frm.doc.items || []).map(item => {
+                if (item.scope_number === row.scope_number) {
+                    return calculate_remaining_values(frm, item, ratio);
+                }
+                return Promise.resolve();
+            });
+
+            // After all calculations are done, update scope totals
+            Promise.all(promises).then(() => {
+                update_scope_totals(frm, row.scope_number);
+            });
+        });
+}
+
+// Round a number to the nearest 5
+function roundToNearest5(num) {
+    return Math.ceil(num / 5) * 5;
+}
+
+// Calculate area and basic glass calculations
+function calculate_glass_values(frm, row, scope) {
+    // Calculate area
+    if (row.width >= 0 && row.height >= 0) {
+        const area = (row.width * row.height) / 10000;
+        frappe.model.set_value(row.doctype, row.name, 'area', area);
+        
+        // Calculate glass price and total glass
+        if (row.glass_unit >= 0 && scope) {
+            const glass_price = row.glass_unit * area * (1 + (scope.vat / 100));
+            frappe.model.set_value(row.doctype, row.name, 'glass_price', glass_price);
+            
+            if (row.qty >= 0) {
+                frappe.model.set_value(row.doctype, row.name, 'total_glass', glass_price * row.qty);
+            }
+        }
+    }
+}
+
+// Calculate aluminum price
+function calculate_aluminum_price(frm, row) {
+    const aluminum_price = (row.curtain_wall || 0) + 
+                         (row.insertion_1 || 0) + 
+                         (row.insertion_2 || 0) + 
+                         (row.insertion_3 || 0) + 
+                         (row.insertion_4 || 0);
+    
+    return frappe.model.set_value(row.doctype, row.name, 'aluminum_price', aluminum_price)
+        .then(() => aluminum_price);
+}
+
+// Calculate aluminum ratio for a specific scope
+function calculate_aluminum_ratio(frm, scope_number) {
+    const items = frm.doc.items || [];
+    const scope = (frm.doc.scopes || []).find(s => s.scope_number === scope_number);
+    
+    if (!scope) return 1;
+    
+    // Get all items for this scope
+    const scope_items = items.filter(item => item.scope_number === scope_number);
+    
+    // Calculate x (sum of VAT amounts)
+    const x = scope_items.reduce((sum, item) => {
+        return sum + ((item.aluminum_price || 0) * (scope.vat / 100));
+    }, 0);
+    
+    // Calculate y (sum of aluminum_price * qty)
+    const y = scope_items.reduce((sum, item) => {
+        return sum + ((item.aluminum_price || 0) * (item.qty || 0));
+    }, 0);
+    
+    // Calculate total
+    const total = ((scope.aluminum_weight || 0) * (scope.sdf || 0)) + y + x;
+    
+    // Calculate ratio and round to 3 decimal places
+    const ratio = y > 0 ? Number((total / y).toFixed(3)) : 1;
+    
+    // Store the ratio in the scope
+    frappe.model.set_value(scope.doctype, scope.name, 'ratio', ratio);
+    
+    return ratio;
+}
+
+// Calculate remaining values
+function calculate_remaining_values(frm, row, ratio) {
+    if (row.aluminum_price >= 0) {
+        // Calculate aluminum unit and total
+        const aluminum_unit = row.aluminum_price * ratio;
+        return frappe.model.set_value(row.doctype, row.name, 'aluminum_unit', aluminum_unit)
+            .then(() => {
+                if (row.qty >= 0) {
+                    return frappe.model.set_value(row.doctype, row.name, 'total_aluminum', aluminum_unit * row.qty);
+                }
+            })
+            .then(() => {
+                // Calculate actual unit
+                if (row.glass_price >= 0) {
+                    // Find the corresponding scope to get labour_charges
+                    const scope = frm.doc.scopes.find(s => s.scope_number === row.scope_number);
+                    const labour_charges = scope ? (scope.labour_charges || 0) : 0;
+                    
+                    const actual_unit = aluminum_unit + row.glass_price + labour_charges;
+                    return frappe.model.set_value(row.doctype, row.name, 'actual_unit', actual_unit)
+                        .then(() => {
+                            // Calculate profit and costs
+                            if (row.profit_percentage >= 0) {
+                                const total_profit = actual_unit * (row.profit_percentage / 100);
+                                return frappe.model.set_value(row.doctype, row.name, 'total_profit', total_profit)
+                                    .then(() => {
+                                        if (row.qty >= 0) {
+                                            return frappe.model.set_value(row.doctype, row.name, 'total_cost', actual_unit * row.qty);
+                                        }
+                                    })
+                                    .then(() => {
+                                        const actual_unit_rate = total_profit + actual_unit;
+                                        return frappe.model.set_value(row.doctype, row.name, 'actual_unit_rate', actual_unit_rate)
+                                            .then(() => {
+                                                if (row.qty >= 0) {
+                                                    let overall_price = actual_unit_rate * row.qty;
+                                                    
+                                                    // Find the corresponding scope
+                                                    const scope = frm.doc.scopes.find(s => s.scope_number === row.scope_number);
+                                                    
+                                                    // Apply rounding if specified in scope
+                                                    if (scope && scope.rounding === "Round up to nearest 5") {
+                                                        overall_price = roundToNearest5(overall_price);
+                                                    }
+                                                    
+                                                    return frappe.model.set_value(row.doctype, row.name, 'overall_price', overall_price);
+                                                }
+                                            });
+                                    });
+                            }
+                        });
+                }
+            });
+    }
+    return Promise.resolve();
+}
+
+// Calculate scope totals
+function update_scope_totals(frm, scope_number) {
+    const scope = (frm.doc.scopes || []).find(s => s.scope_number === scope_number);
+    if (!scope) return;
+
+    const scope_items = (frm.doc.items || []).filter(item => item.scope_number === scope_number);
+    
+    // Calculate totals
+    const totals = scope_items.reduce((acc, item) => {
+        return {
+            total_price: acc.total_price + (item.overall_price || 0),
+            total_cost: acc.total_cost + (item.total_cost || 0),
+            total_profit: acc.total_profit + (item.total_profit * item.qty || 0),
+            total_items: acc.total_items + (item.qty || 0)
+        };
+    }, { total_price: 0, total_cost: 0, total_profit: 0, total_items: 0 });
+
+    // Update scope with new totals
+    frappe.model.set_value(scope.doctype, scope.name, 'total_price', totals.total_price);
+    frappe.model.set_value(scope.doctype, scope.name, 'total_cost', totals.total_cost);
+    frappe.model.set_value(scope.doctype, scope.name, 'total_profit', totals.total_profit);
+    frappe.model.set_value(scope.doctype, scope.name, 'total_items', totals.total_items);
+}
+
+//#endregion
