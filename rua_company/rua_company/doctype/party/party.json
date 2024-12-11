@@ -1,0 +1,134 @@
+{
+ "actions": [],
+ "allow_copy": 1,
+ "allow_import": 1,
+ "allow_rename": 1,
+ "autoname": "field:party_name",
+ "creation": "2024-12-09 11:47:01.929060",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "party_name",
+  "html_hbfh",
+  "column_break_ldss",
+  "type",
+  "default_type",
+  "default_section",
+  "enabled",
+  "column_break_zcia",
+  "phone",
+  "email",
+  "image"
+ ],
+ "fields": [
+  {
+   "fieldname": "type",
+   "fieldtype": "Select",
+   "label": "Party Type",
+   "options": "\nIndividual\nCompany"
+  },
+  {
+   "fieldname": "column_break_zcia",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "phone",
+   "fieldtype": "Data",
+   "label": "Phone",
+   "options": "Phone"
+  },
+  {
+   "fieldname": "email",
+   "fieldtype": "Data",
+   "label": "Email",
+   "options": "Email"
+  },
+  {
+   "fieldname": "image",
+   "fieldtype": "Attach Image",
+   "label": "Image"
+  },
+  {
+   "fieldname": "default_type",
+   "fieldtype": "Autocomplete",
+   "label": "Default Type",
+   "options": "\nSupplier\nConsultant\nClient"
+  },
+  {
+   "fieldname": "column_break_ldss",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "1",
+   "depends_on": "eval:!(doc.__islocal)",
+   "fieldname": "enabled",
+   "fieldtype": "Check",
+   "label": "Enabled"
+  },
+  {
+   "fieldname": "html_hbfh",
+   "fieldtype": "HTML",
+   "options": "<img style=\"border-radius: var(--border-radius);\" src=\"{{doc.image}}\">"
+  },
+  {
+   "fieldname": "party_name",
+   "fieldtype": "Data",
+   "label": "Party Name",
+   "unique": 1
+  },
+  {
+   "depends_on": "eval:doc.default_type == \"Supplier\"",
+   "fieldname": "default_section",
+   "fieldtype": "Autocomplete",
+   "label": "Default Section",
+   "options": "\nAluminum\nGlass\nCladding"
+  }
+ ],
+ "hide_toolbar": 1,
+ "image_field": "image",
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "make_attachments_public": 1,
+ "modified": "2024-12-09 13:26:53.312740",
+ "modified_by": "Administrator",
+ "module": "Rua Company",
+ "name": "Party",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "RUA Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "read": 1,
+   "role": "RUA Employee",
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

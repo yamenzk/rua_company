@@ -1,0 +1,162 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2024-12-10 18:39:15.888187",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_break_oelv",
+  "amended_from",
+  "column_break_klok",
+  "date",
+  "project",
+  "section_break_nwsm",
+  "column_break_mphn",
+  "type",
+  "paid_to",
+  "received_from",
+  "party",
+  "amount",
+  "column_break_yivt",
+  "mode",
+  "ref",
+  "bank",
+  "claimable_on"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_break_oelv",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Payment Voucher",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "section_break_nwsm",
+   "fieldtype": "Section Break"
+  },
+  {
+   "depends_on": "eval:doc.party",
+   "fieldname": "amount",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Amount",
+   "precision": "2",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_mphn",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Type",
+   "options": "\nPay\nReceive",
+   "reqd": 1
+  },
+  {
+   "depends_on": "eval:doc.type",
+   "fieldname": "party",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Party",
+   "options": "Party",
+   "reqd": 1
+  },
+  {
+   "depends_on": "eval:doc.type == \"Pay\"",
+   "fieldname": "paid_to",
+   "fieldtype": "Heading",
+   "label": "Paid to:"
+  },
+  {
+   "fieldname": "column_break_yivt",
+   "fieldtype": "Column Break"
+  },
+  {
+   "depends_on": "eval:doc.type == \"Receive\"",
+   "fieldname": "received_from",
+   "fieldtype": "Heading",
+   "label": "Received from:"
+  },
+  {
+   "fieldname": "column_break_klok",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Now",
+   "fieldname": "date",
+   "fieldtype": "Datetime",
+   "label": "Date"
+  },
+  {
+   "default": "Cash",
+   "depends_on": "eval:doc.type",
+   "fieldname": "mode",
+   "fieldtype": "Select",
+   "label": "Mode",
+   "options": "Cash\nCheque\nBank Transfer"
+  },
+  {
+   "depends_on": "eval:doc.mode != \"Cash\"",
+   "fieldname": "ref",
+   "fieldtype": "Data",
+   "label": "Ref"
+  },
+  {
+   "depends_on": "eval:doc.mode != \"Cash\"",
+   "fieldname": "bank",
+   "fieldtype": "Data",
+   "label": "Bank"
+  },
+  {
+   "depends_on": "eval:doc.mode != \"Cash\"",
+   "fieldname": "claimable_on",
+   "fieldtype": "Date",
+   "label": "Claimable on"
+  },
+  {
+   "fieldname": "project",
+   "fieldtype": "Link",
+   "label": "Project",
+   "options": "Project",
+   "read_only": 1,
+   "reqd": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2024-12-10 20:21:30.947111",
+ "modified_by": "Administrator",
+ "module": "Rua Company",
+ "name": "Payment Voucher",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

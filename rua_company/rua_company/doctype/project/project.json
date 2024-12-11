@@ -1,0 +1,531 @@
+{
+ "actions": [],
+ "allow_copy": 1,
+ "allow_import": 1,
+ "allow_rename": 1,
+ "autoname": "field:project_name",
+ "creation": "2024-12-09 12:09:41.983655",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "tab_6_tab",
+  "html_bxjf",
+  "details_tab",
+  "project_name",
+  "serial_number",
+  "column_break_jyft",
+  "location",
+  "image",
+  "column_break_zshe",
+  "status",
+  "section_break_snka",
+  "parties",
+  "tab_break_czaf",
+  "scopes_section",
+  "scopes",
+  "section_break_duur",
+  "items",
+  "additional_expenses_tab",
+  "section_break_jjtl",
+  "html_hcoq",
+  "section_break_mouu",
+  "additional_items",
+  "draft_billing_tab",
+  "quotation_drafts",
+  "quotations",
+  "column_break_qneq",
+  "rfq_drafts",
+  "rfqs",
+  "section_break_nqqq",
+  "proforma_drafts",
+  "column_break_iuor",
+  "lpo_drafts",
+  "section_break_trqo",
+  "invoice_drafts",
+  "column_break_ooqf",
+  "actual_billing_tab",
+  "transactions_section",
+  "income_column",
+  "proformas",
+  "total_proformas",
+  "invoices",
+  "total_invoices",
+  "expense_column",
+  "lpos",
+  "total_expenses",
+  "total_additional_expenses",
+  "payments_section",
+  "received_column",
+  "received_table",
+  "paid_column",
+  "paid_table",
+  "summary_section",
+  "total_receivable",
+  "total_received",
+  "due_receivables",
+  "column_break_kzfn",
+  "total_payable",
+  "total_paid",
+  "due_payables",
+  "section_break_qtmj",
+  "total_project_value",
+  "column_break_gtze",
+  "project_profit",
+  "column_break_yran",
+  "profit_percentage"
+ ],
+ "fields": [
+  {
+   "fieldname": "project_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Project Name",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "column_break_jyft",
+   "fieldtype": "Column Break"
+  },
+  {
+   "depends_on": "eval:doc.serial_number != 0",
+   "fieldname": "serial_number",
+   "fieldtype": "Int",
+   "label": "Serial Number",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_zshe",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Open",
+   "depends_on": "eval:!(doc.__islocal)",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Open\nTender\nJob In Hand\nIn Progress\nCompleted\nCancelled",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_snka",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "parties",
+   "fieldtype": "Table",
+   "label": "Parties",
+   "options": "Parties"
+  },
+  {
+   "fieldname": "location",
+   "fieldtype": "Data",
+   "label": "Location"
+  },
+  {
+   "fieldname": "tab_break_czaf",
+   "fieldtype": "Tab Break",
+   "label": "Items"
+  },
+  {
+   "fieldname": "scopes",
+   "fieldtype": "Table",
+   "options": "Scopes",
+   "read_only": 1
+  },
+  {
+   "bold": 1,
+   "fieldname": "section_break_duur",
+   "fieldtype": "Section Break",
+   "label": "Items"
+  },
+  {
+   "fieldname": "items",
+   "fieldtype": "Table",
+   "options": "Project Items"
+  },
+  {
+   "fieldname": "scopes_section",
+   "fieldtype": "Section Break",
+   "label": "Scopes"
+  },
+  {
+   "fieldname": "details_tab",
+   "fieldtype": "Tab Break",
+   "hidden": 1,
+   "label": "Details"
+  },
+  {
+   "fieldname": "draft_billing_tab",
+   "fieldtype": "Tab Break",
+   "hidden": 1,
+   "label": "Draft Billing"
+  },
+  {
+   "fieldname": "quotation_drafts",
+   "fieldtype": "Table",
+   "label": "Quotation Drafts",
+   "options": "Project Bills",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_qneq",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "rfq_drafts",
+   "fieldtype": "Table",
+   "label": "RFQ Drafts",
+   "options": "Project Bills",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_nqqq",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "proforma_drafts",
+   "fieldtype": "Table",
+   "label": "Proforma Drafts",
+   "options": "Project Bills",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_iuor",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "lpo_drafts",
+   "fieldtype": "Table",
+   "label": "LPO Drafts",
+   "options": "Project Bills",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_trqo",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "invoice_drafts",
+   "fieldtype": "Table",
+   "label": "Invoice Drafts",
+   "options": "Project Bills",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_ooqf",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "actual_billing_tab",
+   "fieldtype": "Tab Break",
+   "hidden": 1,
+   "label": "Actual Billing"
+  },
+  {
+   "fieldname": "transactions_section",
+   "fieldtype": "Section Break",
+   "label": "Transactions"
+  },
+  {
+   "fieldname": "income_column",
+   "fieldtype": "Column Break",
+   "label": "Income"
+  },
+  {
+   "fieldname": "proformas",
+   "fieldtype": "Table",
+   "label": "Proformas",
+   "options": "Project Bills",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_proformas",
+   "fieldtype": "Currency",
+   "label": "Total Proformas",
+   "precision": "0",
+   "read_only": 1
+  },
+  {
+   "fieldname": "invoices",
+   "fieldtype": "Table",
+   "label": "Invoices",
+   "options": "Project Bills",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_invoices",
+   "fieldtype": "Currency",
+   "label": "Total Invoices",
+   "precision": "0",
+   "read_only": 1
+  },
+  {
+   "fieldname": "expense_column",
+   "fieldtype": "Column Break",
+   "label": "Expense"
+  },
+  {
+   "fieldname": "lpos",
+   "fieldtype": "Table",
+   "label": "LPOs",
+   "options": "Project Bills",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_expenses",
+   "fieldtype": "Currency",
+   "label": "Total Expenses",
+   "precision": "0",
+   "read_only": 1
+  },
+  {
+   "fieldname": "quotations",
+   "fieldtype": "Table",
+   "label": "Quotations",
+   "options": "Project Bills",
+   "read_only": 1
+  },
+  {
+   "fieldname": "rfqs",
+   "fieldtype": "Table",
+   "label": "RFQs",
+   "options": "Project Bills",
+   "read_only": 1
+  },
+  {
+   "fieldname": "payments_section",
+   "fieldtype": "Section Break",
+   "label": "Payments"
+  },
+  {
+   "fieldname": "received_column",
+   "fieldtype": "Column Break",
+   "label": "Received"
+  },
+  {
+   "fieldname": "received_table",
+   "fieldtype": "Table",
+   "options": "Payments",
+   "read_only": 1
+  },
+  {
+   "fieldname": "paid_column",
+   "fieldtype": "Column Break",
+   "label": "Paid"
+  },
+  {
+   "fieldname": "paid_table",
+   "fieldtype": "Table",
+   "options": "Payments",
+   "read_only": 1
+  },
+  {
+   "fieldname": "summary_section",
+   "fieldtype": "Section Break",
+   "label": "Summary"
+  },
+  {
+   "fieldname": "total_receivable",
+   "fieldtype": "Currency",
+   "label": "Total Receivable",
+   "precision": "0",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_received",
+   "fieldtype": "Currency",
+   "label": "Total Received",
+   "precision": "0",
+   "read_only": 1
+  },
+  {
+   "fieldname": "due_receivables",
+   "fieldtype": "Currency",
+   "label": "Due",
+   "precision": "0",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_kzfn",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "total_payable",
+   "fieldtype": "Currency",
+   "label": "Total Payable",
+   "precision": "0",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_paid",
+   "fieldtype": "Currency",
+   "label": "Total Paid",
+   "precision": "0",
+   "read_only": 1
+  },
+  {
+   "fieldname": "due_payables",
+   "fieldtype": "Currency",
+   "label": "Due",
+   "precision": "0",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_qtmj",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "total_project_value",
+   "fieldtype": "Currency",
+   "label": "Total Project Value",
+   "precision": "0",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_gtze",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "project_profit",
+   "fieldtype": "Currency",
+   "label": "Project Profit",
+   "precision": "0",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_yran",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "profit_percentage",
+   "fieldtype": "Percent",
+   "label": "Profit Percentage",
+   "precision": "0",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_additional_expenses",
+   "fieldtype": "Currency",
+   "label": "Total Additional Expenses",
+   "precision": "0",
+   "read_only": 1
+  },
+  {
+   "fieldname": "additional_expenses_tab",
+   "fieldtype": "Tab Break",
+   "label": "Additional Expenses"
+  },
+  {
+   "fieldname": "html_hcoq",
+   "fieldtype": "HTML",
+   "options": "<div class=\"notice-container\">\n  <div class=\"notice\">\n    <h2>Additional Expense Documentation</h2>\n    <p>\n      Please document any additional expenses in the section below. \n      <span class=\"highlighted\">Ensure all item rates are VAT inclusive.</span>\n    </p>\n    <div class=\"info-panel\">\n      <p>\n        Expenses listed here will be automatically processed as paid. The total amount will be incorporated into the final payable sum and adjusted in the balance calculation.\n      </p>\n    </div>\n  </div>\n</div>\n\n<style>\n.notice-container {\n  max-width: 800px;\nmargin: auto;\n}\n\n.notice {\n  border: 1px solid var(--border-color);;\n  border-radius: var(--border-radius);\n  padding: var(--padding-md);\n  position: relative;\n  overflow: hidden;\n}\n\n.notice::before {\n  content: '';\n  position: absolute;\n  top: 0;\n  left: 0;\n  width: 4px;\n  height: 100%;\n  background: #FBC418;\n}\n\n.notice h2 {\n  color: var(--heading-color);\n  font-size: var(--text-lg);\n  font-weight: 600;\n  margin: 0 0 12px 0;\n  letter-spacing: -0.02em;\n}\n\n.notice p {\n  color: var(--text-muted);\n  line-height: 1.7;\n  margin: 0 0 6px 0;\n  font-size: var(--text-base);\n}\n\n.notice .highlighted {\n  color: var(--red);\n  font-weight: 600;\n}\n\n.notice .info-panel {\n  background: var(--subtle-fg);\n  border: 1px solid var(--border-color);\n  border-radius: var(--border-radius);\n  padding: var(--padding-sm);\n}\n\n.notice .info-panel p {\n  color: var(--gray-600);\n  font-size: var(--text-sm);\n  margin: 0;\n  line-height: 1.6;\n}\n\n[data-theme=\"dark\"] .notice .highlighted,\n[data-theme-mode=\"dark\"] .notice .highlighted {\n  color: var(--dt-light-red);\n}\n</style>"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "section_break_mouu",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "additional_items",
+   "fieldtype": "Table",
+   "label": "Additional Items",
+   "options": "Items"
+  },
+  {
+   "fieldname": "section_break_jjtl",
+   "fieldtype": "Section Break",
+   "hide_border": 1
+  },
+  {
+   "fieldname": "tab_6_tab",
+   "fieldtype": "Tab Break",
+   "label": "Project"
+  },
+  {
+   "fieldname": "html_bxjf",
+   "fieldtype": "HTML",
+   "options": "<div id=\"actual_billing_dash\"></div>"
+  },
+  {
+   "fieldname": "image",
+   "fieldtype": "Attach Image",
+   "label": "Image"
+  }
+ ],
+ "image_field": "image",
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "make_attachments_public": 1,
+ "modified": "2024-12-11 04:17:49.670700",
+ "modified_by": "Administrator",
+ "module": "Rua Company",
+ "name": "Project",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "RUA Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "RUA Employee",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [
+  {
+   "color": "Blue",
+   "title": "Open"
+  },
+  {
+   "color": "Purple",
+   "title": "Tender"
+  },
+  {
+   "color": "Orange",
+   "title": "Job In Hand"
+  },
+  {
+   "color": "Cyan",
+   "title": "In Progress"
+  },
+  {
+   "color": "Green",
+   "title": "Completed"
+  },
+  {
+   "color": "Gray",
+   "title": "Cancelled"
+  }
+ ]
+}

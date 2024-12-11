@@ -1,0 +1,90 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2024-12-10 17:16:48.589603",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "scope",
+  "bill",
+  "bill_type",
+  "column_break_jrfc",
+  "date",
+  "grand_total",
+  "status",
+  "party"
+ ],
+ "fields": [
+  {
+   "columns": 2,
+   "fieldname": "bill",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Bill",
+   "options": "Project Bill"
+  },
+  {
+   "fieldname": "column_break_jrfc",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "bill.date",
+   "fieldname": "date",
+   "fieldtype": "Date",
+   "label": "Date",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "bill.grand_total",
+   "fieldname": "grand_total",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Grand Total",
+   "precision": "0",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "bill.bill_type",
+   "fieldname": "bill_type",
+   "fieldtype": "Read Only",
+   "label": "Bill Type"
+  },
+  {
+   "fetch_from": "bill.scope",
+   "fieldname": "scope",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Scope",
+   "non_negative": 1,
+   "read_only": 1
+  },
+  {
+   "fetch_from": "bill.party",
+   "fieldname": "party",
+   "fieldtype": "Link",
+   "label": "Party",
+   "options": "Party",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "bill.status",
+   "fieldname": "status",
+   "fieldtype": "Read Only",
+   "in_list_view": 1,
+   "label": "Status"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2024-12-10 17:37:24.553886",
+ "modified_by": "Administrator",
+ "module": "Rua Company",
+ "name": "Project Bills",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

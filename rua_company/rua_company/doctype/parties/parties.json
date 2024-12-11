@@ -1,0 +1,77 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2024-12-09 11:53:50.291808",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "party",
+  "type",
+  "section",
+  "column_break_ldcq",
+  "image",
+  "phone",
+  "email"
+ ],
+ "fields": [
+  {
+   "fieldname": "party",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Party",
+   "link_filters": "[[\"Party\",\"enabled\",\"=\",1]]",
+   "options": "Party",
+   "reqd": 1
+  },
+  {
+   "fieldname": "type",
+   "fieldtype": "Autocomplete",
+   "in_list_view": 1,
+   "label": "Type",
+   "options": "\nSupplier\nConsultant\nClient",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_ldcq",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "party.image",
+   "fieldname": "image",
+   "fieldtype": "Read Only",
+   "label": "Image"
+  },
+  {
+   "fetch_from": "party.phone",
+   "fieldname": "phone",
+   "fieldtype": "Read Only",
+   "label": "Phone"
+  },
+  {
+   "fetch_from": "party.email",
+   "fieldname": "email",
+   "fieldtype": "Read Only",
+   "label": "Email"
+  },
+  {
+   "fieldname": "section",
+   "fieldtype": "Autocomplete",
+   "in_list_view": 1,
+   "label": "Section",
+   "options": "\nAluminum\nGlass\nCladding"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2024-12-09 13:24:21.323246",
+ "modified_by": "Administrator",
+ "module": "Rua Company",
+ "name": "Parties",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
