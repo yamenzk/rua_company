@@ -1040,11 +1040,11 @@ function update_scope_totals(frm, scope_number) {
         return {
             total_price: acc.total_price + price,
             total_cost: acc.total_cost + (item.total_cost || 0),
-            total_profit: acc.total_profit + (item.total_profit * item.qty || 0),
+            // total_profit: acc.total_profit + (item.total_profit * item.qty || 0),
             total_items: acc.total_items + (item.qty || 0),
             total_vat_amount: acc.total_vat_amount + vat_amount
         };
-    }, { total_price: 0, total_cost: 0, total_profit: 0, total_items: 0, total_vat_amount: 0 });
+    }, { total_price: 0, total_cost: 0, total_items: 0, total_vat_amount: 0 });
     
     // Calculate price excluding VAT
     const total_price_excluding_vat = totals.total_price - totals.total_vat_amount;
@@ -1068,7 +1068,7 @@ function update_scope_totals(frm, scope_number) {
     frappe.model.set_value(scope.doctype, scope.name, {
         total_price: totals.total_price,
         total_cost: totals.total_cost,
-        total_profit: totals.total_profit,
+        total_profit: total_price - total_cost,
         total_items: totals.total_items,
         total_vat_amount: totals.total_vat_amount,
         total_price_excluding_vat: total_price_excluding_vat,

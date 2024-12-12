@@ -464,7 +464,7 @@ function generateDashboardHTML(frm) {
     background: var(--subtle-fg);
     border-radius: 0;
     border-bottom: 1px solid var(--border-color);
-    padding: var(--padding-md);
+    padding: var(--padding-lg);
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -1789,8 +1789,9 @@ function showScopeDetailsDialog(frm, scopeNumber) {
                 fieldtype: 'HTML',
                 fieldname: 'scope_details',
                 options: `
-                    <div style="padding: var(--padding-md);">
-                        <div style="
+                    <div class="scope-details-container">
+                        <!-- Header Section -->
+                        <div class="scope-header" style="
                             background: ${colorSet.bg}; 
                             color: ${colorSet.text};
                             padding: var(--padding-lg);
@@ -1817,62 +1818,119 @@ function showScopeDetailsDialog(frm, scopeNumber) {
                                 </button>
                             </div>
                         </div>
-                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--padding-md);">
-                            <div class="scope-detail-card">
-                                <div class="detail-label">Glass SQM Price</div>
-                                <div class="detail-value">${formatCurrency(scope.glass_sqm_price)}</div>
-                            </div>
-                            <div class="scope-detail-card">
-                                <div class="detail-label">Labour Charges</div>
-                                <div class="detail-value">${formatCurrency(scope.labour_charges)}</div>
-                            </div>
-                            <div class="scope-detail-card">
-                                <div class="detail-label">Aluminum Weight</div>
-                                <div class="detail-value">${scope.aluminum_weight || 0} kg</div>
-                            </div>
-                            <div class="scope-detail-card">
-                                <div class="detail-label">SDF</div>
-                                <div class="detail-value">${scope.sdf || 0}</div>
-                            </div>
-                            <div class="scope-detail-card">
-                                <div class="detail-label">Profit %</div>
-                                <div class="detail-value">${scope.profit || 0}%</div>
-                            </div>
-                            <div class="scope-detail-card">
-                                <div class="detail-label">Rounding</div>
-                                <div class="detail-value">${scope.rounding || 0}</div>
-                            </div>
-                            <div class="scope-detail-card">
-                                <div class="detail-label">Ratio</div>
-                                <div class="detail-value">${scope.ratio || 0}</div>
-                            </div>
-                            <div class="scope-detail-card">
-                                <div class="detail-label">VAT %</div>
-                                <div class="detail-value">${scope.vat || 0}%</div>
+
+                        <!-- Base Parameters Section -->
+                        <div class="section-container">
+                            <h4 class="section-title">Base Parameters</h4>
+                            <div class="parameters-grid">
+                                <div class="scope-detail-card">
+                                    <div class="detail-label">Glass SQM Price</div>
+                                    <div class="detail-value">${formatCurrency(scope.glass_sqm_price)}</div>
+                                </div>
+                                <div class="scope-detail-card">
+                                    <div class="detail-label">Labour Charges</div>
+                                    <div class="detail-value">${formatCurrency(scope.labour_charges)}</div>
+                                </div>
+                                <div class="scope-detail-card">
+                                    <div class="detail-label">Aluminum Weight</div>
+                                    <div class="detail-value">${scope.aluminum_weight || 0} kg</div>
+                                </div>
+                                <div class="scope-detail-card">
+                                    <div class="detail-label">SDF</div>
+                                    <div class="detail-value">${scope.sdf || 0}</div>
+                                </div>
                             </div>
                         </div>
 
-                        <div style="
-                            margin-top: var(--padding-xl);
-                            display: grid;
-                            grid-template-columns: repeat(3, 1fr);
-                            gap: var(--padding-md);
-                        ">
-                            <div class="scope-summary-card">
-                                <div class="summary-label">Total Items</div>
-                                <div class="summary-value">${scope.total_items || 0}</div>
+                        <!-- Financial Parameters Section -->
+                        <div class="section-container">
+                            <h4 class="section-title">Financial Parameters</h4>
+                            <div class="parameters-grid">
+                                <div class="scope-detail-card">
+                                    <div class="detail-label">Profit Percentage</div>
+                                    <div class="detail-value highlighted">${scope.profit || 0}%</div>
+                                </div>
+                                <div class="scope-detail-card">
+                                    <div class="detail-label">Retention Percentage</div>
+                                    <div class="detail-value">${scope.retention || 0}%</div>
+                                </div>
+                                <div class="scope-detail-card">
+                                    <div class="detail-label">VAT Rate</div>
+                                    <div class="detail-value">${scope.vat || 0}%</div>
+                                </div>
+                                <div class="scope-detail-card">
+                                    <div class="detail-label">VAT Inclusive</div>
+                                    <div class="detail-value ${scope.vat_inclusive ? 'highlighted' : ''}">${scope.vat_inclusive ? 'Yes' : 'No'}</div>
+                                </div>
                             </div>
-                            <div class="scope-summary-card">
-                                <div class="summary-label">Total Price</div>
-                                <div class="summary-value positive">${formatCurrency(scope.total_price)}</div>
-                            </div>
-                            <div class="scope-summary-card">
-                                <div class="summary-label">Total Cost</div>
-                                <div class="summary-value">${formatCurrency(scope.total_cost)}</div>
-                            </div>
-                            <div class="scope-summary-card" style="grid-column: span 3;">
-                                <div class="summary-label">Total Profit</div>
-                                <div class="summary-value positive">${formatCurrency(scope.total_profit)}</div>
+                        </div>
+
+                        <!-- Financial Calculations Section -->
+                        <div class="section-container">
+                            <h4 class="section-title">Financial Summary</h4>
+                            
+                            <div class="financial-flow-chart">
+                                <!-- Starting Point -->
+                                <div class="flow-row">
+                                    <div class="flow-card main">
+                                        <div class="flow-label">Total Price (Excl. VAT)</div>
+                                        <div class="flow-value">${formatCurrency(scope.total_price_excluding_vat)}</div>
+                                    </div>
+                                </div>
+
+                                <!-- Connector Lines -->
+                                <div class="flow-connector">
+                                    <div class="connector-line left"></div>
+                                    <div class="connector-line right"></div>
+                                </div>
+
+                                <!-- Split Paths -->
+                                <div class="flow-split">
+                                    <!-- Left Side - VAT Path -->
+                                    <div class="flow-column">
+                                        <div class="flow-card">
+                                            <div class="flow-label">+ VAT Amount</div>
+                                            <div class="flow-value">${formatCurrency(scope.total_vat_amount)}</div>
+                                        </div>
+                                        <div class="flow-arrow"></div>
+                                        <div class="flow-card highlighted">
+                                            <div class="flow-label">Total Price (Incl. VAT)</div>
+                                            <div class="flow-value positive">${formatCurrency(scope.total_price)}</div>
+                                        </div>
+                                        <div class="flow-connector">
+                                            <div class="connector-line left"></div>
+                                            <div class="connector-line right"></div>
+                                        </div>
+                                        <div class="flow-row space-between">
+                                            <div class="flow-card small">
+                                                <div class="flow-label">Total Cost</div>
+                                                <div class="flow-value">${formatCurrency(scope.total_cost)}</div>
+                                            </div>
+                                            <div class="flow-card small positive">
+                                                <div class="flow-label">Total Profit</div>
+                                                <div class="flow-value">${formatCurrency(scope.total_profit)}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Right Side - Retention Path -->
+                                    <div class="flow-column">
+                                        <div class="flow-card">
+                                            <div class="flow-label">Price After Retention</div>
+                                            <div class="flow-value">${formatCurrency(scope.price_after_retention)}</div>
+                                        </div>
+                                        <div class="flow-arrow"></div>
+                                        <div class="flow-card">
+                                            <div class="flow-label">+ VAT After Retention</div>
+                                            <div class="flow-value">${formatCurrency(scope.vat_after_retention)}</div>
+                                        </div>
+                                        <div class="flow-arrow"></div>
+                                        <div class="flow-card highlighted">
+                                            <div class="flow-label">Total Price After Retention</div>
+                                            <div class="flow-value positive">${formatCurrency(scope.total_price_after_retention)}</div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -1882,43 +1940,210 @@ function showScopeDetailsDialog(frm, scopeNumber) {
         size: 'large'
     });
 
-    dialog.$wrapper.find('.modal-dialog').css('max-width', '700px');
+    dialog.$wrapper.find('.modal-dialog').css('max-width', '800px');
     
     // Add custom styles to the dialog
     dialog.$wrapper.append(`
         <style>
-            .scope-detail-card {
+            .scope-details-container {
+                padding: var(--padding-lg);
+            }
+            
+            .section-container {
+                margin-bottom: var(--padding-xl);
                 background: var(--card-bg);
+                border-radius: var(--border-radius-lg);
+                padding: var(--padding-lg);
+                box-shadow: var(--card-shadow);
+            }
+            
+            .section-title {
+                font-size: var(--text-lg);
+                font-weight: 600;
+                color: var(--heading-color);
+                margin-bottom: var(--padding-md);
+                padding-bottom: var(--padding-xs);
+            }
+            
+            .parameters-grid {
+                display: grid;
+                grid-template-columns: repeat(4, 1fr);
+                gap: var(--padding-md);
+            }
+            
+            .scope-detail-card {
+                background: var(--fg-color);
                 border: 1px solid var(--border-color);
                 border-radius: var(--border-radius-md);
                 padding: var(--padding-sm);
             }
+            
             .detail-label {
                 font-size: var(--text-sm);
                 color: var(--text-muted);
                 margin-bottom: 2px;
             }
+            
             .detail-value {
                 font-size: var(--text-base);
                 font-weight: 500;
             }
-            .scope-summary-card {
+            
+            .detail-value.highlighted {
+                font-weight: bold;
+            }
+
+            /* Flow Chart Styles */
+            .financial-flow-chart {
+                padding: var(--padding-xl) var(--padding-sm);
+                position: relative;
+            }
+
+            .flow-row {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                margin-bottom: var(--padding-lg);
+            }
+
+            .flow-row.space-between {
+                justify-content: space-around;
+                width: 100%;
+            }
+
+            .flow-card {
                 background: var(--fg-color);
                 border: 1px solid var(--border-color);
                 border-radius: var(--border-radius-md);
                 padding: var(--padding-md);
+                min-width: 200px;
+                text-align: center;
+                position: relative;
+                z-index: 2;
             }
-            .summary-label {
+
+            .flow-card.main {
+                background: var(--bg-blue-100);
+                border-color: var(--bg-blue-200);
+            }
+
+            .flow-card.highlighted {
+                background: var(--bg-green-50);
+                border-color: var(--bg-green-200);
+            }
+
+            .flow-card.small {
+                min-width: 150px;
+                padding: var(--padding-sm);
+            }
+
+            .flow-card.positive {
+                background: var(--bg-green);
+                color: var(--text-on-green);
+                border-color: var(--green-600);
+            }
+
+            .flow-label {
                 font-size: var(--text-sm);
                 color: var(--text-muted);
                 margin-bottom: 4px;
             }
-            .summary-value {
-                font-size: var(--text-lg);
+
+            .flow-value {
+                font-size: var(--text-base);
                 font-weight: 600;
             }
-            .summary-value.positive {
-                color: var(--green-600);
+
+            .flow-value.positive {
+                color: var(--text-on-green);
+            }
+
+            .flow-split {
+                display: flex;
+                justify-content: space-around;
+                margin-top: var(--padding-lg);
+            }
+
+            .flow-column {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: var(--padding-md);
+                position: relative;
+                flex: 1;
+                max-width: 45%;
+            }
+
+            .flow-connector {
+                position: relative;
+                height: 30px;
+                width: 100%;
+            }
+
+            .connector-line {
+                position: absolute;
+                background: var(--border-color);
+                height: 2px;
+                top: 50%;
+                transform-origin: center center;
+            }
+
+            .connector-line.left {
+                left: 25%;
+                width: 29%;
+                transform: translateX(-50%) rotate(-45deg); /* Rotate the line diagonally */
+            }
+
+            .connector-line.right {
+                right: 25%;
+                width: 29%;
+                transform: translateX(50%) rotate(45deg); /* Rotate the line diagonally in the opposite direction */
+            }
+
+
+            .flow-arrow {
+                width: 2px;
+                height: 30px;
+                background: var(--border-color);
+                position: relative;
+                margin: 5px 0;
+            }
+
+            .flow-arrow::after {
+                content: '';
+                position: absolute;
+                bottom: 0;
+                left: 50%;
+                transform: translateX(-50%);
+                width: 0;
+                height: 0;
+                border-left: 6px solid transparent;
+                border-right: 6px solid transparent;
+                border-top: 6px solid var(--border-color);
+            }
+
+            @media (max-width: 768px) {
+                .parameters-grid {
+                    grid-template-columns: repeat(2, 1fr);
+                }
+
+                .flow-split {
+                    flex-direction: column;
+                    align-items: center;
+                }
+
+                .flow-column {
+                    max-width: 100%;
+                    margin-bottom: var(--padding-xl);
+                }
+
+                .flow-card {
+                    min-width: 180px;
+                }
+
+                .connector-line {
+                    display: none;
+                }
             }
         </style>
     `);
@@ -1981,6 +2206,18 @@ function showScopeEditDialog(frm, scope = null) {
                 label: 'Profit',
                 mandatory_depends_on: 'eval:1',
                 default: 35
+            },
+            {
+                fieldname: 'retention',
+                fieldtype: 'Percent',
+                label: 'Retention',
+                default: 0
+            },
+            {
+                fieldname: 'vat_inclusive',
+                fieldtype: 'Check',
+                label: 'VAT Inclusive',
+                default: 0
             },
             {
                 fieldname: 'vat',
@@ -2081,6 +2318,8 @@ function showScopeEditDialog(frm, scope = null) {
             aluminum_weight: scope.aluminum_weight,
             sdf: scope.sdf,
             profit: scope.profit,
+            retention: scope.retention,
+            vat_inclusive: scope.vat_inclusive,
             vat: scope.vat,
             rounding: scope.rounding || 'Round up to nearest 5'
         });

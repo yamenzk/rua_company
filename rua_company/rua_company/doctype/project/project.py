@@ -124,7 +124,7 @@ class Project(Document):
         # Calculate basic totals
         scope.total_price = sum(item.overall_price or 0 for item in scope_items)
         scope.total_cost = sum(item.total_cost or 0 for item in scope_items)
-        scope.total_profit = sum((item.total_profit or 0) * (item.qty or 0) for item in scope_items)
+        scope.total_profit = scope.total_price - scope.total_cost
         scope.total_items = sum(item.qty or 0 for item in scope_items)
         
         # Calculate VAT amount
