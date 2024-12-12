@@ -1,0 +1,92 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2024-12-12 19:54:11.818675",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "company_name",
+  "company_name_arabic",
+  "column_break_rrxf",
+  "logo_horizontal",
+  "logo_vertical",
+  "logo_icon",
+  "vat",
+  "additional_expenses_tab",
+  "items"
+ ],
+ "fields": [
+  {
+   "default": "RUA COMPANY ALUMINUM AND GLASS L.L.C O.P.C",
+   "fieldname": "company_name",
+   "fieldtype": "Data",
+   "label": "Company Name"
+  },
+  {
+   "fieldname": "company_name_arabic",
+   "fieldtype": "Data",
+   "label": "Company Name Arabic"
+  },
+  {
+   "fieldname": "column_break_rrxf",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "logo_horizontal",
+   "fieldtype": "Attach Image",
+   "label": "Logo Horizontal"
+  },
+  {
+   "fieldname": "logo_vertical",
+   "fieldtype": "Attach Image",
+   "label": "Logo Vertical"
+  },
+  {
+   "fieldname": "logo_icon",
+   "fieldtype": "Attach Image",
+   "label": "Logo Icon"
+  },
+  {
+   "fieldname": "additional_expenses_tab",
+   "fieldtype": "Tab Break",
+   "label": "Additional Expenses"
+  },
+  {
+   "fieldname": "items",
+   "fieldtype": "Table",
+   "label": "Items",
+   "options": "Items"
+  },
+  {
+   "default": "5",
+   "fieldname": "vat",
+   "fieldtype": "Percent",
+   "label": "VAT",
+   "precision": "0",
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "issingle": 1,
+ "links": [],
+ "modified": "2024-12-12 20:14:48.812989",
+ "modified_by": "Administrator",
+ "module": "Rua Company",
+ "name": "Rua",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

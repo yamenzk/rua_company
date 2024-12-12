@@ -295,6 +295,9 @@ function generateDashboardHTML(frm) {
             <button class="btn btn-default btn-sm btn-block mt-2 view-items-btn">
                 <i class="fa fa-list"></i> View Items
             </button>
+            <button class="btn btn-default btn-sm btn-block mt-2 project-financials-btn">
+                <i class="fa fa-money"></i> Project Financials
+            </button>
         </div>
     `;
 
@@ -1615,6 +1618,11 @@ function attachDashboardEventListeners(frm) {
         showItemsDialog(frm);
     });
 
+    // Project financials button handler
+    $('.project-financials-btn').on('click', function() {
+        showProjectFinancialsDialog(frm);
+    });
+
     // Add expense handler
     $('.add-expense').on('click', function() {
         rua_company.project_dashboard.showAddExpenseDialog(frm);
@@ -1926,7 +1934,7 @@ function showScopeDetailsDialog(frm, scopeNumber) {
                                         </div>
                                         <div class="flow-arrow"></div>
                                         <div class="flow-card highlighted">
-                                            <div class="flow-label">Total Price After Retention</div>
+                                            <div class="flow-label">Total After Retention</div>
                                             <div class="flow-value positive">${formatCurrency(scope.total_price_after_retention)}</div>
                                         </div>
                                     </div>
@@ -2357,6 +2365,350 @@ function deleteScope(frm, scopeNumber) {
             });
         }
     );
+}
+
+// Function to show project financials dialog
+function showProjectFinancialsDialog(frm) {
+    const dialog = new frappe.ui.Dialog({
+        title: 'Project Financial Overview',
+        size: 'extra-large',
+        fields: [{
+            fieldname: 'financials_html',
+            fieldtype: 'HTML'
+        }]
+    });
+
+    // Calculate project totals
+    const projectTotals = {
+        totalPriceExclVAT: 0,
+        totalVAT: 0,
+        totalPriceInclVAT: 0,
+        totalRetention: 0,
+        totalPriceAfterRetention: 0,
+        totalCost: 0,
+        totalProfit: 0
+    };
+
+    // Generate flowchart HTML
+    const generateFlowchartHTML = () => {
+        const scopeFlowcharts = frm.doc.scopes.map(scope => {
+            // Calculate scope totals
+            projectTotals.totalPriceExclVAT += scope.total_price_excluding_vat || 0;
+            projectTotals.totalVAT += scope.total_vat_amount || 0;
+            projectTotals.totalPriceInclVAT += scope.total_price || 0;
+            projectTotals.totalRetention += (scope.total_price * (scope.retention || 0) / 100) || 0;
+            projectTotals.totalPriceAfterRetention += scope.total_price_after_retention || 0;
+            projectTotals.totalCost += scope.total_cost || 0;
+            projectTotals.totalProfit += scope.total_profit || 0;
+
+            const colorSet = SCOPE_COLORS[(parseInt(scope.scope_number) - 1) % SCOPE_COLORS.length];
+            
+            return `
+                <div class="scope-flow-container">
+                    <div class="scope-header" style="
+                        background: ${colorSet.bg}; 
+                        color: ${colorSet.text};
+                        padding: 1rem;
+                        border-radius: 8px 8px 0 0;
+                        margin-bottom: 0;">
+                        <h3 style="margin: 0; font-size: 1.1rem;">
+                            <i class="fa fa-bookmark-o mr-2"></i>
+                            Scope ${scope.scope_number}: ${scope.description || 'Untitled Scope'}
+                        </h3>
+                    </div>
+                    <div class="scope-flow" style="
+                        background: var(--card-bg);
+                        border: 1px solid var(--border-color);
+                        border-radius: 0 0 8px 8px;
+                        padding: 1.5rem;
+                        margin-bottom: 2rem;">
+                        
+                        <!-- Main Price Section -->
+                        <div class="flow-section">
+                            <div class="flow-node main" style="
+                                background: ${colorSet.bg};
+                                border: 2px solid ${colorSet.bg};
+                                border-radius: 8px;
+                                padding: 1rem;
+                                text-align: center;
+                                margin-bottom: 1.5rem;">
+                                <div class="flow-label" style="
+                                    color: var(--text-muted);
+                                    font-size: 0.9rem;
+                                    margin-bottom: 0.5rem;">Total Price (Excl. VAT)</div>
+                                <div class="flow-value" style="
+                                    font-size: 1.2rem;
+                                    font-weight: 600;
+                                    color: ${colorSet.text};">${formatCurrency(scope.total_price_excluding_vat)}</div>
+                            </div>
+                        </div>
+
+                        <!-- Split Sections -->
+                        <div class="flow-split" style="
+                            display: grid;
+                            grid-template-columns: 1fr 1fr;
+                            gap: 2rem;">
+                            
+                            <!-- Left Branch - VAT and Total -->
+                            <div class="flow-branch">
+                                <div class="flow-node" style="
+                                    background: var(--bg-color);
+                                    border: 1px solid var(--border-color);
+                                    border-radius: 8px;
+                                    padding: 0.8rem;
+                                    margin-bottom: 1rem;">
+                                    <div class="flow-label" style="color: var(--text-muted); font-size: 0.9rem;">VAT Amount</div>
+                                    <div class="flow-value" style="font-weight: 500;">${formatCurrency(scope.total_vat_amount)}</div>
+                                </div>
+                                
+                                <div class="flow-node highlighted" style="
+                                    background: ${colorSet.bg};
+                                    border: 2px solid ${colorSet.bg};
+                                    border-radius: 8px;
+                                    padding: 1rem;
+                                    margin-bottom: 1rem;">
+                                    <div class="flow-label" style="color: var(--text-muted); font-size: 0.9rem;">Total Price (Incl. VAT)</div>
+                                    <div class="flow-value" style="
+                                        font-size: 1.1rem;
+                                        font-weight: 600;
+                                        color: ${colorSet.text};">${formatCurrency(scope.total_price)}</div>
+                                </div>
+
+                                <!-- Cost and Profit -->
+                                <div class="flow-split secondary" style="
+                                    display: grid;
+                                    grid-template-columns: 1fr 1fr;
+                                    gap: 1rem;">
+                                    <div class="flow-node small" style="
+                                        background: var(--bg-color);
+                                        border: 1px solid var(--border-color);
+                                        border-radius: 8px;
+                                        padding: 0.8rem;">
+                                        <div class="flow-label" style="
+                                            color: var(--text-muted);
+                                            font-size: 0.85rem;">Cost</div>
+                                        <div class="flow-value" style="color: var(--red-600);">
+                                            ${formatCurrency(scope.total_cost)}</div>
+                                    </div>
+                                    <div class="flow-node small positive" style="
+                                        background: var(--bg-color);
+                                        border: 1px solid var(--border-color);
+                                        border-radius: 8px;
+                                        padding: 0.8rem;">
+                                        <div class="flow-label" style="
+                                            color: var(--text-muted);
+                                            font-size: 0.85rem;">Profit</div>
+                                        <div class="flow-value" style="color: var(--green-600);">
+                                            ${formatCurrency(scope.total_profit)}</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Right Branch - Retention -->
+                            <div class="flow-branch">
+                                <div class="flow-node" style="
+                                    background: var(--bg-color);
+                                    border: 1px solid var(--border-color);
+                                    border-radius: 8px;
+                                    padding: 0.8rem;
+                                    margin-bottom: 1rem;">
+                                    <div class="flow-label" style="color: var(--text-muted); font-size: 0.9rem;">Price After Retention</div>
+                                    <div class="flow-value" style="font-weight: 500;">${formatCurrency(scope.price_after_retention)}</div>
+                                </div>
+
+                                <div class="flow-node" style="
+                                    background: var(--bg-color);
+                                    border: 1px solid var(--border-color);
+                                    border-radius: 8px;
+                                    padding: 0.8rem;
+                                    margin-bottom: 1rem;">
+                                    <div class="flow-label" style="color: var(--text-muted); font-size: 0.9rem;">VAT After Retention</div>
+                                    <div class="flow-value" style="font-weight: 500;">${formatCurrency(scope.vat_after_retention)}</div>
+                                </div>
+
+                                <div class="flow-node highlighted" style="
+                                    background: ${colorSet.bg};
+                                    border: 1px solid ${colorSet.bg};
+                                    border-radius: 8px;
+                                    padding: 1rem;">
+                                    <div class="flow-label" style="color: var(--text-muted); font-size: 0.9rem;">Total After Retention</div>
+                                    <div class="flow-value" style="
+                                        font-size: 1.1rem;
+                                        font-weight: 600;
+                                        color: ${colorSet.text};">${formatCurrency(scope.total_price_after_retention)}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        return `
+            <div class="project-flow-container" style="max-width: 1200px; margin: auto;">
+                <div class="project-header" style="
+                    background: var(--card-bg);
+                    border: 1px solid var(--border-color);
+                    border-radius: 8px;
+                    padding: 1.5rem;
+                    margin-bottom: 2rem;
+                    text-align: center;">
+                    <h2 style="
+                        margin: 0;
+                        color: var(--heading-color);
+                        font-size: 1.5rem;
+                        font-weight: 600;">
+                        <i class="fa fa-building-o mr-2"></i>
+                        SN#${frm.doc.serial_number || '0'}: ${frm.doc.project_name || frm.doc.name}
+                    </h2>
+                </div>
+
+                <div class="scopes-flow">
+                    ${scopeFlowcharts}
+                </div>
+
+                <!-- Project Summary Section -->
+                <div class="project-summary" style="
+                    background: var(--card-bg);
+                    border: 1px solid var(--border-color);
+                    border-radius: 8px;
+                    overflow: hidden;">
+                    <div class="summary-header" style="
+                        background: var(--bg-color);
+                        padding: 1rem;
+                        border-bottom: 1px solid var(--border-color);">
+                        <h3 style="
+                            margin: 0;
+                            color: var(--heading-color);
+                            font-size: 1.2rem;">
+                            <i class="fa fa-calculator mr-2"></i>
+                            Project Summary
+                        </h3>
+                    </div>
+
+                    <div class="summary-grid" style="
+                        display: grid;
+                        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+                        gap: 1.5rem;
+                        padding: 1.5rem;">
+                        
+                        <!-- Summary Cards -->
+                        <div class="summary-card" style="
+                            background: var(--bg-color);
+                            border: 1px solid var(--border-color);
+                            border-radius: 8px;
+                            flex-direction: column;
+                            padding: 1rem;">
+                            <div class="card-label" style="
+                                color: var(--text-muted);
+                                font-size: 0.9rem;
+                                margin-bottom: 0.5rem;">Total Price (Excl. VAT)</div>
+                            <div class="card-value" style="
+                                font-size: 1.2rem;
+                                font-weight: 600;">${formatCurrency(projectTotals.totalPriceExclVAT)}</div>
+                        </div>
+
+                        <div class="summary-card" style="
+                            background: var(--bg-color);
+                            border: 1px solid var(--border-color);
+                            border-radius: 8px;
+                            flex-direction: column;
+                            padding: 1rem;">
+                            <div class="card-label" style="
+                                color: var(--text-muted);
+                                font-size: 0.9rem;
+                                margin-bottom: 0.5rem;">Total VAT</div>
+                            <div class="card-value" style="
+                                font-size: 1.2rem;
+                                font-weight: 600;">${formatCurrency(projectTotals.totalVAT)}</div>
+                        </div>
+
+                        <div class="summary-card highlighted" style="
+                            background: var(--bg-color);
+                            border: 1px solid var(--border-color);
+                            border-radius: 8px;
+                            flex-direction: column;
+                            padding: 1rem;">
+                            <div class="card-label" style="
+                                color: var(--text-muted);
+                                font-size: 0.9rem;
+                                margin-bottom: 0.5rem;">Total Price (Incl. VAT)</div>
+                            <div class="card-value" style="
+                                font-size: 1.3rem;
+                                font-weight: 600;
+                                color: var(--text-color);">${formatCurrency(projectTotals.totalPriceInclVAT)}</div>
+                        </div>
+
+                        <div class="summary-card" style="
+                            background: var(--bg-color);
+                            border: 1px solid var(--border-color);
+                            border-radius: 8px;
+                            flex-direction: column;
+                            padding: 1rem;">
+                            <div class="card-label" style="
+                                color: var(--text-muted);
+                                font-size: 0.9rem;
+                                margin-bottom: 0.5rem;">Total Retention</div>
+                            <div class="card-value" style="
+                                font-size: 1.2rem;
+                                font-weight: 600;">${formatCurrency(projectTotals.totalRetention)}</div>
+                        </div>
+
+                        <div class="summary-card highlighted" style="
+                            background: var(--bg-color);
+                            border: 1px solid var(--border-color);
+                            border-radius: 8px;
+                            flex-direction: column;
+                            padding: 1rem;">
+                            <div class="card-label" style="
+                                color: var(--text-muted);
+                                font-size: 0.9rem;
+                                margin-bottom: 0.5rem;">Total After Retention</div>
+                            <div class="card-value" style="
+                                font-size: 1.3rem;
+                                font-weight: 600;
+                                color: var(--text-color);">${formatCurrency(projectTotals.totalPriceAfterRetention)}</div>
+                        </div>
+
+                        <div class="summary-card" style="
+                            background: var(--bg-red);
+                            border: 1px solid var(--red-600);
+                            border-radius: 8px;
+                            flex-direction: column;
+                            padding: 1rem;">
+                            <div class="card-label" style="
+                                color: var(--text-muted);
+                                font-size: 0.9rem;
+                                margin-bottom: 0.5rem;">Total Cost</div>
+                            <div class="card-value" style="
+                                font-size: 1.2rem;
+                                font-weight: 600;
+                                color: var(--text-on-red);">${formatCurrency(projectTotals.totalCost)}</div>
+                        </div>
+
+                        <div class="summary-card" style="
+                            background: var(--bg-green);
+                            border: 1px solid var(--green-600);
+                            border-radius: 8px;
+                            flex-direction: column;
+                            padding: 1rem;">
+                            <div class="card-label" style="
+                                color: var(--text-muted);
+                                font-size: 0.9rem;
+                                margin-bottom: 0.5rem;">Total Profit</div>
+                            <div class="card-value" style="
+                                font-size: 1.2rem;
+                                font-weight: 600;
+                                color: var(--green-600);">${formatCurrency(projectTotals.totalProfit)}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    };
+
+    dialog.fields_dict.financials_html.$wrapper.html(generateFlowchartHTML());
+    dialog.show();
 }
 
 // Function to show items dialog
