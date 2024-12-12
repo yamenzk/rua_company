@@ -64,8 +64,13 @@ class Project(Document):
     
     def calculate_aluminum_ratio(self, scope, scope_items):
         # Calculate x (sum of VAT amounts)
-        x = sum((item.aluminum_price or 0) * (scope.vat or 0) / 100 
-                for item in scope_items)
+        x = sum(
+            # If VAT inclusive, extract VAT from price, otherwise calculate normally
+            (price - (price / (1 + scope.vat / 100))) if scope.vat_inclusive
+            else (price * scope.vat / 100)
+            for item in scope_items
+            for price in [(item.aluminum_price or 0)]
+        )
         
         # Calculate y (sum of aluminum_price * qty)
         y = sum((item.aluminum_price or 0) * (item.qty or 0) 
@@ -84,7 +89,9 @@ class Project(Document):
             item.area = (item.width * item.height) / 10000
             
             if item.glass_unit >= 0:
-                glass_price = item.glass_unit * item.area * (1 + (scope.vat or 0) / 100)
+                # If VAT inclusive, don't add VAT to price
+                vat_multiplier = 0 if scope.vat_inclusive else scope.vat
+                glass_price = item.glass_unit * item.area * (1 + (vat_multiplier or 0) / 100)
                 item.glass_price = glass_price
                 item.total_glass = glass_price * (item.qty or 0)
         
@@ -114,10 +121,36 @@ class Project(Document):
         item.overall_price = overall_price
     
     def update_scope_totals(self, scope, scope_items):
+        # Calculate basic totals
         scope.total_price = sum(item.overall_price or 0 for item in scope_items)
         scope.total_cost = sum(item.total_cost or 0 for item in scope_items)
         scope.total_profit = sum((item.total_profit or 0) * (item.qty or 0) for item in scope_items)
         scope.total_items = sum(item.qty or 0 for item in scope_items)
+        
+        # Calculate VAT amount
+        total_vat = sum(
+            # If VAT inclusive, extract VAT from price, otherwise calculate normally
+            (price - (price / (1 + scope.vat / 100))) if scope.vat_inclusive
+            else (price * scope.vat / 100)
+            for item in scope_items
+            for price in [(item.overall_price or 0)]
+        )
+        scope.total_vat_amount = total_vat
+        
+        # Calculate price excluding VAT
+        scope.total_price_excluding_vat = scope.total_price - scope.total_vat_amount
+        
+        # Calculate retention-related values
+        retention_percentage = scope.retention or 0
+        price_after_retention = scope.total_price_excluding_vat
+        
+        if retention_percentage > 0:
+            # Remove retention percentage from the price
+            price_after_retention = scope.total_price_excluding_vat * (1 - (retention_percentage / 100))
+        
+        scope.price_after_retention = price_after_retention
+        scope.vat_after_retention = price_after_retention * (scope.vat / 100)
+        scope.total_price_after_retention = scope.price_after_retention + scope.vat_after_retention
     
     def calculate_financial_totals(self):
         """Calculate all financial totals for the project"""

@@ -1,3 +1,226 @@
+// Initialize rua_company namespace if it doesn't exist
+frappe.provide('rua_company');
+frappe.provide('rua_company.project_dashboard');
+
+// Define the dashboard object first
+rua_company.project_dashboard = {
+    render: function(frm) {
+        // Remove any existing listeners before generating new HTML
+        removeExistingListeners();
+        
+        // Generate dashboard HTML
+        generateDashboardHTML(frm);
+        
+        // Attach event listeners
+        attachDashboardEventListeners(frm);
+        listenersAttached = true;
+    },
+    showAddExpenseDialog: function(frm) {
+        // Function to show add expense dialog
+        const dialog = new frappe.ui.Dialog({
+            title: 'Add Expense',
+            fields: [
+                {
+                    fieldtype: 'Section Break',
+                    label: 'Expense Details'
+                },
+                {
+                    fieldname: 'item',
+                    fieldtype: 'Data',
+                    label: 'Item',
+                    mandatory_depends_on: 'eval:1'
+                },
+                {
+                    fieldname: 'description',
+                    fieldtype: 'Small Text',
+                    label: 'Description'
+                },
+                {
+                    fieldtype: 'Column Break'
+                },
+                {
+                    fieldname: 'width',
+                    fieldtype: 'Float',
+                    label: 'Width (cm)'
+                },
+                {
+                    fieldname: 'height',
+                    fieldtype: 'Float',
+                    label: 'Height (cm)'
+                },
+                {
+                    fieldtype: 'Section Break',
+                    label: 'Pricing'
+                },
+                {
+                    fieldname: 'qty',
+                    fieldtype: 'Float',
+                    label: 'Quantity',
+                    mandatory_depends_on: 'eval:1',
+                    default: 1
+                },
+                {
+                    fieldname: 'rate',
+                    fieldtype: 'Currency',
+                    label: 'Rate (VAT Inclusive)',
+                    mandatory_depends_on: 'eval:1',
+                    description: 'Please ensure the rate includes VAT'
+                },
+                {
+                    fieldtype: 'HTML',
+                    options: `
+                        <div class="alert alert-info">
+                            <i class="fa fa-info-circle"></i>
+                            <strong>Note:</strong> The rate should be VAT inclusive.
+                        </div>
+                    `
+                }
+            ],
+            primary_action_label: 'Add Expense',
+            primary_action(values) {
+                if (!frm.doc.additional_items) {
+                    frm.doc.additional_items = [];
+                }
+
+                const amount = values.qty * values.rate; 
+                
+                let row = frappe.model.add_child(frm.doc, 'Additional Items', 'additional_items');
+                Object.assign(row, {
+                    ...values,
+                    amount: amount
+                });
+                
+                frm.refresh_field('additional_items');
+                frm.dirty();
+                dialog.hide();
+                frm.save();
+                rua_company.project_dashboard.render(frm);
+                frappe.show_alert({
+                    message: __('Expense added successfully'),
+                    indicator: 'green'
+                });
+            }
+        });
+        
+        dialog.show();
+    },
+    showExpenseDetailsDialog: function(frm, idx) {
+        // Function to show expense details dialog
+        const expense = frm.doc.additional_items.find(item => item.idx === idx);
+        if (!expense) return;
+
+        const dialog = new frappe.ui.Dialog({
+            title: 'Expense Details',
+            fields: [
+                {
+                    fieldtype: 'Section Break',
+                    label: 'Expense Details'
+                },
+                {
+                    fieldname: 'item',
+                    fieldtype: 'Data',
+                    label: 'Item',
+                    mandatory_depends_on: 'eval:1',
+                    default: expense.item
+                },
+                {
+                    fieldname: 'description',
+                    fieldtype: 'Small Text',
+                    label: 'Description',
+                    default: expense.description
+                },
+                {
+                    fieldtype: 'Column Break'
+                },
+                {
+                    fieldname: 'width',
+                    fieldtype: 'Float',
+                    label: 'Width (cm)',
+                    default: expense.width
+                },
+                {
+                    fieldname: 'height',
+                    fieldtype: 'Float',
+                    label: 'Height (cm)',
+                    default: expense.height
+                },
+                {
+                    fieldtype: 'Section Break',
+                    label: 'Pricing'
+                },
+                {
+                    fieldname: 'qty',
+                    fieldtype: 'Float',
+                    label: 'Quantity',
+                    mandatory_depends_on: 'eval:1',
+                    default: expense.qty
+                },
+                {
+                    fieldname: 'rate',
+                    fieldtype: 'Currency',
+                    label: 'Rate (VAT Inclusive)',
+                    mandatory_depends_on: 'eval:1',
+                    default: expense.rate,
+                    description: 'Please ensure the rate includes VAT'
+                },
+                {
+                    fieldtype: 'HTML',
+                    options: `
+                        <div class="alert alert-info">
+                            <i class="fa fa-info-circle"></i>
+                            <strong>Note:</strong> The rate should be VAT inclusive.
+                        </div>
+                    `
+                }
+            ],
+            primary_action_label: 'Save Changes',
+            primary_action(values) {
+                const amount = values.qty * values.rate;
+                
+                // Find and update the expense
+                const expense_idx = frm.doc.additional_items.findIndex(item => item.idx === idx);
+                if (expense_idx !== -1) {
+                    Object.assign(frm.doc.additional_items[expense_idx], {
+                        ...values,
+                        amount: amount
+                    });
+                    
+                    frm.refresh_field('additional_items');
+                    frm.dirty();
+                    dialog.hide();
+                    frm.save();
+                    rua_company.project_dashboard.render(frm);
+                    frappe.show_alert({
+                        message: __('Expense updated successfully'),
+                        indicator: 'green'
+                    });
+                }
+            }
+        });
+
+        // Add delete button
+        dialog.add_custom_action('Delete', () => {
+            frappe.confirm(
+                __('Are you sure you want to delete this expense?'),
+                () => {
+                    frm.doc.additional_items = frm.doc.additional_items.filter(item => item.idx !== idx);
+                    frm.refresh_field('additional_items');
+                    frm.dirty();
+                    dialog.hide();
+                    frm.save();
+                    rua_company.project_dashboard.render(frm);
+                    frappe.show_alert({
+                        message: __('Expense deleted'),
+                        indicator: 'green'
+                    });
+                }
+            );
+        }, 'red');
+        
+        dialog.show();
+    }
+};
+
 // Helper function to format currency
 const formatCurrency = (amount) => {
     return new Intl.NumberFormat('en-AE', {
@@ -1288,122 +1511,120 @@ function createDashboardContainer(frm) {
 
 // Function to attach event listeners to dashboard elements
 function attachDashboardEventListeners(frm) {
-    setTimeout(() => {
-        // Project image click handler
-        const projectImage = document.querySelector('.project-image');
-        if (projectImage) {
-            projectImage.addEventListener('click', () => {
-                new frappe.ui.Dialog({
-                    title: 'Project Image',
-                    fields: [
-                        {
-                            label: 'Project Image',
-                            fieldname: 'image',
-                            fieldtype: 'Attach Image',
-                            default: frm.doc.image || ''
-                        }
-                    ],
-                    primary_action_label: 'Update',
-                    primary_action(values) {
-                        if (values.image) {
-                            frm.set_value('image', values.image);
-                            frm.save();
-                        }
-                        this.hide();
+    // Project image click handler
+    const projectImage = document.querySelector('.project-image');
+    if (projectImage) {
+        projectImage.addEventListener('click', () => {
+            new frappe.ui.Dialog({
+                title: 'Project Image',
+                fields: [
+                    {
+                        label: 'Project Image',
+                        fieldname: 'image',
+                        fieldtype: 'Attach Image',
+                        default: frm.doc.image || ''
                     }
-                }).show();
-            });
-        }
-
-        // Project name click handler
-        const projectName = document.querySelector('.project-name');
-        if (projectName) {
-            projectName.addEventListener('click', () => {
-                new frappe.ui.Dialog({
-                    title: 'Edit Project Name',
-                    fields: [
-                        {
-                            label: 'Project Name',
-                            fieldname: 'project_name',
-                            fieldtype: 'Data',
-                            default: frm.doc.project_name || ''
-                        }
-                    ],
-                    primary_action_label: 'Update',
-                    primary_action(values) {
-                        if (values.project_name) {
-                            frm.set_value('project_name', values.project_name);
-                            frm.save();
-                        }
-                        this.hide();
+                ],
+                primary_action_label: 'Update',
+                primary_action(values) {
+                    if (values.image) {
+                        frm.set_value('image', values.image);
+                        frm.save();
                     }
-                }).show();
-            });
-        }
+                    this.hide();
+                }
+            }).show();
+        });
+    }
 
-        // Project location click handler
-        const projectLocation = document.querySelector('.project-location');
-        if (projectLocation) {
-            projectLocation.addEventListener('click', () => {
-                new frappe.ui.Dialog({
-                    title: 'Edit Location',
-                    fields: [
-                        {
-                            label: 'Location',
-                            fieldname: 'location',
-                            fieldtype: 'Data',
-                            default: frm.doc.location || ''
-                        }
-                    ],
-                    primary_action_label: 'Update',
-                    primary_action(values) {
-                        if (values.location) {
-                            frm.set_value('location', values.location);
-                            frm.save();
-                        }
-                        this.hide();
+    // Project name click handler
+    const projectName = document.querySelector('.project-name');
+    if (projectName) {
+        projectName.addEventListener('click', () => {
+            new frappe.ui.Dialog({
+                title: 'Edit Project Name',
+                fields: [
+                    {
+                        label: 'Project Name',
+                        fieldname: 'project_name',
+                        fieldtype: 'Data',
+                        default: frm.doc.project_name || ''
                     }
-                }).show();
-            });
+                ],
+                primary_action_label: 'Update',
+                primary_action(values) {
+                    if (values.project_name) {
+                        frm.set_value('project_name', values.project_name);
+                        frm.save();
+                    }
+                    this.hide();
+                }
+            }).show();
+        });
+    }
+
+    // Project location click handler
+    const projectLocation = document.querySelector('.project-location');
+    if (projectLocation) {
+        projectLocation.addEventListener('click', () => {
+            new frappe.ui.Dialog({
+                title: 'Edit Location',
+                fields: [
+                    {
+                        label: 'Location',
+                        fieldname: 'location',
+                        fieldtype: 'Data',
+                        default: frm.doc.location || ''
+                    }
+                ],
+                primary_action_label: 'Update',
+                primary_action(values) {
+                    if (values.location) {
+                        frm.set_value('location', values.location);
+                        frm.save();
+                    }
+                    this.hide();
+                }
+            }).show();
+        });
+    }
+
+    // Add party button click handler
+    const addPartyButton = document.querySelector('.party-tag.add-party');
+    if (addPartyButton) {
+        addPartyButton.addEventListener('click', () => {
+            show_manage_parties_dialog(frm);
+        });
+    }
+
+    // Scope click handlers
+    $('.scope-item:not(.add-scope)').on('click', function(e) {
+        if (!$(e.target).closest('.scope-actions').length) {
+            const scopeNumber = parseInt($(this).data('scope-number'));
+            showScopeDetailsDialog(frm, scopeNumber);
         }
+    });
 
-        // Add party button click handler
-        const addPartyButton = document.querySelector('.party-tag.add-party');
-        if (addPartyButton) {
-            addPartyButton.addEventListener('click', () => {
-                show_manage_parties_dialog(frm);
-            });
-        }
+    // Add scope handler
+    $('.add-scope').on('click', function() {
+        showScopeEditDialog(frm);
+    });
 
-        // Scope click handlers
-        $('.scope-item:not(.add-scope)').on('click', function(e) {
-            if (!$(e.target).closest('.scope-actions').length) {
-                const scopeNumber = parseInt($(this).data('scope-number'));
-                showScopeDetailsDialog(frm, scopeNumber);
-            }
-        });
+    // View items button handler
+    $('.view-items-btn').on('click', function() {
+        showItemsDialog(frm);
+    });
 
-        // Add scope handler
-        $('.add-scope').on('click', function() {
-            showScopeEditDialog(frm);
-        });
+    // Add expense handler
+    $('.add-expense').on('click', function() {
+        rua_company.project_dashboard.showAddExpenseDialog(frm);
+    });
 
-        // View items button handler
-        $('.view-items-btn').on('click', function() {
-            showItemsDialog(frm);
-        });
-
-        // Add expense handler
-        $('.add-expense').on('click', function() {
-            showAddExpenseDialog(frm);
-        });
-
-        // Expense card click handler
-        $('.expense-card:not(.add-expense)').on('click', function() {
-            const idx = parseInt($(this).data('item-idx'));
-            showExpenseDetailsDialog(frm, idx);
-        });
-    }, 100);
+    // Expense card click handler
+    $('.expense-card:not(.add-expense)').on('click', function() {
+        const idx = parseInt($(this).data('item-idx'));
+        rua_company.project_dashboard.showExpenseDetailsDialog(frm, idx);
+    });
 }
 
 // Manage parties dialog
@@ -2213,216 +2434,6 @@ function showItemsDialog(frm) {
     dialog.show();
 }
 
-// Function to show add expense dialog
-function showAddExpenseDialog(frm) {
-    const dialog = new frappe.ui.Dialog({
-        title: 'Add Expense',
-        fields: [
-            {
-                fieldtype: 'Section Break',
-                label: 'Expense Details'
-            },
-            {
-                fieldname: 'item',
-                fieldtype: 'Data',
-                label: 'Item',
-                mandatory_depends_on: 'eval:1'
-            },
-            {
-                fieldname: 'description',
-                fieldtype: 'Small Text',
-                label: 'Description'
-            },
-            {
-                fieldtype: 'Column Break'
-            },
-            {
-                fieldname: 'width',
-                fieldtype: 'Float',
-                label: 'Width (cm)'
-            },
-            {
-                fieldname: 'height',
-                fieldtype: 'Float',
-                label: 'Height (cm)'
-            },
-            {
-                fieldtype: 'Section Break',
-                label: 'Pricing'
-            },
-            {
-                fieldname: 'qty',
-                fieldtype: 'Float',
-                label: 'Quantity',
-                mandatory_depends_on: 'eval:1',
-                default: 1
-            },
-            {
-                fieldname: 'rate',
-                fieldtype: 'Currency',
-                label: 'Rate (VAT Inclusive)',
-                mandatory_depends_on: 'eval:1',
-                description: 'Please ensure the rate includes VAT'
-            },
-            {
-                fieldtype: 'HTML',
-                options: `
-                    <div class="alert alert-info">
-                        <i class="fa fa-info-circle"></i>
-                        <strong>Note:</strong> The rate should be VAT inclusive.
-                    </div>
-                `
-            }
-        ],
-        primary_action_label: 'Add Expense',
-        primary_action(values) {
-            if (!frm.doc.additional_items) {
-                frm.doc.additional_items = [];
-            }
-
-            const amount = values.qty * values.rate; 
-            
-            let row = frappe.model.add_child(frm.doc, 'Additional Items', 'additional_items');
-            Object.assign(row, {
-                ...values,
-                amount: amount
-            });
-            
-            frm.refresh_field('additional_items');
-            frm.dirty();
-            dialog.hide();
-            frm.save();
-            rua_company.project_dashboard.render(frm);
-            frappe.show_alert({
-                message: __('Expense added successfully'),
-                indicator: 'green'
-            });
-        }
-    });
-    
-    dialog.show();
-}
-
-// Function to show expense details dialog
-function showExpenseDetailsDialog(frm, idx) {
-    const expense = frm.doc.additional_items.find(item => item.idx === idx);
-    if (!expense) return;
-
-    const dialog = new frappe.ui.Dialog({
-        title: 'Expense Details',
-        fields: [
-            {
-                fieldtype: 'Section Break',
-                label: 'Expense Details'
-            },
-            {
-                fieldname: 'item',
-                fieldtype: 'Data',
-                label: 'Item',
-                mandatory_depends_on: 'eval:1',
-                default: expense.item
-            },
-            {
-                fieldname: 'description',
-                fieldtype: 'Small Text',
-                label: 'Description',
-                default: expense.description
-            },
-            {
-                fieldtype: 'Column Break'
-            },
-            {
-                fieldname: 'width',
-                fieldtype: 'Float',
-                label: 'Width (cm)',
-                default: expense.width
-            },
-            {
-                fieldname: 'height',
-                fieldtype: 'Float',
-                label: 'Height (cm)',
-                default: expense.height
-            },
-            {
-                fieldtype: 'Section Break',
-                label: 'Pricing'
-            },
-            {
-                fieldname: 'qty',
-                fieldtype: 'Float',
-                label: 'Quantity',
-                mandatory_depends_on: 'eval:1',
-                default: expense.qty
-            },
-            {
-                fieldname: 'rate',
-                fieldtype: 'Currency',
-                label: 'Rate (VAT Inclusive)',
-                mandatory_depends_on: 'eval:1',
-                default: expense.rate,
-                description: 'Please ensure the rate includes VAT'
-            },
-            {
-                fieldtype: 'HTML',
-                options: `
-                    <div class="alert alert-info">
-                        <i class="fa fa-info-circle"></i>
-                        <strong>Note:</strong> The rate should be VAT inclusive.
-                    </div>
-                `
-            }
-        ],
-        primary_action_label: 'Save Changes',
-        primary_action(values) {
-            const amount = values.qty * values.rate;
-            
-            // Find and update the expense
-            const expense_idx = frm.doc.additional_items.findIndex(item => item.idx === idx);
-            if (expense_idx !== -1) {
-                Object.assign(frm.doc.additional_items[expense_idx], {
-                    ...values,
-                    amount: amount
-                });
-                
-                frm.refresh_field('additional_items');
-                frm.dirty();
-                dialog.hide();
-                frm.save();
-                rua_company.project_dashboard.render(frm);
-                frappe.show_alert({
-                    message: __('Expense updated successfully'),
-                    indicator: 'green'
-                });
-            }
-        }
-    });
-
-    // Add delete button
-    dialog.add_custom_action('Delete', () => {
-        frappe.confirm(
-            __('Are you sure you want to delete this expense?'),
-            () => {
-                frm.doc.additional_items = frm.doc.additional_items.filter(item => item.idx !== idx);
-                frm.refresh_field('additional_items');
-                frm.dirty();
-                dialog.hide();
-                frm.save();
-                rua_company.project_dashboard.render(frm);
-                frappe.show_alert({
-                    message: __('Expense deleted'),
-                    indicator: 'green'
-                });
-            }
-        );
-    }, 'red');
-    
-    dialog.show();
-}
-
-// Add the functions to the dashboard namespace
-rua_company.project_dashboard.showAddExpenseDialog = showAddExpenseDialog;
-rua_company.project_dashboard.showExpenseDetailsDialog = showExpenseDetailsDialog;
-
 // Track attached listeners to prevent duplicates
 let listenersAttached = false;
 
@@ -2444,22 +2455,6 @@ function removeExistingListeners() {
     
     listenersAttached = false;
 }
-
-rua_company.project_dashboard = {
-    render: function(frm) {
-        // Remove any existing listeners before generating new HTML
-        removeExistingListeners();
-        
-        // Generate dashboard HTML
-        generateDashboardHTML(frm);
-        
-        // Attach event listeners
-        setTimeout(() => {
-            attachDashboardEventListeners(frm);
-            listenersAttached = true;
-        }, 500);
-    }
-};
 
 // Initialize the dashboard
 frappe.ui.form.on('Project', {

@@ -65,6 +65,7 @@
   "due_payables",
   "section_break_qtmj",
   "total_project_value",
+  "total_project_value_after_retention",
   "column_break_gtze",
   "project_profit",
   "column_break_yran",
@@ -427,13 +428,20 @@
    "fieldname": "image",
    "fieldtype": "Attach Image",
    "label": "Image"
+  },
+  {
+   "fieldname": "total_project_value_after_retention",
+   "fieldtype": "Currency",
+   "label": "Total Project Value After Retention",
+   "precision": "0",
+   "read_only": 1
   }
  ],
  "image_field": "image",
  "index_web_pages_for_search": 1,
  "links": [],
  "make_attachments_public": 1,
- "modified": "2024-12-11 20:23:55.706885",
+ "modified": "2024-12-12 14:06:16.793272",
  "modified_by": "Administrator",
  "module": "Rua Company",
  "name": "Project",

@@ -234,7 +234,7 @@ frappe.ui.form.on("Project", {
         if (frm.doc.scopes && frm.doc.scopes.length > 1) {
             apply_color_coding(frm);
         }
-
+        
 	},
     
     
@@ -896,7 +896,9 @@ function calculate_glass_values(frm, row, scope) {
         
         // Calculate glass price and total glass
         if (row.glass_unit >= 0 && scope) {
-            const glass_price = row.glass_unit * area * (1 + (scope.vat / 100));
+            // If VAT is inclusive, don't add VAT to the price
+            const vat_multiplier = scope.vat_inclusive ? 0 : scope.vat;
+            const glass_price = row.glass_unit * area * (1 + (vat_multiplier / 100));
             frappe.model.set_value(row.doctype, row.name, 'glass_price', glass_price);
             
             if (row.qty >= 0) {
@@ -930,7 +932,15 @@ function calculate_aluminum_ratio(frm, scope_number) {
     
     // Calculate x (sum of VAT amounts)
     const x = scope_items.reduce((sum, item) => {
-        return sum + ((item.aluminum_price || 0) * (scope.vat / 100));
+        if (!scope.vat_inclusive) {
+            // If VAT is not inclusive, calculate VAT normally
+            return sum + ((item.aluminum_price || 0) * (scope.vat / 100));
+        } else {
+            // If VAT is inclusive, extract VAT from the price
+            // Formula: VAT amount = price - (price / (1 + VAT%))
+            const price = item.aluminum_price || 0;
+            return sum + (price - (price / (1 + scope.vat / 100)));
+        }
     }, 0);
     
     // Calculate y (sum of aluminum_price * qty)
@@ -1016,18 +1026,55 @@ function update_scope_totals(frm, scope_number) {
     
     // Calculate totals
     const totals = scope_items.reduce((acc, item) => {
+        let vat_amount = 0;
+        const price = item.overall_price || 0;
+        
+        if (scope.vat_inclusive) {
+            // If VAT inclusive, extract VAT from the price
+            vat_amount = price - (price / (1 + scope.vat / 100));
+        } else {
+            // If VAT not inclusive, calculate VAT normally
+            vat_amount = price * (scope.vat / 100);
+        }
+        
         return {
-            total_price: acc.total_price + (item.overall_price || 0),
+            total_price: acc.total_price + price,
             total_cost: acc.total_cost + (item.total_cost || 0),
             total_profit: acc.total_profit + (item.total_profit * item.qty || 0),
-            total_items: acc.total_items + (item.qty || 0)
+            total_items: acc.total_items + (item.qty || 0),
+            total_vat_amount: acc.total_vat_amount + vat_amount
         };
-    }, { total_price: 0, total_cost: 0, total_profit: 0, total_items: 0 });
-
-    // Update scope with new totals
-    frappe.model.set_value(scope.doctype, scope.name, 'total_price', totals.total_price);
-    frappe.model.set_value(scope.doctype, scope.name, 'total_cost', totals.total_cost);
-    frappe.model.set_value(scope.doctype, scope.name, 'total_profit', totals.total_profit);
-    frappe.model.set_value(scope.doctype, scope.name, 'total_items', totals.total_items);
+    }, { total_price: 0, total_cost: 0, total_profit: 0, total_items: 0, total_vat_amount: 0 });
+    
+    // Calculate price excluding VAT
+    const total_price_excluding_vat = totals.total_price - totals.total_vat_amount;
+    
+    // Calculate retention-related values
+    const retention_percentage = scope.retention || 0;
+    let price_after_retention = total_price_excluding_vat;
+    
+    if (retention_percentage > 0) {
+        // Remove retention percentage from the price
+        price_after_retention = total_price_excluding_vat * (1 - (retention_percentage / 100));
+    }
+    
+    // Calculate VAT after retention
+    const vat_after_retention = price_after_retention * (scope.vat / 100);
+    
+    // Calculate total price after retention
+    const total_price_after_retention = price_after_retention + vat_after_retention;
+    
+    // Update scope with calculated totals
+    frappe.model.set_value(scope.doctype, scope.name, {
+        total_price: totals.total_price,
+        total_cost: totals.total_cost,
+        total_profit: totals.total_profit,
+        total_items: totals.total_items,
+        total_vat_amount: totals.total_vat_amount,
+        total_price_excluding_vat: total_price_excluding_vat,
+        price_after_retention: price_after_retention,
+        vat_after_retention: vat_after_retention,
+        total_price_after_retention: total_price_after_retention
+    });
 }
 //#endregion
