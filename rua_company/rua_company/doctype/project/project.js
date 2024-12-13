@@ -59,61 +59,67 @@ frappe.ui.form.on("Project", {
             $('.no-scope-message').remove();
         }
         
-		frm.page.clear_actions_menu();
+        frm.page.clear_actions_menu();
 
-        // Add Generate dropdown items with icons
-        frm.add_custom_button(__('<i class="fa fa-file-text-o"></i> Request for Quotation'), function() {
-            create_project_bill(frm, 'Request for Quotation');
-        }, __('Generate'));
 
-        frm.add_custom_button(__('<i class="fa fa-shopping-cart"></i> Purchase Order'), function() {
-            create_project_bill(frm, 'Purchase Order');
-        }, __('Generate'));
+        if (frappe.is_large_screen()) {
+            // Add Generate dropdown items with icons
+            frm.add_custom_button(__('Request for Quotation'), function() {
+                create_project_bill(frm, 'Request for Quotation');
+            }, __('Generate')).addClass('has-icon').prepend('<i class="fa fa-file-text-o"></i> ');
 
-        frm.add_custom_button(__('<i class="fa fa-quote-left"></i> Quotation'), function() {
-            create_project_bill(frm, 'Quotation');
-        }, __('Generate'));
+            frm.add_custom_button(__('Purchase Order'), function() {
+                create_project_bill(frm, 'Purchase Order');
+            }, __('Generate')).addClass('has-icon').prepend('<i class="fa fa-shopping-cart"></i> ');
 
-        frm.add_custom_button(__('<i class="fa fa-file"></i> Proforma'), function() {
-            create_project_bill(frm, 'Proforma');
-        }, __('Generate'));
+            frm.add_custom_button(__('Quotation'), function() {
+                create_project_bill(frm, 'Quotation');
+            }, __('Generate')).addClass('has-icon').prepend('<i class="fa fa-quote-left"></i> ');
 
-        frm.add_custom_button(__('<i class="fa fa-file-text"></i> Tax Invoice'), function() {
-            create_project_bill(frm, 'Tax Invoice');
-        }, __('Generate'));
+            frm.add_custom_button(__('Proforma'), function() {
+                create_project_bill(frm, 'Proforma');
+            }, __('Generate')).addClass('has-icon').prepend('<i class="fa fa-file"></i> ');
 
-        frm.add_custom_button(__('<i class="fa fa-money"></i> Payment Voucher'), function() {
-            create_project_bill(frm, 'Payment Voucher');
-        }, __('Generate'));
+            frm.add_custom_button(__('Tax Invoice'), function() {
+                create_project_bill(frm, 'Tax Invoice');
+            }, __('Generate')).addClass('has-icon').prepend('<i class="fa fa-file-text"></i> ');
 
-        // Style the Generate parent button
-        $('.inner-group-button[data-label="Generate"] .btn-default')
-            .removeClass('btn-default')
-            .addClass('btn-warning');
+            frm.add_custom_button(__('Payment Voucher'), function() {
+                create_project_bill(frm, 'Payment Voucher');
+            }, __('Generate')).addClass('has-icon').prepend('<i class="fa fa-money"></i> ');
+
+            // Style the Generate parent button
+            $('.inner-group-button[data-label="Generate"] .btn-default')
+                .removeClass('btn-default')
+                .addClass('btn-warning');
             
-        // Add refresh button
-        frm.add_custom_button(__('<i class="fa fa-refresh"></i>'), function() {
-            frappe.confirm(
-                __('This will clear and repopulate all child tables. Continue?'),
-                function() {
-                    frappe.call({
-                        method: 'rua_company.rua_company.doctype.project.project.refresh_all_tables',
-                        args: {
-                            project: frm.doc.name
-                        },
-                        freeze: true,
-                        freeze_message: __('Refreshing all tables...'),
-                        callback: function(r) {
-                            frm.reload_doc();
-                            frappe.show_alert({
-                                message: __('All tables refreshed successfully'),
-                                indicator: 'green'
-                            });
-                        }
-                    });
-                }
-            );
-        });
+                // Add refresh button
+            frm.add_custom_button(__('Refresh'), function() {
+                frappe.confirm(
+                    __('This will clear and repopulate all child tables. Continue?'),
+                    function() {
+                        frappe.call({
+                            method: 'rua_company.rua_company.doctype.project.project.refresh_all_tables',
+                            args: {
+                                project: frm.doc.name
+                            },
+                            freeze: true,
+                            freeze_message: __('Refreshing all tables...'),
+                            callback: function(r) {
+                                frm.reload_doc();
+                                frappe.show_alert({
+                                    message: __('All tables refreshed successfully'),
+                                    indicator: 'green'
+                                });
+                            }
+                        });
+                    }
+                );
+            }).addClass('has-icon').prepend('<i class="fa fa-refresh"></i>');
+        }
+
+
+        
         
         // Add import button to grid
         if (!frm.doc.__islocal) {
@@ -642,7 +648,89 @@ function create_project_bill(frm, bill_type) {
         d.show();
     }
 }
-
+function show_item_selection_dialog(frm, bill_type, scope, party) {
+    // Get items for the selected scope
+    let items = frm.doc.items.filter(item => 
+        scope === '0' || String(item.scope_number) === String(scope)
+    );
+    if (!items.length) {
+        frappe.msgprint(__('No items found for the selected scope'));
+        return;
+    }
+    // Create HTML table for item selection
+    let table_html = `
+        <div style="max-height: 500px; overflow-y: auto;">
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th style="width: 30px;">
+                            <input type="checkbox" class="select-all" title="Select All">
+                        </th>
+                        <th>${__('Item')}</th>
+                        <th>${__('Description')}</th>
+                        <th>${__('Qty')}</th>
+                        <th>${__('Width')}</th>
+                        <th>${__('Height')}</th>
+                        ${bill_type === 'Purchase Order' ? `<th>${__('Rate')}</th>` : ''}
+                    </tr>
+                </thead>
+                <tbody>
+                    ${items.map((item, idx) => `
+                        <tr>
+                            <td>
+                                <input type="checkbox" class="item-select" data-idx="${idx}">
+                            </td>
+                            <td>${item.item || ''}</td>
+                            <td>${item.description || ''}</td>
+                            <td>${item.qty || ''}</td>
+                            <td>${item.width || ''}</td>
+                            <td>${item.height || ''}</td>
+                            ${bill_type === 'Purchase Order' ? 
+                                `<td>${format_currency(item.actual_unit_rate || 0, frm.doc.currency)}</td>` : 
+                                ''}
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        </div>
+    `;
+    let d = new frappe.ui.Dialog({
+        title: __('Select Items'),
+        fields: [{
+            fieldtype: 'HTML',
+            fieldname: 'items_html',
+            options: table_html
+        }],
+        primary_action_label: __('Create'),
+        primary_action(values) {
+            // Get selected items
+            let selected_items = [];
+            d.$wrapper.find('.item-select:checked').each(function() {
+                let idx = $(this).data('idx');
+                let item = items[idx];
+                selected_items.push({
+                    item: item.item,
+                    description: item.description,
+                    qty: item.qty,
+                    width: item.width,
+                    height: item.height,
+                    rate: bill_type === 'Purchase Order' ? item.actual_unit_rate : undefined
+                });
+            });
+            d.hide();
+            create_bill_with_scope(frm, bill_type, scope, {
+                selected_items: selected_items,
+                party: party
+            });
+        }
+    });
+    // Handle select all checkbox
+    d.$wrapper.find('.select-all').on('change', function() {
+        let checked = $(this).prop('checked');
+        d.$wrapper.find('.item-select').prop('checked', checked);
+    });
+    d.show();
+}
 function create_bill_with_scope(frm, bill_type, scope, args = {}) {
     frappe.model.open_mapped_doc({
         method: "rua_company.rua_company.doctype.project.project.make_project_bill",

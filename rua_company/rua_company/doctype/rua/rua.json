@@ -7,13 +7,15 @@
  "field_order": [
   "company_name",
   "company_name_arabic",
+  "brand_color",
   "column_break_rrxf",
   "logo_horizontal",
+  "logo_wide",
   "logo_vertical",
   "logo_icon",
-  "vat",
-  "additional_expenses_tab",
-  "items"
+  "column_break_dgcc",
+  "trn",
+  "vat"
  ],
  "fields": [
   {
@@ -47,29 +49,38 @@
    "label": "Logo Icon"
   },
   {
-   "fieldname": "additional_expenses_tab",
-   "fieldtype": "Tab Break",
-   "label": "Additional Expenses"
-  },
-  {
-   "fieldname": "items",
-   "fieldtype": "Table",
-   "label": "Items",
-   "options": "Items"
-  },
-  {
    "default": "5",
    "fieldname": "vat",
    "fieldtype": "Percent",
    "label": "VAT",
    "precision": "0",
    "read_only": 1
+  },
+  {
+   "default": "#FBC418",
+   "fieldname": "brand_color",
+   "fieldtype": "Color",
+   "label": "Brand Color"
+  },
+  {
+   "fieldname": "column_break_dgcc",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "trn",
+   "fieldtype": "Int",
+   "label": "TRN"
+  },
+  {
+   "fieldname": "logo_wide",
+   "fieldtype": "Attach Image",
+   "label": "Logo Wide"
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2024-12-12 20:14:48.812989",
+ "modified": "2024-12-13 19:36:39.018408",
  "modified_by": "Administrator",
  "module": "Rua Company",
  "name": "Rua",

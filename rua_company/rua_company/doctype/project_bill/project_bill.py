@@ -19,6 +19,8 @@ class ProjectBill(Document):
 			self.naming_series = 'RC-LPO-' + self.get_year_suffix()
 		elif self.bill_type == 'Request for Quotation':
 			self.naming_series = 'RC-RFQ-' + self.get_year_suffix()
+		if not self.vat:
+			self.vat = frappe.db.get_single_value('Rua', 'vat')
 
 	def get_year_suffix(self):
 		# Get the last two digits of the current year

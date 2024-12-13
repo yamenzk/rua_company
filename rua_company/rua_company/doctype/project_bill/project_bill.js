@@ -2,6 +2,14 @@
 // For license information, please see license.txt
 
 frappe.ui.form.on('Project Bill', {
+    setup: function(frm) {
+        if (frm.doc.__islocal) {
+            frappe.db.get_single_value('Rua', 'vat')
+                .then(value => {
+                    frm.set_value('vat', value);
+                });
+        }
+    },
     refresh: function(frm) {
         calculate_totals(frm);
     },

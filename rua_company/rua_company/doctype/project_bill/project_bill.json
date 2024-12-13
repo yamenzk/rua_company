@@ -21,6 +21,7 @@
   "column_break_oior",
   "bill_type",
   "party",
+  "invoice_number",
   "section_break_wldl",
   "send_rfq_link",
   "url",
@@ -205,12 +206,18 @@
   {
    "fieldname": "column_break_nytf",
    "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "invoice_number",
+   "fieldtype": "Int",
+   "label": "Invoice Number",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-12-10 22:08:16.957950",
+ "modified": "2024-12-13 16:22:21.401588",
  "modified_by": "Administrator",
  "module": "Rua Company",
  "name": "Project Bill",

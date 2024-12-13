@@ -7,15 +7,19 @@
  "field_order": [
   "section_break_oelv",
   "amended_from",
-  "column_break_klok",
   "date",
   "project",
-  "section_break_nwsm",
-  "column_break_mphn",
+  "column_break_iqqy",
   "type",
   "paid_to",
   "received_from",
   "party",
+  "column_break_klok",
+  "trn",
+  "emirate",
+  "is_petty_cash",
+  "section_break_nwsm",
+  "column_break_mphn",
   "amount",
   "column_break_yivt",
   "mode",
@@ -43,7 +47,7 @@
    "fieldtype": "Section Break"
   },
   {
-   "depends_on": "eval:doc.party",
+   "depends_on": "eval:(doc.party || doc.walk_in_party)",
    "fieldname": "amount",
    "fieldtype": "Currency",
    "in_list_view": 1,
@@ -64,12 +68,11 @@
    "reqd": 1
   },
   {
-   "depends_on": "eval:doc.type",
    "fieldname": "party",
    "fieldtype": "Link",
-   "in_list_view": 1,
    "label": "Party",
    "options": "Party",
+   "read_only": 1,
    "reqd": 1
   },
   {
@@ -95,7 +98,7 @@
   {
    "default": "Now",
    "fieldname": "date",
-   "fieldtype": "Datetime",
+   "fieldtype": "Date",
    "label": "Date"
   },
   {
@@ -119,6 +122,7 @@
    "label": "Bank"
   },
   {
+   "default": "Now",
    "depends_on": "eval:doc.mode != \"Cash\"",
    "fieldname": "claimable_on",
    "fieldtype": "Date",
@@ -128,15 +132,39 @@
    "fieldname": "project",
    "fieldtype": "Link",
    "label": "Project",
+   "mandatory_depends_on": "eval:doc.assign_to_project",
    "options": "Project",
    "read_only": 1,
    "reqd": 1
+  },
+  {
+   "fetch_from": "party.trn",
+   "fieldname": "trn",
+   "fieldtype": "Read Only",
+   "label": "TRN"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_petty_cash",
+   "fieldtype": "Check",
+   "hidden": 1,
+   "label": "is petty cash"
+  },
+  {
+   "fieldname": "column_break_iqqy",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "party.emirate",
+   "fieldname": "emirate",
+   "fieldtype": "Read Only",
+   "label": "Emirate"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-12-10 20:21:30.947111",
+ "modified": "2024-12-13 19:28:51.171995",
  "modified_by": "Administrator",
  "module": "Rua Company",
  "name": "Payment Voucher",

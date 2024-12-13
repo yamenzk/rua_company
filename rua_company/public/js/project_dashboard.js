@@ -283,7 +283,7 @@ function generateDashboardHTML(frm) {
     `;
 
     const projectImage = frm.doc.image ? 
-        `<img src="${frm.doc.image}" alt="${frm.doc.name}" style="object-fit: fill"/>` : 
+        `<img src="${frm.doc.image}" alt="${frm.doc.name}"/>` : 
         `<i class="fa fa-building-o fa-3x text-muted"></i>`;
 
     // Project Image Section
@@ -730,7 +730,7 @@ function generateDashboardHTML(frm) {
     object-fit: cover;
 }
 
-.view-items-btn {
+.view-items-btn, .project-financials-btn {
     width: 180px;
     margin-top: var(--padding-xs);
 }
@@ -747,7 +747,7 @@ function generateDashboardHTML(frm) {
         height: 200px;
     }
 
-    .view-items-btn {
+    .view-items-btn, .project-financials-btn  {
         width: 100%;
         max-width: 300px;
     }
@@ -2172,168 +2172,170 @@ function showScopeDetailsDialog(frm, scopeNumber) {
 
 // Function to show scope edit dialog
 function showScopeEditDialog(frm, scope = null) {
-    const dialog = new frappe.ui.Dialog({
-        title: scope ? `Edit Scope ${scope.scope_number}` : 'Add New Scope',
-        fields: [
-            {
-                fieldname: 'description',
-                fieldtype: 'Data',
-                label: 'Description',
-                mandatory_depends_on: 'eval:1'
-            },
-            {
-                fieldname: 'glass_sqm_price',
-                fieldtype: 'Currency',
-                label: 'Glass SQM Price',
-                mandatory_depends_on: 'eval:1'
-            },
-            {
-                fieldname: 'labour_charges',
-                fieldtype: 'Currency',
-                label: 'Labour Charges',
-                mandatory_depends_on: 'eval:1'
-            },
-            {
-                fieldname: 'aluminum_weight',
-                fieldtype: 'Float',
-                label: 'Aluminum Weight',
-                mandatory_depends_on: 'eval:1'
-            },
-            {
-                fieldtype: 'Column Break'
-            },
-            {
-                fieldname: 'sdf',
-                fieldtype: 'Float',
-                label: 'SDF',
-                mandatory_depends_on: 'eval:1'
-            },
-            {
-                fieldname: 'profit',
-                fieldtype: 'Percent',
-                label: 'Profit',
-                mandatory_depends_on: 'eval:1',
-                default: 35
-            },
-            {
-                fieldname: 'retention',
-                fieldtype: 'Percent',
-                label: 'Retention',
-                default: 0
-            },
-            {
-                fieldname: 'vat_inclusive',
-                fieldtype: 'Check',
-                label: 'VAT Inclusive',
-                default: 0
-            },
-            {
-                fieldname: 'vat',
-                fieldtype: 'Percent',
-                label: 'VAT',
-                default: 5,
-                read_only: 1
-            },
-            {
-                fieldname: 'rounding',
-                fieldtype: 'Select',
-                label: 'Rounding',
-                options: [
-                    'No Rounding',
-                    'Round up to nearest 5'
-                ],
-                default: 'Round up to nearest 5'
-            }
-        ],
-        primary_action_label: scope ? 'Save Changes' : 'Add Scope',
-        primary_action(values) {
-            if (scope) {
-                // Check if there are items using this scope
-                const items_with_scope = frm.doc.items ? 
-                    frm.doc.items.filter(item => item.scope_number === scope.scope_number) : [];
-                
-                const update_scope = () => {
-                    // Update existing scope
-                    const scope_idx = frm.doc.scopes.findIndex(s => s.scope_number === scope.scope_number);
-                    if (scope_idx !== -1) {
-                        Object.assign(frm.doc.scopes[scope_idx], values);
-                        
-                        // Update all items using this scope
-                        if (frm.doc.items) {
-                            frm.doc.items.forEach(item => {
-                                if (item.scope_number === scope.scope_number) {
-                                    item.glass_unit = values.glass_sqm_price;
-                                    item.profit_percentage = values.profit;
-                                }
+    frappe.db.get_single_value('Rua', 'vat').then(vat_value => {
+        const dialog = new frappe.ui.Dialog({
+            title: scope ? `Edit Scope ${scope.scope_number}` : 'Add New Scope',
+            fields: [
+                {
+                    fieldname: 'description',
+                    fieldtype: 'Data',
+                    label: 'Description',
+                    mandatory_depends_on: 'eval:1'
+                },
+                {
+                    fieldname: 'glass_sqm_price',
+                    fieldtype: 'Currency',
+                    label: 'Glass SQM Price',
+                    mandatory_depends_on: 'eval:1'
+                },
+                {
+                    fieldname: 'labour_charges',
+                    fieldtype: 'Currency',
+                    label: 'Labour Charges',
+                    mandatory_depends_on: 'eval:1'
+                },
+                {
+                    fieldname: 'aluminum_weight',
+                    fieldtype: 'Float',
+                    label: 'Aluminum Weight',
+                    mandatory_depends_on: 'eval:1'
+                },
+                {
+                    fieldtype: 'Column Break'
+                },
+                {
+                    fieldname: 'sdf',
+                    fieldtype: 'Float',
+                    label: 'SDF',
+                    mandatory_depends_on: 'eval:1'
+                },
+                {
+                    fieldname: 'profit',
+                    fieldtype: 'Percent',
+                    label: 'Profit',
+                    mandatory_depends_on: 'eval:1',
+                    default: 35
+                },
+                {
+                    fieldname: 'retention',
+                    fieldtype: 'Percent',
+                    label: 'Retention',
+                    default: 0
+                },
+                {
+                    fieldname: 'vat_inclusive',
+                    fieldtype: 'Check',
+                    label: 'VAT Inclusive',
+                    default: 0
+                },
+                {
+                    fieldname: 'vat',
+                    fieldtype: 'Percent',
+                    label: 'VAT',
+                    default: vat_value,
+                    read_only: 1
+                },
+                {
+                    fieldname: 'rounding',
+                    fieldtype: 'Select',
+                    label: 'Rounding',
+                    options: [
+                        'No Rounding',
+                        'Round up to nearest 5'
+                    ],
+                    default: 'Round up to nearest 5'
+                }
+            ],
+            primary_action_label: scope ? 'Save Changes' : 'Add Scope',
+            primary_action(values) {
+                if (scope) {
+                    // Check if there are items using this scope
+                    const items_with_scope = frm.doc.items ? 
+                        frm.doc.items.filter(item => item.scope_number === scope.scope_number) : [];
+                    
+                    const update_scope = () => {
+                        // Update existing scope
+                        const scope_idx = frm.doc.scopes.findIndex(s => s.scope_number === scope.scope_number);
+                        if (scope_idx !== -1) {
+                            Object.assign(frm.doc.scopes[scope_idx], values);
+                            
+                            // Update all items using this scope
+                            if (frm.doc.items) {
+                                frm.doc.items.forEach(item => {
+                                    if (item.scope_number === scope.scope_number) {
+                                        item.glass_unit = values.glass_sqm_price;
+                                        item.profit_percentage = values.profit;
+                                    }
+                                });
+                                frm.refresh_field('items');
+                            }
+                            
+                            frm.refresh_field('scopes');
+                            frm.dirty();
+                            dialog.hide();
+                            frm.save();
+                            rua_company.project_dashboard.render(frm);
+                            frappe.show_alert({
+                                message: __('Scope {0} updated', [scope.scope_number]),
+                                indicator: 'green'
                             });
-                            frm.refresh_field('items');
                         }
-                        
-                        frm.refresh_field('scopes');
-                        frm.dirty();
-                        dialog.hide();
-                        frm.save();
-                        rua_company.project_dashboard.render(frm);
-                        frappe.show_alert({
-                            message: __('Scope {0} updated', [scope.scope_number]),
-                            indicator: 'green'
-                        });
+                    };
+                    
+                    if (items_with_scope.length > 0) {
+                        frappe.confirm(
+                            __('This scope is being used by {0} items. Updating this scope will also update these items. Are you sure you want to continue?', [items_with_scope.length]),
+                            () => {
+                                update_scope();
+                            }
+                        );
+                    } else {
+                        update_scope();
                     }
-                };
-                
-                if (items_with_scope.length > 0) {
-                    frappe.confirm(
-                        __('This scope is being used by {0} items. Updating this scope will also update these items. Are you sure you want to continue?', [items_with_scope.length]),
-                        () => {
-                            update_scope();
-                        }
-                    );
                 } else {
-                    update_scope();
+                    // Add new scope
+                    if (!frm.doc.scopes) {
+                        frm.doc.scopes = [];
+                    }
+                    
+                    const next_scope_number = frm.doc.scopes.length > 0 
+                        ? Math.max(...frm.doc.scopes.map(s => s.scope_number)) + 1 
+                        : 1;
+                    
+                    let row = frappe.model.add_child(frm.doc, 'Project Scope', 'scopes');
+                    Object.assign(row, values, { scope_number: next_scope_number });
+                    
+                    frm.refresh_field('scopes');
+                    frm.dirty();
+                    dialog.hide();
+                    frm.save();
+                    rua_company.project_dashboard.render(frm);
+                    frappe.show_alert({
+                        message: __('Scope {0} added', [next_scope_number]),
+                        indicator: 'green'
+                    });
                 }
-            } else {
-                // Add new scope
-                if (!frm.doc.scopes) {
-                    frm.doc.scopes = [];
-                }
-                
-                const next_scope_number = frm.doc.scopes.length > 0 
-                    ? Math.max(...frm.doc.scopes.map(s => s.scope_number)) + 1 
-                    : 1;
-                
-                let row = frappe.model.add_child(frm.doc, 'Project Scope', 'scopes');
-                Object.assign(row, values, { scope_number: next_scope_number });
-                
-                frm.refresh_field('scopes');
-                frm.dirty();
-                dialog.hide();
-                frm.save();
-                rua_company.project_dashboard.render(frm);
-                frappe.show_alert({
-                    message: __('Scope {0} added', [next_scope_number]),
-                    indicator: 'green'
-                });
             }
-        }
-    });
-    
-    // If editing, populate the fields with existing scope data
-    if (scope) {
-        dialog.set_values({
-            description: scope.description,
-            glass_sqm_price: scope.glass_sqm_price,
-            labour_charges: scope.labour_charges,
-            aluminum_weight: scope.aluminum_weight,
-            sdf: scope.sdf,
-            profit: scope.profit,
-            retention: scope.retention,
-            vat_inclusive: scope.vat_inclusive,
-            vat: scope.vat,
-            rounding: scope.rounding || 'Round up to nearest 5'
         });
-    }
-    
-    dialog.show();
+        
+        // If editing, populate the fields with existing scope data
+        if (scope) {
+            dialog.set_values({
+                description: scope.description,
+                glass_sqm_price: scope.glass_sqm_price,
+                labour_charges: scope.labour_charges,
+                aluminum_weight: scope.aluminum_weight,
+                sdf: scope.sdf,
+                profit: scope.profit,
+                retention: scope.retention,
+                vat_inclusive: scope.vat_inclusive,
+                vat: scope.vat,
+                rounding: scope.rounding || 'Round up to nearest 5'
+            });
+        }
+        
+        dialog.show();
+    });
 }
 
 // Function to delete scope
@@ -2515,7 +2517,6 @@ function showProjectFinancialsDialog(frm) {
                                     <div class="flow-label" style="color: var(--text-muted); font-size: 0.9rem;">Price After Retention</div>
                                     <div class="flow-value" style="font-weight: 500;">${formatCurrency(scope.price_after_retention)}</div>
                                 </div>
-
                                 <div class="flow-node" style="
                                     background: var(--bg-color);
                                     border: 1px solid var(--border-color);
@@ -2525,7 +2526,6 @@ function showProjectFinancialsDialog(frm) {
                                     <div class="flow-label" style="color: var(--text-muted); font-size: 0.9rem;">VAT After Retention</div>
                                     <div class="flow-value" style="font-weight: 500;">${formatCurrency(scope.vat_after_retention)}</div>
                                 </div>
-
                                 <div class="flow-node highlighted" style="
                                     background: ${colorSet.bg};
                                     border: 1px solid ${colorSet.bg};

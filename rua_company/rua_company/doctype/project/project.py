@@ -418,6 +418,7 @@ def make_project_bill(source_name, target_doc=None):
     doclist.date = frappe.utils.nowdate()
     doclist.bill_type = bill_type
     doclist.scope = scope
+    doclist.vat = frappe.db.get_single_value('Rua', 'vat')
     
     # Set the selected party as the main party
     if party:
@@ -433,10 +434,7 @@ def make_project_bill(source_name, target_doc=None):
         if scope_row:
             doclist.scope_description = scope_row.description
     
-    # Move VAT from the first row of the scopes table
-    if source_doc.scopes:
-        first_scope_vat = source_doc.scopes[0].vat  # Get VAT from the first scope row
-        doclist.vat = first_scope_vat  # Add it to the doclist
+    
     
     
     # Handle items based on bill type
