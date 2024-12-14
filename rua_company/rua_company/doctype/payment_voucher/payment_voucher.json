@@ -5,6 +5,9 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
+  "notice_tab",
+  "you_can_only_create_payment_vouchers_through_a_project",
+  "details_tab",
   "section_break_oelv",
   "amended_from",
   "date",
@@ -141,14 +144,15 @@
    "fetch_from": "party.trn",
    "fieldname": "trn",
    "fieldtype": "Read Only",
-   "label": "TRN"
+   "label": "TRN",
+   "read_only": 1
   },
   {
    "default": "0",
    "fieldname": "is_petty_cash",
    "fieldtype": "Check",
-   "hidden": 1,
-   "label": "is petty cash"
+   "label": "is petty cash",
+   "read_only": 1
   },
   {
    "fieldname": "column_break_iqqy",
@@ -158,13 +162,31 @@
    "fetch_from": "party.emirate",
    "fieldname": "emirate",
    "fieldtype": "Read Only",
-   "label": "Emirate"
+   "label": "Emirate",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval:!doc.project",
+   "fieldname": "notice_tab",
+   "fieldtype": "Tab Break",
+   "label": "Notice"
+  },
+  {
+   "fieldname": "you_can_only_create_payment_vouchers_through_a_project",
+   "fieldtype": "Heading",
+   "label": "You can only create payment vouchers through a project."
+  },
+  {
+   "depends_on": "eval:doc.project",
+   "fieldname": "details_tab",
+   "fieldtype": "Tab Break",
+   "label": "Details"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-12-14 01:18:51.668807",
+ "modified": "2024-12-14 18:38:05.533694",
  "modified_by": "Administrator",
  "module": "Rua Company",
  "name": "Payment Voucher",

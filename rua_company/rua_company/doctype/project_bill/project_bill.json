@@ -6,6 +6,9 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
+  "notice_tab",
+  "you_can_only_create_bills_through_a_project",
+  "details_tab",
   "status",
   "column_break_nytf",
   "date",
@@ -21,7 +24,7 @@
   "column_break_oior",
   "bill_type",
   "party",
-  "invoice_number",
+  "bill_number",
   "section_break_wldl",
   "send_rfq_link",
   "url",
@@ -192,13 +195,13 @@
   },
   {
    "default": "0",
-   "depends_on": "eval:doc.bill_type == \"Request for Quotation\"",
    "fieldname": "send_rfq_link",
    "fieldtype": "Check",
+   "hidden": 1,
    "label": "Send RFQ Link"
   },
   {
-   "depends_on": "eval:doc.bill_type == \"Request for Quotation\"",
+   "depends_on": "eval:(doc.bill_type == \"Request for Quotation\" && doc.send_rfq_link)",
    "fieldname": "url",
    "fieldtype": "Data",
    "label": "URL"
@@ -208,16 +211,34 @@
    "fieldtype": "Column Break"
   },
   {
-   "fieldname": "invoice_number",
+   "allow_on_submit": 1,
+   "fieldname": "bill_number",
    "fieldtype": "Int",
-   "label": "Invoice Number",
+   "label": "Bill Number",
    "read_only": 1
+  },
+  {
+   "depends_on": "eval:!doc.project",
+   "fieldname": "notice_tab",
+   "fieldtype": "Tab Break",
+   "label": "Notice"
+  },
+  {
+   "fieldname": "you_can_only_create_bills_through_a_project",
+   "fieldtype": "Heading",
+   "label": "You can only create bills through a project."
+  },
+  {
+   "depends_on": "eval:doc.project",
+   "fieldname": "details_tab",
+   "fieldtype": "Tab Break",
+   "label": "Details"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-12-13 16:22:21.401588",
+ "modified": "2024-12-14 18:41:03.336005",
  "modified_by": "Administrator",
  "module": "Rua Company",
  "name": "Project Bill",

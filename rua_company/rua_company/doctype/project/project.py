@@ -454,7 +454,8 @@ def make_project_bill(source_name, target_doc=None):
                     "description": item.get("description"),
                     "qty": item.get("qty"),
                     "width": item.get("width"),
-                    "height": item.get("height")
+                    "height": item.get("height"),
+                    "party": party
                 })
     elif bill_type == "Purchase Order" and selected_items:
         # Purchase Order case
@@ -465,7 +466,8 @@ def make_project_bill(source_name, target_doc=None):
                 "qty": item.get("qty"),
                 "width": item.get("width"),
                 "height": item.get("height"),
-                "rate": item.get("rate")
+                "rate": item.get("rate"),
+                "party": party
             })
     elif bill_type == "Quotation" and source_doc.items:
         # Existing Quotation logic
@@ -477,7 +479,8 @@ def make_project_bill(source_name, target_doc=None):
                     "qty": item.qty,
                     "width": item.width,
                     "height": item.height,
-                    "rate": item.actual_unit_rate
+                    "rate": item.actual_unit_rate,
+                    "party": party
                 })
     elif bill_type in ["Proforma", "Tax Invoice"]:
         if str(scope) == "0" and len(source_doc.scopes) > 1:
@@ -487,7 +490,8 @@ def make_project_bill(source_name, target_doc=None):
                     "item": source_doc.name,
                     "description": scope_row.description,
                     "qty": 1,
-                    "rate": scope_row.total_price or 0
+                    "rate": scope_row.total_price or 0,
+                    "party": party
                 })
         else:
             # Single scope case
@@ -506,7 +510,8 @@ def make_project_bill(source_name, target_doc=None):
                 "item": source_doc.name,
                 "description": description,
                 "qty": 1,
-                "rate": rate
+                "rate": rate,
+                "party": party
             })
     
     doclist.calculate_amounts()

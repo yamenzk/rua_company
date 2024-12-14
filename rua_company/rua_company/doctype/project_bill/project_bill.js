@@ -12,6 +12,30 @@ frappe.ui.form.on('Project Bill', {
     },
     refresh: function(frm) {
         calculate_totals(frm);
+        if (frm.doc.bill_type == 'Request for Quotation') { 
+            frm.get_field("items").grid.update_docfield_property("rate", "read_only", true);
+            if (frm.doc.docstatus == 1){
+                frm.add_custom_button(__('Create Purchase Order'), function() {
+                    frappe.model.open_mapped_doc({
+                        method: "rua_company.rua_company.doctype.project_bill.project_bill.make_purchase_order",
+                        frm: frm
+                    });
+                });
+            }
+        } else if (frm.doc.bill_type == 'Purchase Order' || frm.doc.bill_type == 'Tax Invoice') {
+            frm.get_field("items").grid.update_docfield_property("rate", "read_only", false);
+            if (frm.doc.docstatus == 1){
+                frm.add_custom_button(__('Generate Payment Voucher'), function() {
+                    frappe.model.open_mapped_doc({
+                        method: "rua_company.rua_company.doctype.project_bill.project_bill.make_payment_voucher",
+                        frm: frm
+                    });
+                });
+            }
+        } else {
+            frm.get_field("items").grid.update_docfield_property("rate", "read_only", false);
+            frm.get_field("items").grid.update_docfield_property("amount", "read_only", false);
+        }
     },
     
     apply_vat: function(frm) {

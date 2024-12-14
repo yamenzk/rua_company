@@ -1404,6 +1404,65 @@ function generateDashboardHTML(frm) {
     font-weight: 500;
     font-size: 1.125rem;
 }
+
+/* Payment List Container */
+.payment-list-container, .doc-list-container {
+    max-height: 265px;
+    overflow-y: auto;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE and Edge */
+}
+
+.payment-list-container::-webkit-scrollbar, .doc-list-container::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, Opera */
+}
+
+.payment-list-item, .doc-list-item {
+    padding: var(--padding-md);
+    display: grid;
+    grid-template-columns: 1fr 2fr 0.5fr;
+    gap: var(--padding-sm);
+    align-items: center;
+    border-bottom: 1px solid var(--border-color);
+    transition: background-color 0.2s;
+}
+
+.payment-list-item:hover, .doc-list-item:hover {
+    background: var(--fg-hover);
+}
+
+.payment-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.payment-info .voucher {
+    color: var(--text-color);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.payment-info .amount {
+    color: var(--text-muted);
+    font-size: var(--text-sm);
+}
+
+.payment-arrow {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: var(--text-lg);
+}
+
+.arrow-incoming {
+    color: var(--green-600);
+}
+
+.arrow-outgoing {
+    color: var(--red-600);
+}
+
 </style>
 <div class="finance-dashboard">
 <div class="project-header">
@@ -1525,6 +1584,7 @@ function generateDashboardHTML(frm) {
                           frm.doc.total_proformas
                         )}</div>
                     </div>
+                    <div class="doc-list-container">
                     ${
                       (frm.doc.proformas || []).length
                         ? (frm.doc.proformas || [])
@@ -1576,6 +1636,7 @@ function generateDashboardHTML(frm) {
                             .join("")
                         : '<div class="empty-state">No proformas found</div>'
                     }
+                    </div>
                 </div>
 
                 <!-- Invoices Block -->
@@ -1586,6 +1647,7 @@ function generateDashboardHTML(frm) {
                           frm.doc.total_invoices
                         )}</div>
                     </div>
+                    <div class="doc-list-container">
                     ${
                       (frm.doc.invoices || []).length
                         ? (frm.doc.invoices || [])
@@ -1637,6 +1699,7 @@ function generateDashboardHTML(frm) {
                             .join("")
                         : '<div class="empty-state">No invoices found</div>'
                     }
+                    </div>
                 </div>
 
                 <!-- Received Payments Block -->
@@ -1647,6 +1710,7 @@ function generateDashboardHTML(frm) {
                           frm.doc.total_received
                         )}</div>
                     </div>
+                    <div class="payment-list-container">
                     ${
                       (frm.doc.received_table || []).length
                         ? (frm.doc.received_table || [])
@@ -1669,6 +1733,7 @@ function generateDashboardHTML(frm) {
                             .join("")
                         : '<div class="empty-state">No payments received</div>'
                     }
+                    </div>
                 </div>
             </div>
         </div>
@@ -1693,6 +1758,7 @@ function generateDashboardHTML(frm) {
                           frm.doc.total_expenses
                         )}</div>
                     </div>
+                    <div class="doc-list-container">
                     ${
                       (frm.doc.lpos || []).length
                         ? (frm.doc.lpos || [])
@@ -1744,6 +1810,7 @@ function generateDashboardHTML(frm) {
                             .join("")
                         : '<div class="empty-state">No purchase orders found</div>'
                     }
+                    </div>
                 </div>
 
                 <!-- Paid Payments Block -->
@@ -1754,6 +1821,7 @@ function generateDashboardHTML(frm) {
                           frm.doc.total_paid
                         )}</div>
                     </div>
+                    <div class="payment-list-container">
                     ${
                       (frm.doc.paid_table || []).length
                         ? (frm.doc.paid_table || [])
@@ -1792,6 +1860,7 @@ function generateDashboardHTML(frm) {
                     `
                         : ""
                     }
+                    </div>
                 </div>
             </div>
         </div>
@@ -1811,6 +1880,7 @@ function generateDashboardHTML(frm) {
                     <div class="summary-card">
                         <div class="title">Proforma Drafts</div>
                     </div>
+                    <div class="doc-list-container">
                     ${
                       (frm.doc.proforma_drafts || []).length
                         ? (frm.doc.proforma_drafts || [])
@@ -1850,6 +1920,7 @@ function generateDashboardHTML(frm) {
                             .join("")
                         : '<div class="empty-state">No draft proformas</div>'
                     }
+                    </div>
                 </div>
 
                 <!-- LPO Drafts -->
@@ -1857,6 +1928,7 @@ function generateDashboardHTML(frm) {
                     <div class="summary-card">
                         <div class="title">Purchase Order Drafts</div>
                     </div>
+                    <div class="doc-list-container">
                     ${
                       (frm.doc.lpo_drafts || []).length
                         ? (frm.doc.lpo_drafts || [])
@@ -1896,6 +1968,7 @@ function generateDashboardHTML(frm) {
                             .join("")
                         : '<div class="empty-state">No draft purchase orders</div>'
                     }
+                    </div>
                 </div>
 
                 <!-- Invoice Drafts -->
@@ -1903,6 +1976,7 @@ function generateDashboardHTML(frm) {
                     <div class="summary-card">
                         <div class="title">Invoice Drafts</div>
                     </div>
+                    <div class="doc-list-container">
                     ${
                       (frm.doc.invoice_drafts || []).length
                         ? (frm.doc.invoice_drafts || [])
@@ -1942,6 +2016,7 @@ function generateDashboardHTML(frm) {
                             .join("")
                         : '<div class="empty-state">No draft invoices</div>'
                     }
+                    </div>
                 </div>
             </div>
 
@@ -1952,6 +2027,7 @@ function generateDashboardHTML(frm) {
                     <div class="summary-card">
                         <div class="title">Quotations</div>
                     </div>
+                    <div class="doc-list-container">
                     
                     <!-- Submitted Quotations -->
                     ${
@@ -2047,6 +2123,8 @@ function generateDashboardHTML(frm) {
                         ? '<div class="empty-state">No quotations found</div>'
                         : ""
                     }
+
+                    </div>
                 </div>
 
                 <!-- RFQs Block -->
@@ -2056,6 +2134,7 @@ function generateDashboardHTML(frm) {
                     </div>
                     
                     <!-- Submitted RFQs -->
+                    <div class="doc-list-container">
                     ${
                       (frm.doc.rfqs || []).length
                         ? `
@@ -2148,6 +2227,8 @@ function generateDashboardHTML(frm) {
                         ? '<div class="empty-state">No RFQs found</div>'
                         : ""
                     }
+
+                    </div>
                 </div>
             </div>
         </div>
