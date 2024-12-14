@@ -184,7 +184,7 @@ class Project(Document):
         self.due_receivables = flt(self.total_receivable) - flt(self.total_received)
         self.due_payables = flt(self.total_payable) - flt(self.total_paid)
         
-        self.total_project_value = flt(self.total_receivable) + flt(self.total_payable)
+        self.total_project_value = flt(self.total_receivable) + flt(self.total_payable) - flt(self.total_additional_expenses)
         self.project_profit = flt(self.total_receivable) - flt(self.total_payable)
         
         self.profit_percentage = (flt(self.project_profit) / flt(self.total_payable) * 100) if self.total_payable else 0

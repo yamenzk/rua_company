@@ -1201,7 +1201,7 @@ function generateDashboardHTML(frm) {
             <div class="amount">${formatCurrency(
               frm.doc.total_project_value
             )}</div>
-            <div class="metric">Total Contract Value</div>
+            <div class="metric">Total Contract Value (Exc. A/E)</div>
         </div>
         
         <div class="overview-card profit">
