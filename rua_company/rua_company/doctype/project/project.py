@@ -3,6 +3,7 @@
 
 import frappe
 from frappe.model.document import Document
+from frappe.utils import flt
 import math
 import openpyxl
 from openpyxl.styles import Font, PatternFill, Alignment
@@ -37,154 +38,156 @@ class Project(Document):
     
     #region "Calculations"
     def calculate_all_values(self):
-        # Get unique scope numbers
-        scope_numbers = set(item.scope_number for item in self.items if item.scope_number)
+        """Optimized calculation of all values"""
+        # Create lookup dictionaries to avoid repeated searches
+        scope_dict = {s.scope_number: s for s in self.scopes}
+        items_by_scope = {}
         
-        # Calculate for each scope
-        for scope_number in scope_numbers:
-            scope = next((s for s in self.scopes if s.scope_number == scope_number), None)
+        # Group items by scope in a single pass
+        for item in self.items:
+            if item.scope_number:
+                items_by_scope.setdefault(item.scope_number, []).append(item)
+        
+        # Pre-calculate common values used across scopes
+        for scope_number, scope_items in items_by_scope.items():
+            scope = scope_dict.get(scope_number)
             if not scope:
                 continue
-                
-            scope_items = [item for item in self.items if item.scope_number == scope_number]
+
+            # Pre-calculate scope-level values
+            vat = scope.vat or 0
+            vat_inclusive = scope.vat_inclusive
+            vat_factor = 1 + (vat / 100)
+            labour_charges = scope.labour_charges or 0
             
-            # Calculate aluminum ratio first
-            ratio = self.calculate_aluminum_ratio(scope, scope_items)
+            # Calculate ratio once per scope
+            ratio = self.calculate_aluminum_ratio_optimized(scope, scope_items, vat_factor, vat_inclusive)
             scope.ratio = ratio
             
-            # Calculate values for each item
-            for item in scope_items:
-                self.calculate_item_values(item, scope, ratio)
+            # Bulk calculate items with pre-calculated values
+            self.calculate_items_batch(scope_items, scope, ratio, vat, vat_inclusive, vat_factor, labour_charges)
             
-            # Update scope totals
-            self.update_scope_totals(scope, scope_items)
+            # Update scope totals with pre-calculated values
+            self.update_scope_totals_optimized(scope, scope_items, vat_factor, vat_inclusive)
         
         # Calculate financial totals
-        self.calculate_financial_totals()
-    
-    def calculate_aluminum_ratio(self, scope, scope_items):
-        # Calculate x (sum of VAT amounts)
-        x = sum(
-            # If VAT inclusive, extract VAT from price, otherwise calculate normally
-            (price - (price / (1 + scope.vat / 100))) if scope.vat_inclusive
-            else (price * scope.vat / 100)
-            for item in scope_items
-            for price in [(item.aluminum_price or 0)]
-        )
+        self.calculate_financial_totals_optimized()
+
+    def calculate_aluminum_ratio_optimized(self, scope, scope_items, vat_factor, vat_inclusive):
+        """Optimized aluminum ratio calculation"""
+        aluminum_prices = [(item.aluminum_price or 0) for item in scope_items]
+        quantities = [(item.qty or 0) for item in scope_items]
         
-        # Calculate y (sum of aluminum_price * qty)
-        y = sum((item.aluminum_price or 0) * (item.qty or 0) 
-                for item in scope_items)
+        # Calculate VAT amounts in bulk
+        if vat_inclusive:
+            x = sum(price - (price / vat_factor) for price in aluminum_prices)
+        else:
+            x = sum(price * (vat_factor - 1) for price in aluminum_prices)
+        
+        # Calculate y in bulk
+        y = sum(price * qty for price, qty in zip(aluminum_prices, quantities))
         
         # Calculate total
         total = ((scope.aluminum_weight or 0) * (scope.sdf or 0)) + y + x
         
-        # Calculate ratio and round to 3 decimal places
-        ratio = round(total / y, 3) if y > 0 else 1
-        return ratio
-    
-    def calculate_item_values(self, item, scope, ratio):
-        # Calculate area and glass values
-        if item.width >= 0 and item.height >= 0:
-            item.area = (item.width * item.height) / 10000
+        return round(total / y, 3) if y > 0 else 1
+
+    def calculate_items_batch(self, items, scope, ratio, vat, vat_inclusive, vat_factor, labour_charges):
+        """Calculate values for a batch of items"""
+        for item in items:
+            # Calculate area only if needed
+            if item.width >= 0 and item.height >= 0:
+                area = (item.width * item.height) / 10000
+                item.area = area
+                
+                if item.glass_unit >= 0:
+                    vat_multiplier = 0 if vat_inclusive else vat
+                    glass_price = item.glass_unit * area * (1 + (vat_multiplier / 100))
+                    item.glass_price = glass_price
+                    item.total_glass = glass_price * (item.qty or 0)
             
-            if item.glass_unit >= 0:
-                # If VAT inclusive, don't add VAT to price
-                vat_multiplier = 0 if scope.vat_inclusive else scope.vat
-                glass_price = item.glass_unit * item.area * (1 + (vat_multiplier or 0) / 100)
-                item.glass_price = glass_price
-                item.total_glass = glass_price * (item.qty or 0)
+            # Calculate aluminum price in one operation
+            item.aluminum_price = sum(
+                getattr(item, field) or 0 
+                for field in ['curtain_wall', 'insertion_1', 'insertion_2', 'insertion_3', 'insertion_4']
+            )
+            
+            # Calculate remaining values in sequence to minimize recalculations
+            qty = item.qty or 0
+            aluminum_unit = item.aluminum_price * ratio
+            item.aluminum_unit = aluminum_unit
+            item.total_aluminum = aluminum_unit * qty
+            
+            actual_unit = aluminum_unit + (item.glass_price or 0) + labour_charges
+            item.actual_unit = actual_unit
+            
+            profit_factor = (item.profit_percentage or 0) / 100
+            item.total_profit = actual_unit * profit_factor
+            item.total_cost = actual_unit * qty
+            
+            actual_unit_rate = item.total_profit + actual_unit
+            item.actual_unit_rate = actual_unit_rate
+            
+            overall_price = actual_unit_rate * qty
+            if scope.rounding == "Round up to nearest 5":
+                overall_price = math.ceil(overall_price / 5) * 5
+            item.overall_price = overall_price
+
+    def update_scope_totals_optimized(self, scope, scope_items, vat_factor, vat_inclusive):
+        """Optimized scope totals calculation"""
+        # Calculate basic totals in bulk
+        overall_prices = [item.overall_price or 0 for item in scope_items]
+        total_costs = [item.total_cost or 0 for item in scope_items]
+        quantities = [item.qty or 0 for item in scope_items]
         
-        # Calculate aluminum price
-        item.aluminum_price = (
-            (item.curtain_wall or 0) +
-            (item.insertion_1 or 0) +
-            (item.insertion_2 or 0) +
-            (item.insertion_3 or 0) +
-            (item.insertion_4 or 0)
-        )
-        
-        # Calculate remaining values
-        item.aluminum_unit = item.aluminum_price * ratio
-        item.total_aluminum = item.aluminum_unit * (item.qty or 0)
-        
-        # Include labour_charges in actual_unit calculation
-        item.actual_unit = item.aluminum_unit + (item.glass_price or 0) + (scope.labour_charges or 0)
-        item.total_profit = item.actual_unit * ((item.profit_percentage or 0) / 100)
-        item.total_cost = item.actual_unit * (item.qty or 0)
-        item.actual_unit_rate = item.total_profit + item.actual_unit
-        
-        # Calculate overall price with optional rounding
-        overall_price = item.actual_unit_rate * (item.qty or 0)
-        if scope.rounding == "Round up to nearest 5":
-            overall_price = math.ceil(overall_price / 5) * 5
-        item.overall_price = overall_price
-    
-    def update_scope_totals(self, scope, scope_items):
-        # Calculate basic totals
-        scope.total_price = sum(item.overall_price or 0 for item in scope_items)
-        scope.total_cost = sum(item.total_cost or 0 for item in scope_items)
+        scope.total_price = sum(overall_prices)
+        scope.total_cost = sum(total_costs)
         scope.total_profit = scope.total_price - scope.total_cost
-        scope.total_items = sum(item.qty or 0 for item in scope_items)
+        scope.total_items = sum(quantities)
         
-        # Calculate VAT amount
-        total_vat = sum(
-            # If VAT inclusive, extract VAT from price, otherwise calculate normally
-            (price - (price / (1 + scope.vat / 100))) if scope.vat_inclusive
-            else (price * scope.vat / 100)
-            for item in scope_items
-            for price in [(item.overall_price or 0)]
-        )
+        # Calculate VAT amount in bulk
+        if vat_inclusive:
+            total_vat = sum(price - (price / vat_factor) for price in overall_prices)
+        else:
+            total_vat = sum(price * (vat_factor - 1) for price in overall_prices)
         scope.total_vat_amount = total_vat
         
-        # Calculate price excluding VAT
-        scope.total_price_excluding_vat = scope.total_price - scope.total_vat_amount
+        # Calculate remaining values
+        total_price_excluding_vat = scope.total_price - total_vat
+        scope.total_price_excluding_vat = total_price_excluding_vat
         
-        # Calculate retention-related values
-        retention_percentage = scope.retention or 0
-        price_after_retention = scope.total_price_excluding_vat
-        
-        if retention_percentage > 0:
-            # Remove retention percentage from the price
-            price_after_retention = scope.total_price_excluding_vat * (1 - (retention_percentage / 100))
+        retention_factor = 1 - ((scope.retention or 0) / 100)
+        price_after_retention = total_price_excluding_vat * retention_factor
         
         scope.price_after_retention = price_after_retention
         scope.vat_after_retention = price_after_retention * (scope.vat / 100)
-        scope.total_price_after_retention = scope.price_after_retention + scope.vat_after_retention
-    
-    def calculate_financial_totals(self):
-        """Calculate all financial totals for the project"""
-        from frappe.utils import flt
+        scope.total_price_after_retention = price_after_retention + scope.vat_after_retention
+
+    def calculate_financial_totals_optimized(self):
+        """Optimized financial totals calculation"""
         
-        # Calculate totals from child tables
+        
+        # Calculate all sums in one pass per table
         self.total_proformas = sum(flt(d.grand_total) for d in self.proformas)
         self.total_invoices = sum(flt(d.grand_total) for d in self.invoices)
         self.total_expenses = sum(flt(d.grand_total) for d in self.lpos)
         self.total_received = sum(flt(d.amount) for d in self.received_table)
         self.total_additional_expenses = sum(flt(d.amount) for d in self.additional_items)
         
-        # Calculate total paid including additional expenses
+        # Calculate derived values
         total_payments = sum(flt(d.amount) for d in self.paid_table)
         self.total_paid = flt(total_payments) + flt(self.total_additional_expenses)
         
-        # Calculate receivables and payables
-        # Only consider tax invoices for receivables, not proformas
         self.total_receivable = flt(self.total_invoices)
         self.total_payable = flt(self.total_expenses) + flt(self.total_additional_expenses)
         
-        # Calculate dues
         self.due_receivables = flt(self.total_receivable) - flt(self.total_received)
         self.due_payables = flt(self.total_payable) - flt(self.total_paid)
         
-        # Calculate project value and profit
         self.total_project_value = flt(self.total_receivable) + flt(self.total_payable)
         self.project_profit = flt(self.total_receivable) - flt(self.total_payable)
         
-        # Calculate profit percentage
-        if self.total_payable:
-            self.profit_percentage = (flt(self.project_profit) / flt(self.total_payable)) * 100
-        else:
-            self.profit_percentage = 0
+        self.profit_percentage = (flt(self.project_profit) / flt(self.total_payable) * 100) if self.total_payable else 0
     #endregion
 
 #region Excel Import
@@ -707,8 +710,8 @@ def refresh_all_tables(project):
 
     # Recalculate project totals
     project_doc = frappe.get_doc("Project", project)
-    project_doc.calculate_financial_totals()
-    
+    project_doc.calculate_financial_totals_optimized()
+
     # Update project fields
     frappe.db.sql("""
         UPDATE `tabProject`
@@ -717,7 +720,9 @@ def refresh_all_tables(project):
             total_invoices = %s,
             total_expenses = %s,
             total_received = %s,
+            total_additional_expenses = %s,
             total_paid = %s,
+            total_receivable = %s,
             total_payable = %s,
             due_receivables = %s,
             due_payables = %s,
@@ -730,7 +735,9 @@ def refresh_all_tables(project):
         project_doc.total_invoices,
         project_doc.total_expenses,
         project_doc.total_received,
+        project_doc.total_additional_expenses,
         project_doc.total_paid,
+        project_doc.total_receivable,
         project_doc.total_payable,
         project_doc.due_receivables,
         project_doc.due_payables,
@@ -739,6 +746,6 @@ def refresh_all_tables(project):
         project_doc.profit_percentage,
         project
     ))
-    
+
     frappe.db.commit()
     return True

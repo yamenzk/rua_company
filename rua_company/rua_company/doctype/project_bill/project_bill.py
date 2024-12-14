@@ -123,8 +123,8 @@ class ProjectBill(Document):
 
 		# Get project doc and recalculate totals
 		project = frappe.get_doc("Project", self.project)
-		project.calculate_financial_totals()
-		
+		project.calculate_financial_totals_optimized()
+
 		# Update only the calculated fields using SQL
 		frappe.db.sql("""
 			UPDATE `tabProject`
@@ -132,6 +132,8 @@ class ProjectBill(Document):
 				total_proformas = %s,
 				total_invoices = %s,
 				total_expenses = %s,
+				total_received = %s,
+				total_additional_expenses = %s,
 				total_paid = %s,
 				total_receivable = %s,
 				total_payable = %s,
@@ -145,6 +147,8 @@ class ProjectBill(Document):
 			project.total_proformas,
 			project.total_invoices,
 			project.total_expenses,
+			project.total_received,
+			project.total_additional_expenses,
 			project.total_paid,
 			project.total_receivable,
 			project.total_payable,
@@ -268,8 +272,8 @@ class ProjectBill(Document):
 			
 			# Get project doc and recalculate totals
 			project = frappe.get_doc("Project", self.project)
-			project.calculate_financial_totals()
-			
+			project.calculate_financial_totals_optimized()
+
 			# Update only the calculated fields using SQL
 			frappe.db.sql("""
 				UPDATE `tabProject`
@@ -277,6 +281,8 @@ class ProjectBill(Document):
 					total_proformas = %s,
 					total_invoices = %s,
 					total_expenses = %s,
+					total_received = %s,
+					total_additional_expenses = %s,
 					total_paid = %s,
 					total_receivable = %s,
 					total_payable = %s,
@@ -290,6 +296,8 @@ class ProjectBill(Document):
 				project.total_proformas,
 				project.total_invoices,
 				project.total_expenses,
+				project.total_received,
+				project.total_additional_expenses,
 				project.total_paid,
 				project.total_receivable,
 				project.total_payable,
