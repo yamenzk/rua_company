@@ -608,6 +608,91 @@ def get_party_outstanding_amounts(project, parties):
 #endregion
 
 @frappe.whitelist()
+def get_item_suggestions(doctype, txt, searchfield, start, page_len, filters):
+    """Get item suggestions for autocomplete with party history and dimensions"""
+    try:
+        filters = json.loads(filters) if isinstance(filters, str) else filters
+        party = filters.get('party') if filters else None
+        
+        # Base conditions and values
+        conditions = []
+        values = {
+            'start': int(start),
+            'page_len': int(page_len)
+        }
+        
+        if txt:
+            conditions.append("i.item LIKE %(txt)s")
+            values['txt'] = f'%{txt}%'
+        
+        # If party is selected, get their items first with most recent values
+        order_by = "i.item"
+        if party:
+            values['party'] = party
+            query = f"""
+                WITH RankedItems AS (
+                    SELECT 
+                        i.item,
+                        i.description,
+                        i.rate,
+                        i.width,
+                        i.height,
+                        ROW_NUMBER() OVER (
+                            PARTITION BY i.item 
+                            ORDER BY i.modified DESC
+                        ) as rn
+                    FROM `tabItems` i
+                    WHERE i.party = %(party)s
+                    {' AND ' + ' AND '.join(conditions) if conditions else ''}
+                )
+                SELECT 
+                    item,
+                    description,
+                    COALESCE(rate, 0) as last_rate,
+                    COALESCE(width, 0) as width,
+                    COALESCE(height, 0) as height
+                FROM RankedItems
+                WHERE rn = 1
+                ORDER BY item
+                LIMIT %(start)s, %(page_len)s
+            """
+        else:
+            # For non-party searches, show distinct items with their most recent values
+            query = f"""
+                WITH RankedItems AS (
+                    SELECT 
+                        i.item,
+                        i.description,
+                        i.rate,
+                        i.width,
+                        i.height,
+                        ROW_NUMBER() OVER (
+                            PARTITION BY i.item 
+                            ORDER BY i.modified DESC
+                        ) as rn
+                    FROM `tabItems` i
+                    {' WHERE ' + ' AND '.join(conditions) if conditions else ''}
+                )
+                SELECT 
+                    item,
+                    description,
+                    COALESCE(rate, 0) as last_rate,
+                    COALESCE(width, 0) as width,
+                    COALESCE(height, 0) as height
+                FROM RankedItems
+                WHERE rn = 1
+                ORDER BY item
+                LIMIT %(start)s, %(page_len)s
+            """
+        
+        result = frappe.db.sql(query, values, as_list=1)
+        return result
+        
+    except Exception as e:
+        frappe.logger("items").error(f"Item Suggestion Error: {str(e)}\nFilters: {filters}")
+        return []
+
+@frappe.whitelist()
 def refresh_all_tables(project):
     """Clear and repopulate all child tables in the project"""
     # Clear all child tables using SQL

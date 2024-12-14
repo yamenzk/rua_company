@@ -17,72 +17,163 @@ rua_company.project_dashboard = {
   },
   showAddExpenseDialog: function (frm) {
     const dialog = new frappe.ui.Dialog({
-      title: "Add Expense",
+      title: __('Add Expense'),
+      size: 'small',
       fields: [
         {
-          fieldtype: "Section Break",
-          label: "Expense Details",
+          fieldname: 'basic_info_section',
+          fieldtype: 'Section Break',
+          label: __('Basic Information'),
         },
         {
-          fieldname: "party",
-          fieldtype: "Link",
-          options: "Party",
-          label: "Party",
-          mandatory_depends_on: "eval:1",
+          fieldname: 'party',
+          fieldtype: 'Link',
+          options: 'Party',
+          label: __('Party'),
+          mandatory_depends_on: 'eval:1',
+          description: __('Select the party for this expense'),
         },
         {
-          fieldname: "item",
-          fieldtype: "Data",
-          label: "Item",
-          mandatory_depends_on: "eval:1",
-        },
-        {
-          fieldname: "description",
-          fieldtype: "Small Text",
-          label: "Description",
-        },
-        {
-          fieldtype: "Column Break",
-        },
-        {
-          fieldname: "width",
-          fieldtype: "Float",
-          label: "Width (cm)",
-        },
-        {
-          fieldname: "height",
-          fieldtype: "Float",
-          label: "Height (cm)",
-        },
-        {
-          fieldtype: "Section Break",
-          label: "Pricing",
-        },
-        {
-          fieldname: "qty",
-          fieldtype: "Float",
-          label: "Quantity",
-          mandatory_depends_on: "eval:1",
-          default: 1,
-        },
-        {
-          fieldname: "rate",
-          fieldtype: "Currency",
-          label: "Rate (VAT Inclusive)",
-          mandatory_depends_on: "eval:1",
-          description: "Please ensure the rate includes VAT",
-        },
-        {
-          fieldtype: "HTML",
+          fieldname: 'item_wrapper',
+          fieldtype: 'HTML',
+          label: __('Item'),
           options: `
-                        <div class="alert alert-info">
-                            <i class="fa fa-info-circle"></i>
-                            <strong>Note:</strong> The rate should be VAT inclusive.
-                        </div>
-                    `,
+            <div class="item-autocomplete-wrapper">
+              <input type="text" class="form-control item-autocomplete" placeholder="${__('Type to search items...')}" />
+              <div class="item-suggestions"></div>
+            </div>
+            <style>
+              .item-autocomplete-wrapper {
+                position: relative;
+              }
+              .item-suggestions {
+                position: absolute;
+                top: 100%;
+                left: 0;
+                right: 0;
+                z-index: 1000;
+                max-height: 300px;
+                overflow-y: auto;
+                background: var(--modal-bg);
+                border: 1px solid var(--border-color);
+                border-radius: var(--border-radius);
+                box-shadow: var(--shadow-base);
+                display: none;
+              }
+              .item-suggestion {
+                padding: 8px 12px;
+                cursor: pointer;
+                border-bottom: 1px solid var(--border-color);
+              }
+              .item-suggestion:last-child {
+                border-bottom: none;
+              }
+              .item-suggestion:hover {
+                background: var(--fg-hover-color);
+              }
+              .item-suggestion.selected {
+                background: var(--fg-hover-color);
+              }
+              .item-suggestion .item-name {
+                font-weight: 600;
+                color: var(--text-color);
+              }
+              .item-suggestion .item-details {
+                font-size: 0.85em;
+                color: var(--text-muted);
+                margin-top: 2px;
+              }
+              .item-suggestion .item-rate {
+                float: right;
+                font-weight: 600;
+                color: var(--text-color);
+              }
+            </style>
+          `,
+        },
+        {
+          fieldname: 'item',
+          fieldtype: 'Data',
+          label: __('Item'),
+          hidden: 1,
+          mandatory_depends_on: 'eval:1'
+        },
+        {
+          fieldname: 'col_break1',
+          fieldtype: 'Column Break'
+        },
+        {
+          fieldname: 'qty',
+          fieldtype: 'Int',
+          label: __('Quantity'),
+          mandatory_depends_on: 'eval:1',
+          default: 1,
+          onchange: function() {
+            updateTotal(dialog);
+          }
+        },
+        {
+          fieldname: 'rate',
+          fieldtype: 'Currency',
+          label: __('Rate (VAT Incl.)'),
+          mandatory_depends_on: 'eval:1',
+          onchange: function() {
+            updateTotal(dialog);
+          }
+        },
+        {
+          fieldname: 'total_amount',
+          fieldtype: 'Currency',
+          label: __('Total Amount'),
+          read_only: 1,
+          bold: 1,
+          default: 0,
+        },
+        {
+          fieldname: 'dimensions_section',
+          fieldtype: 'Section Break',
+          label: __('Dimensions'),
+          collapsible: 1,
+        },
+        {
+          fieldname: 'width',
+          fieldtype: 'Float',
+          label: __('Width (cm)'),
+        },
+        {
+          fieldname: 'col_break2',
+          fieldtype: 'Column Break'
+        },
+        {
+          fieldname: 'height',
+          fieldtype: 'Float',
+          label: __('Height (cm)'),
+        },
+        {
+          fieldname: 'details_section',
+          fieldtype: 'Section Break',
+          label: __('Additional Details'),
+          collapsible: 1,
+        },
+        {
+          fieldname: 'description',
+          fieldtype: 'Small Text',
+          label: __('Description'),
+        },
+        {
+          fieldtype: 'Section Break',
+        },
+        {
+          fieldtype: 'HTML',
+          options: `
+            <div class="alert alert-info mb-0 mt-3" style="display: flex; align-items: center;">
+              <i class="fa fa-info-circle mr-2"></i>
+              <span>${__('The rate should be VAT inclusive')}</span>
+            </div>
+          `,
         },
       ],
-      primary_action_label: "Add Expense",
+      primary_action_label: __('Add Expense'),
       primary_action(values) {
         if (!frm.doc.additional_items) {
           frm.doc.additional_items = [];
@@ -90,14 +181,13 @@ rua_company.project_dashboard = {
 
         const amount = values.qty * values.rate;
 
-        // Create Payment Voucher
         frappe.call({
-          method: "frappe.client.insert",
+          method: 'frappe.client.insert',
           args: {
             doc: {
-              doctype: "Payment Voucher",
+              doctype: 'Payment Voucher',
               project: frm.doc.name,
-              type: "Pay",
+              type: 'Pay',
               party: values.party,
               amount: amount,
               is_petty_cash: 1,
@@ -105,28 +195,22 @@ rua_company.project_dashboard = {
           },
           callback: function (r) {
             if (!r.exc) {
-              let row = frappe.model.add_child(
-                frm.doc,
-                "Additional Items",
-                "additional_items"
-              );
+              let row = frappe.model.add_child(frm.doc, 'Additional Items', 'additional_items');
               Object.assign(row, {
                 ...values,
                 amount: amount,
                 payment_voucher: r.message.name,
               });
 
-              frm.refresh_field("additional_items");
+              frm.refresh_field('additional_items');
               frm.dirty();
               dialog.hide();
 
-              // Save the project first
-              frm
-                .save()
+              frm.save()
                 .then(() => {
                   return new Promise((resolve, reject) => {
                     frappe.call({
-                      method: "frappe.client.get",
+                      method: 'frappe.client.get',
                       args: {
                         doctype: frm.doctype,
                         name: frm.docname,
@@ -142,9 +226,8 @@ rua_company.project_dashboard = {
                   });
                 })
                 .then(() => {
-                  // Submit Payment Voucher
                   frappe.call({
-                    method: "frappe.client.submit",
+                    method: 'frappe.client.submit',
                     args: {
                       doc: r.message,
                     },
@@ -152,8 +235,8 @@ rua_company.project_dashboard = {
                       if (!r2.exc) {
                         rua_company.project_dashboard.render(frm);
                         frappe.show_alert({
-                          message: __("Expense added successfully"),
-                          indicator: "green",
+                          message: __('Expense added successfully'),
+                          indicator: 'green',
                         });
                       }
                     },
@@ -165,101 +248,283 @@ rua_company.project_dashboard = {
       },
     });
 
+    // Function to update total amount
+    function updateTotal(dialog) {
+      const qty = dialog.get_value('qty') || 0;
+      const rate = dialog.get_value('rate') || 0;
+      const total = qty * rate;
+      dialog.set_value('total_amount', total);
+    }
+
+    // After dialog creation, setup autocomplete
+    let selectedItem = null;
+    const $itemInput = dialog.$wrapper.find('.item-autocomplete');
+    const $suggestions = dialog.$wrapper.find('.item-suggestions');
+    let currentSelectedIndex = -1;
+
+    function populateItemFields(item) {
+      dialog.set_value('item', item.item);
+      if (item.description) dialog.set_value('description', item.description);
+      if (item.last_rate) dialog.set_value('rate', item.last_rate);
+      if (item.width) dialog.set_value('width', item.width);
+      if (item.height) dialog.set_value('height', item.height);
+      selectedItem = item;
+      updateTotal(dialog);
+    }
+
+    function renderSuggestions(items) {
+      if (!items || !items.length) {
+        $suggestions.hide();
+        return;
+      }
+
+      $suggestions.empty();
+      
+      items.forEach((item, index) => {
+        const $suggestion = $(`
+          <div class="item-suggestion ${index === currentSelectedIndex ? 'selected' : ''}" data-index="${index}">
+            <div class="item-rate">${formatCurrency(item.last_rate)}</div>
+            <div class="item-name">${frappe.utils.escape_html(item.item)}</div>
+            <div class="item-details">
+              ${item.description ? `<div>${frappe.utils.escape_html(item.description)}</div>` : ''}
+              ${item.width || item.height ? 
+                `<div>${item.width}cm × ${item.height}cm</div>` : 
+                ''}
+            </div>
+          </div>
+        `);
+        
+        $suggestion.data('item', item);
+        $suggestion.on('click', function() {
+          populateItemFields(item);
+          $itemInput.val(item.item);
+          $suggestions.hide();
+        });
+        
+        $suggestions.append($suggestion);
+      });
+      
+      $suggestions.show();
+    }
+
+    let searchTimeout;
+    $itemInput.on('input', function() {
+      clearTimeout(searchTimeout);
+      currentSelectedIndex = -1;
+      const query = $(this).val();
+      const party = dialog.get_value('party');
+      
+      if (!query && !party) {
+        $suggestions.hide();
+        return;
+      }
+      
+      searchTimeout = setTimeout(() => {
+        frappe.call({
+          method: 'rua_company.rua_company.doctype.project.project.get_item_suggestions',
+          args: {
+            doctype: 'Items',
+            txt: query || '',
+            searchfield: 'item',
+            start: 0,
+            page_len: 10,
+            filters: JSON.stringify(party ? { party: party } : {})
+          },
+          callback: function(r) {
+            if (r.message && r.message.length > 0) {
+              const items = r.message.map(item => ({
+                item: item[0] || '',
+                description: item[1] || '',
+                last_rate: parseFloat(item[2]) || 0,
+                width: parseFloat(item[3]) || 0,
+                height: parseFloat(item[4]) || 0
+              }));
+              renderSuggestions(items);
+            } else {
+              $suggestions.hide();
+            }
+          }
+        });
+      }, 300);
+    });
+
+    $itemInput.on('focus', function() {
+      const party = dialog.get_value('party');
+      if (party) {
+        // Show party-specific suggestions on focus
+        $(this).trigger('input');
+      }
+    });
+
+    $itemInput.on('keydown', function(e) {
+      const $items = $suggestions.find('.item-suggestion');
+      const itemsLength = $items.length;
+
+      switch(e.keyCode) {
+        case 40: // Down arrow
+          e.preventDefault();
+          currentSelectedIndex = Math.min(currentSelectedIndex + 1, itemsLength - 1);
+          break;
+        case 38: // Up arrow
+          e.preventDefault();
+          currentSelectedIndex = Math.max(currentSelectedIndex - 1, 0);
+          break;
+        case 13: // Enter
+          e.preventDefault();
+          if (currentSelectedIndex >= 0) {
+            const $selected = $items.eq(currentSelectedIndex);
+            const item = $selected.data('item');
+            if (item) {
+              populateItemFields(item);
+              $itemInput.val(item.item);
+              $suggestions.hide();
+            }
+          }
+          break;
+        case 27: // Escape
+          $suggestions.hide();
+          break;
+      }
+
+      $items.removeClass('selected');
+      if (currentSelectedIndex >= 0) {
+        $items.eq(currentSelectedIndex).addClass('selected');
+      }
+    });
+
+    $(document).on('mousedown', function(e) {
+      // Using mousedown instead of click for better UX
+      if (!$(e.target).closest('.item-autocomplete-wrapper').length) {
+        $suggestions.hide();
+      }
+    });
+
+    // Handle party changes
+    dialog.fields_dict.party.df.onchange = function() {
+      const party = dialog.get_value('party');
+      if (party) {
+        // Show party-specific suggestions
+        $itemInput.trigger('input');
+      } else {
+        $suggestions.hide();
+        $itemInput.val('');
+        dialog.set_value('item', '');
+      }
+    };
+
     dialog.show();
+    
+    // Initialize total
+    updateTotal(dialog);
   },
   showExpenseDetailsDialog: function (frm, idx) {
-    // Function to show expense details dialog
     const expense = frm.doc.additional_items.find((item) => item.idx === idx);
     if (!expense) return;
 
     const dialog = new frappe.ui.Dialog({
-      title: "Expense Details",
+      title: __('Expense Details'),
+      size: 'small',
       fields: [
         {
-          fieldtype: "Section Break",
-          label: "Expense Details",
+          fieldname: 'basic_info_section',
+          fieldtype: 'Section Break',
+          label: __('Basic Information'),
         },
         {
-          fieldname: "party",
-          fieldtype: "Link",
-          options: "Party",
-          label: "Party",
+          fieldname: 'party',
+          fieldtype: 'Link',
+          options: 'Party',
+          label: __('Party'),
           read_only: 1,
           default: expense.party,
+          bold: 1,
         },
         {
-          fieldname: "item",
-          fieldtype: "Data",
-          label: "Item",
+          fieldname: 'item',
+          fieldtype: 'Data',
+          label: __('Item'),
           read_only: 1,
           default: expense.item,
+          bold: 1,
         },
         {
-          fieldname: "description",
-          fieldtype: "Small Text",
-          label: "Description",
-          read_only: 1,
-          default: expense.description,
+          fieldname: 'col_break1',
+          fieldtype: 'Column Break'
         },
         {
-          fieldtype: "Column Break",
-        },
-        {
-          fieldname: "width",
-          fieldtype: "Float",
-          label: "Width (cm)",
-          read_only: 1,
-          default: expense.width,
-        },
-        {
-          fieldname: "height",
-          fieldtype: "Float",
-          label: "Height (cm)",
-          read_only: 1,
-          default: expense.height,
-        },
-        {
-          fieldtype: "Section Break",
-          label: "Pricing",
-        },
-        {
-          fieldname: "qty",
-          fieldtype: "Float",
-          label: "Quantity",
+          fieldname: 'qty',
+          fieldtype: 'Float',
+          label: __('Quantity'),
           read_only: 1,
           default: expense.qty,
         },
         {
-          fieldname: "rate",
-          fieldtype: "Currency",
-          label: "Rate (VAT Inclusive)",
+          fieldname: 'rate',
+          fieldtype: 'Currency',
+          label: __('Rate (VAT Incl.)'),
           read_only: 1,
           default: expense.rate,
         },
         {
-          fieldname: "amount",
-          fieldtype: "Currency",
-          label: "Total Amount",
+          fieldname: 'amount',
+          fieldtype: 'Currency',
+          label: __('Total Amount'),
           read_only: 1,
           default: expense.amount,
+          bold: 1,
+        },
+        {
+          fieldname: 'dimensions_section',
+          fieldtype: 'Section Break',
+          label: __('Dimensions'),
+          collapsible: 1,
+        },
+        {
+          fieldname: 'width',
+          fieldtype: 'Float',
+          label: __('Width (cm)'),
+          read_only: 1,
+          default: expense.width,
+        },
+        {
+          fieldname: 'col_break2',
+          fieldtype: 'Column Break'
+        },
+        {
+          fieldname: 'height',
+          fieldtype: 'Float',
+          label: __('Height (cm)'),
+          read_only: 1,
+          default: expense.height,
+        },
+        {
+          fieldname: 'details_section',
+          fieldtype: 'Section Break',
+          label: __('Additional Details'),
+          collapsible: 1,
+        },
+        {
+          fieldname: 'description',
+          fieldtype: 'Small Text',
+          label: __('Description'),
+          read_only: 1,
+          default: expense.description,
         },
       ],
-      primary_action_label: "Delete Expense",
+      primary_action_label: __('Delete Expense'),
       primary_action() {
-        frappe.confirm("Are you sure you want to delete this expense?", () => {
-          // First cancel and then delete the Payment Voucher if it exists
+        frappe.confirm(__('Are you sure you want to delete this expense?'), () => {
           if (expense.payment_voucher) {
             frappe.call({
-              method: "frappe.client.cancel",
+              method: 'frappe.client.cancel',
               args: {
-                doctype: "Payment Voucher",
+                doctype: 'Payment Voucher',
                 name: expense.payment_voucher,
               },
               freeze: true,
-              freeze_message: "Canceling Payment Voucher...",
+              freeze_message: __('Canceling Payment Voucher...'),
               callback: function (r) {
                 if (!r.exc) {
-                  // Refresh the form to reflect the changes
                   frm.reload_doc();
                   dialog.hide();
                 }
@@ -2827,7 +3092,9 @@ function deleteScope(frm, scopeNumber) {
 
   // Check if scope is in use
   const items_with_scope = frm.doc.items
-    ? frm.doc.items.filter((item) => item.scope_number === scope.scope_number)
+    ? frm.doc.items.filter(
+        (item) => item.scope_number === scope.scope_number
+      )
     : [];
 
   if (items_with_scope.length > 0) {
@@ -2910,12 +3177,16 @@ function showProjectFinancialsDialog(frm) {
                         padding: 1rem;
                         border-radius: 8px 8px 0 0;
                         margin-bottom: 0;">
-                        <h3 style="margin: 0; font-size: 1.1rem;">
+                        <h2 style="
+                            margin: 0;
+                            color: var(--heading-color);
+                            font-size: 1.1rem;
+                            font-weight: 600;">
                             <i class="fa fa-bookmark-o mr-2"></i>
                             Scope ${scope.scope_number}: ${
           scope.description || "Untitled Scope"
         }
-                        </h3>
+                        </h2>
                     </div>
                     <div class="scope-flow" style="
                         background: var(--card-bg);

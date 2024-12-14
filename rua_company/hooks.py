@@ -184,6 +184,10 @@ doctype_js = {
 # 	"frappe.desk.doctype.event.event.get_events": "rua_company.event.get_events"
 # }
 #
+# rua_company/hooks.py
+whitelisted_methods = {
+    "get_item_suggestions": "rua_company.rua_company.doctype.project.project.get_item_suggestions"
+}
 # each overriding function accepts a `data` argument;
 # generated from the base implementation of the doctype dashboard,
 # along with any modifications made in other Frappe apps
