@@ -11,23 +11,75 @@ class PaymentVoucher(Document):
 		"""Update the corresponding payment tables in the Project document"""
 		if not self.project:
 			return
-
-		project = frappe.get_doc("Project", self.project)
+			
 		table_name = "received_table" if self.type == "Receive" else "paid_table"
+
+		# Remove existing entries
+		if not self.is_petty_cash:
+			frappe.db.sql("""
+				DELETE FROM `tabPayments`
+				WHERE parent = %s AND voucher = %s AND parentfield = %s
+			""", (self.project, self.name, table_name))
+		else:
+			frappe.db.sql("""
+				DELETE FROM `tabItems`
+				WHERE parent = %s AND payment_voucher = %s AND parentfield = 'additional_items'
+			""", (self.project, self.name))
+
+		# Add new entry if not cancelled and not petty cash
+		if self.docstatus == 1 and not self.is_petty_cash:
+			frappe.db.sql("""
+				INSERT INTO `tabPayments` 
+				(
+					name, 
+					parent, 
+					parentfield, 
+					parenttype, 
+					voucher,
+					date,
+					type,
+					amount
+				)
+				VALUES (%s, %s, %s, 'Project', %s, %s, %s, %s)
+			""", (
+				frappe.generate_hash(),
+				self.project,
+				table_name,
+				self.name,
+				self.date,
+				self.type,
+				self.amount
+			))
 		
-		# Get current entries
-		entries = project.get(table_name)
+		# Get project doc and recalculate totals
+		project = frappe.get_doc("Project", self.project)
+		project.calculate_financial_totals()
 		
-		# Remove existing entry if any
-		project.set(table_name, [d for d in entries if d.voucher != self.name])
-		
-		# Add new entry if not cancelled
-		if self.docstatus == 1:  # Submitted
-			project.append(table_name, {
-				"voucher": self.name,
-			})
-		
-		project.save()
+		# Update only the calculated fields using SQL
+		frappe.db.sql("""
+			UPDATE `tabProject`
+			SET 
+				total_received = %s,
+				total_paid = %s,
+				total_payable = %s,
+				due_receivables = %s,
+				due_payables = %s,
+				total_project_value = %s,
+				project_profit = %s,
+				profit_percentage = %s
+			WHERE name = %s
+		""", (
+			project.total_received,
+			project.total_paid,
+			project.total_payable,
+			project.due_receivables,
+			project.due_payables,
+			project.total_project_value,
+			project.project_profit,
+			project.profit_percentage,
+			self.project
+		))
+		frappe.db.commit()
 
 	def on_submit(self):
 		"""Called when document is submitted"""
@@ -41,61 +93,49 @@ class PaymentVoucher(Document):
 	
 	def allocate_payments(self):
 		"""Allocate payments to bills"""
+		if not self.project:
+			return
+
 		if self.type == "Receive":
 			# Get all submitted Tax Invoices for this project
-			bills = frappe.get_all(
-				"Project Bill",
-				filters={
-					"project": self.project,
-					"bill_type": "Tax Invoice",
-					"docstatus": 1
-				},
-				fields=["name", "grand_total", "status"],
-				order_by="creation"
-			)
+			bills = frappe.db.sql("""
+				SELECT name, grand_total, status
+				FROM `tabProject Bill`
+				WHERE project = %s
+				AND bill_type = 'Tax Invoice'
+				AND docstatus = 1
+				ORDER BY creation
+			""", (self.project,), as_dict=1)
+			
+			total_payments = frappe.db.sql("""
+				SELECT COALESCE(SUM(amount), 0) as total
+				FROM `tabPayment Voucher`
+				WHERE project = %s
+				AND type = 'Receive'
+				AND docstatus = 1
+			""", (self.project,))[0][0]
 		else:  # Pay
 			# Get all submitted Purchase Orders for this project and supplier
-			bills = frappe.get_all(
-				"Project Bill",
-				filters={
-					"project": self.project,
-					"party": self.party,
-					"bill_type": "Purchase Order",
-					"docstatus": 1
-				},
-				fields=["name", "grand_total", "status"],
-				order_by="creation"
-			)
+			bills = frappe.db.sql("""
+				SELECT name, grand_total, status
+				FROM `tabProject Bill`
+				WHERE project = %s
+				AND party = %s
+				AND bill_type = 'Purchase Order'
+				AND docstatus = 1
+				ORDER BY creation
+			""", (self.project, self.party), as_dict=1)
+			
+			total_payments = frappe.db.sql("""
+				SELECT COALESCE(SUM(amount), 0) as total
+				FROM `tabPayment Voucher`
+				WHERE project = %s
+				AND party = %s
+				AND type = %s
+				AND docstatus = 1
+			""", (self.project, self.party, self.type))[0][0]
 
-		# Get all submitted payments for this project
-		if self.type == "Receive":
-			payments = frappe.get_all(
-				"Payment Voucher",
-				filters={
-					"project": self.project,
-					"type": self.type,
-					"docstatus": 1
-				},
-				fields=["amount"],
-				order_by="creation"
-			)
-		else:  # Pay
-			payments = frappe.get_all(
-				"Payment Voucher",
-				filters={
-					"project": self.project,
-					"party": self.party,
-					"type": self.type,
-					"docstatus": 1
-				},
-				fields=["amount"],
-				order_by="creation"
-			)
-
-		# Calculate total payments
-		total_payments = sum(payment.amount for payment in payments)
-
-		# Update bill statuses based on available payments
+		# Update statuses one by one
 		remaining_payment = total_payments
 		for bill in bills:
 			if remaining_payment <= 0:
@@ -104,8 +144,13 @@ class PaymentVoucher(Document):
 				status = "Paid"
 			else:
 				status = "Partially Paid"
-
-			frappe.db.set_value("Project Bill", bill.name, "status", status)
+			
+			frappe.db.sql("""
+				UPDATE `tabProject Bill` 
+				SET status = %s 
+				WHERE name = %s
+			""", (status, bill.name))
+			
 			remaining_payment -= bill.grand_total
 
 		frappe.db.commit()

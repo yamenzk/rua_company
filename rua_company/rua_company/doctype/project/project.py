@@ -607,55 +607,138 @@ def get_party_outstanding_amounts(project, parties):
 @frappe.whitelist()
 def refresh_all_tables(project):
     """Clear and repopulate all child tables in the project"""
-    doc = frappe.get_doc("Project", project)
+    # Clear all child tables using SQL
+    child_tables = ['Project Bills', 'Payments']
     
-    # Clear all child tables
-    doc.quotation_drafts = []
-    doc.quotations = []
-    doc.rfq_drafts = []
-    doc.rfqs = []
-    doc.proforma_drafts = []
-    doc.proformas = []
-    doc.lpo_drafts = []
-    doc.lpos = []
-    doc.invoice_drafts = []
-    doc.invoices = []
-    doc.received_table = []
-    doc.paid_table = []
-    
-    # Save to clear tables
-    doc.save()
+    for table in child_tables:
+        frappe.db.sql("""
+            DELETE FROM `tab{0}`
+            WHERE parent = %s
+        """.format(table), (project,))
     
     # Get all project bills sorted by creation date
-    bills = frappe.get_all(
-        "Project Bill",
-        filters={
-            "project": project,
-            "docstatus": ["in", [0, 1]]  # Get both drafts and submitted
-        },
-        fields=["name", "docstatus", "creation"],
-        order_by="creation asc"  # Sort by creation date, oldest first
-    )
+    bills = frappe.db.sql("""
+        SELECT 
+            pb.name,
+            pb.docstatus,
+            pb.bill_type,
+            pb.scope as scope,
+            pb.date,
+            pb.grand_total,
+            pb.status,
+            pb.party
+        FROM `tabProject Bill` pb
+        WHERE pb.project = %s
+        AND pb.docstatus IN (0, 1)
+        ORDER BY pb.creation
+    """, (project,), as_dict=1)
     
-    # Update project tables for each bill
+    # Prepare bill data
+    draft_table = {
+        "Quotation": "quotation_drafts",
+        "Request for Quotation": "rfq_drafts",
+        "Proforma": "proforma_drafts",
+        "Purchase Order": "lpo_drafts",
+        "Tax Invoice": "invoice_drafts"
+    }
+    final_table = {
+        "Quotation": "quotations",
+        "Request for Quotation": "rfqs",
+        "Proforma": "proformas",
+        "Purchase Order": "lpos",
+        "Tax Invoice": "invoices"
+    }
+
+    # Insert bill entries one by one
     for bill in bills:
-        bill_doc = frappe.get_doc("Project Bill", bill.name)
-        bill_doc.update_project_tables()
-    
-    # Get all payment vouchers sorted by creation date
-    vouchers = frappe.get_all(
-        "Payment Voucher",
-        filters={
-            "project": project,
-            "docstatus": 1  # Only get submitted vouchers
-        },
-        fields=["name", "creation"],
-        order_by="creation asc"  # Sort by creation date, oldest first
-    )
-    
-    # Update project tables for each voucher
+        if bill.bill_type not in draft_table:
+            continue
+            
+        table_field = draft_table[bill.bill_type] if bill.docstatus == 0 else final_table[bill.bill_type]
+        frappe.db.sql("""
+            INSERT INTO `tabProject Bills`
+            (name, parent, parentfield, parenttype, bill, scope, bill_type, date, grand_total, status, party)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        """, (
+            frappe.generate_hash(),
+            project,
+            table_field,
+            'Project',
+            bill.name,
+            bill.scope,
+            bill.bill_type,
+            bill.date,
+            bill.grand_total,
+            bill.status,
+            bill.party
+        ))
+
+    # Get all payment vouchers
+    vouchers = frappe.db.sql("""
+        SELECT 
+            name,
+            date,
+            type,
+            amount
+        FROM `tabPayment Voucher`
+        WHERE project = %s
+        AND docstatus = 1
+        AND is_petty_cash = 0
+        ORDER BY creation
+    """, (project,), as_dict=1)
+
+    # Insert voucher entries one by one
     for voucher in vouchers:
-        voucher_doc = frappe.get_doc("Payment Voucher", voucher.name)
-        voucher_doc.update_project_tables()
+        table_name = "received_table" if voucher.type == "Receive" else "paid_table"
+        frappe.db.sql("""
+            INSERT INTO `tabPayments`
+            (name, parent, parentfield, parenttype, voucher, date, type, amount)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+        """, (
+            frappe.generate_hash(),
+            project,
+            table_name,
+            'Project',
+            voucher.name,
+            voucher.date,
+            voucher.type,
+            voucher.amount
+        ))
+
+    # Recalculate project totals
+    project_doc = frappe.get_doc("Project", project)
+    project_doc.calculate_financial_totals()
     
+    # Update project fields
+    frappe.db.sql("""
+        UPDATE `tabProject`
+        SET 
+            total_proformas = %s,
+            total_invoices = %s,
+            total_expenses = %s,
+            total_received = %s,
+            total_paid = %s,
+            total_payable = %s,
+            due_receivables = %s,
+            due_payables = %s,
+            total_project_value = %s,
+            project_profit = %s,
+            profit_percentage = %s
+        WHERE name = %s
+    """, (
+        project_doc.total_proformas,
+        project_doc.total_invoices,
+        project_doc.total_expenses,
+        project_doc.total_received,
+        project_doc.total_paid,
+        project_doc.total_payable,
+        project_doc.due_receivables,
+        project_doc.due_payables,
+        project_doc.total_project_value,
+        project_doc.project_profit,
+        project_doc.profit_percentage,
+        project
+    ))
+    
+    frappe.db.commit()
     return True

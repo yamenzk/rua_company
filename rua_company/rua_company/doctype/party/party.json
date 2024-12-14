@@ -25,16 +25,19 @@
  ],
  "fields": [
   {
+   "allow_in_quick_entry": 1,
+   "default": "Company",
    "fieldname": "type",
    "fieldtype": "Select",
    "label": "Party Type",
-   "options": "\nIndividual\nCompany"
+   "options": "Company\nIndividual"
   },
   {
    "fieldname": "column_break_zcia",
    "fieldtype": "Column Break"
   },
   {
+   "allow_in_quick_entry": 1,
    "fieldname": "phone",
    "fieldtype": "Data",
    "label": "Phone",
@@ -74,9 +77,12 @@
    "options": "<img style=\"border-radius: var(--border-radius);\" src=\"{{doc.image}}\">"
   },
   {
+   "allow_in_quick_entry": 1,
    "fieldname": "party_name",
    "fieldtype": "Data",
+   "in_list_view": 1,
    "label": "Party Name",
+   "reqd": 1,
    "unique": 1
   },
   {
@@ -87,6 +93,7 @@
    "options": "\nAluminum\nGlass\nCladding"
   },
   {
+   "allow_in_quick_entry": 1,
    "fieldname": "trn",
    "fieldtype": "Int",
    "label": "TRN"
@@ -96,6 +103,7 @@
    "fieldtype": "Column Break"
   },
   {
+   "allow_in_quick_entry": 1,
    "default": "Abu Dhabi",
    "fieldname": "emirate",
    "fieldtype": "Select",
@@ -108,7 +116,7 @@
  "index_web_pages_for_search": 1,
  "links": [],
  "make_attachments_public": 1,
- "modified": "2024-12-13 18:10:27.188179",
+ "modified": "2024-12-14 01:10:29.233646",
  "modified_by": "Administrator",
  "module": "Rua Company",
  "name": "Party",
@@ -146,6 +154,7 @@
    "write": 1
   }
  ],
+ "quick_entry": 1,
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [],

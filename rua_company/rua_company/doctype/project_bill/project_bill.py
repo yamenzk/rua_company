@@ -55,7 +55,6 @@ class ProjectBill(Document):
 		if not self.project:
 			return
 
-		project = frappe.get_doc("Project", self.project)
 		draft_table = {
 			"Quotation": "quotation_drafts",
 			"Request for Quotation": "rfq_drafts",
@@ -78,29 +77,88 @@ class ProjectBill(Document):
 		draft_table_name = draft_table[self.bill_type]
 		final_table_name = final_table[self.bill_type]
 
-		# Remove existing entries for this bill from both tables
-		draft_entries = project.get(draft_table_name)
-		final_entries = project.get(final_table_name)
+		# Remove existing entries from both tables
+		frappe.db.sql("""
+			DELETE FROM `tabProject Bills`
+			WHERE parent = %s AND bill = %s AND parentfield = %s
+		""", (self.project, self.name, draft_table_name))
+
+		frappe.db.sql("""
+			DELETE FROM `tabProject Bills`
+			WHERE parent = %s AND bill = %s AND parentfield = %s
+		""", (self.project, self.name, final_table_name))
+
+		# Add new entry to appropriate table based on docstatus
+		if self.docstatus in [0, 1]:  # Draft or Submitted
+			table_field = draft_table_name if self.docstatus == 0 else final_table_name
+			
+			frappe.db.sql("""
+				INSERT INTO `tabProject Bills` 
+				(
+					name, 
+					parent, 
+					parentfield, 
+					parenttype, 
+					bill,
+					scope,
+					bill_type,
+					date,
+					grand_total,
+					status,
+					party
+				)
+				VALUES (%s, %s, %s, 'Project', %s, %s, %s, %s, %s, %s, %s)
+			""", (
+				frappe.generate_hash(),
+				self.project,
+				table_field,
+				self.name,
+				self.scope_number,
+				self.bill_type,
+				self.date,
+				self.grand_total,
+				self.status,
+				self.party
+			))
+
+		# Get project doc and recalculate totals
+		project = frappe.get_doc("Project", self.project)
+		project.calculate_financial_totals()
 		
-		project.set(draft_table_name, [d for d in draft_entries if d.bill != self.name])
-		project.set(final_table_name, [d for d in final_entries if d.bill != self.name])
-
-		# Add to appropriate table based on docstatus
-		if self.docstatus == 0:  # Draft
-			project.append(draft_table_name, {
-				"bill": self.name,
-			})
-		elif self.docstatus == 1:  # Submitted
-			project.append(final_table_name, {
-				"bill": self.name,
-			})
-
-		project.save()
+		# Update only the calculated fields using SQL
+		frappe.db.sql("""
+			UPDATE `tabProject`
+			SET 
+				total_proformas = %s,
+				total_invoices = %s,
+				total_expenses = %s,
+				total_paid = %s,
+				total_receivable = %s,
+				total_payable = %s,
+				due_receivables = %s,
+				due_payables = %s,
+				total_project_value = %s,
+				project_profit = %s,
+				profit_percentage = %s
+			WHERE name = %s
+		""", (
+			project.total_proformas,
+			project.total_invoices,
+			project.total_expenses,
+			project.total_paid,
+			project.total_receivable,
+			project.total_payable,
+			project.due_receivables,
+			project.due_payables,
+			project.total_project_value,
+			project.project_profit,
+			project.profit_percentage,
+			self.project
+		))
+		frappe.db.commit()
 
 	def on_update(self):
-		"""Called when document is updated"""
-		if self.docstatus == 0:  # Only for drafts
-			self.update_project_tables()
+		self.update_project_tables()
 
 	def on_submit(self):
 		"""Called when document is submitted"""
@@ -175,33 +233,71 @@ class ProjectBill(Document):
 
 	def on_trash(self):
 		"""Called when document is deleted"""
-		if self.project:
-			project = frappe.get_doc("Project", self.project)
-			draft_table = {
-				"Quotation": "quotation_drafts",
-				"Request for Quotation": "rfq_drafts",
-				"Proforma": "proforma_drafts",
-				"Purchase Order": "lpo_drafts",
-				"Tax Invoice": "invoice_drafts"
-			}
-			final_table = {
-				"Quotation": "quotations",
-				"Request for Quotation": "rfqs",
-				"Proforma": "proformas",
-				"Purchase Order": "lpos",
-				"Tax Invoice": "invoices"
-			}
+		if not self.project:
+			return
+			
+		draft_table = {
+			"Quotation": "quotation_drafts",
+			"Request for Quotation": "rfq_drafts",
+			"Proforma": "proforma_drafts",
+			"Purchase Order": "lpo_drafts",
+			"Tax Invoice": "invoice_drafts"
+		}
+		final_table = {
+			"Quotation": "quotations",
+			"Request for Quotation": "rfqs",
+			"Proforma": "proformas",
+			"Purchase Order": "lpos",
+			"Tax Invoice": "invoices"
+		}
 
-			if self.bill_type in draft_table:
-				draft_table_name = draft_table[self.bill_type]
-				final_table_name = final_table[self.bill_type]
-				
-				# Remove from draft table
-				draft_entries = project.get(draft_table_name)
-				project.set(draft_table_name, [d for d in draft_entries if d.bill != self.name])
-				
-				# Remove from final table
-				final_entries = project.get(final_table_name)
-				project.set(final_table_name, [d for d in final_entries if d.bill != self.name])
-				
-				project.save()
+		if self.bill_type in draft_table:
+			draft_table_name = draft_table[self.bill_type]
+			final_table_name = final_table[self.bill_type]
+			
+			# Remove from both tables using SQL
+			frappe.db.sql("""
+				DELETE FROM `tabProject Bills`
+				WHERE parent = %s AND bill = %s AND parentfield = %s
+			""", (self.project, self.name, draft_table_name))
+			
+			frappe.db.sql("""
+				DELETE FROM `tabProject Bills`
+				WHERE parent = %s AND bill = %s AND parentfield = %s
+			""", (self.project, self.name, final_table_name))
+			
+			# Get project doc and recalculate totals
+			project = frappe.get_doc("Project", self.project)
+			project.calculate_financial_totals()
+			
+			# Update only the calculated fields using SQL
+			frappe.db.sql("""
+				UPDATE `tabProject`
+				SET 
+					total_proformas = %s,
+					total_invoices = %s,
+					total_expenses = %s,
+					total_paid = %s,
+					total_receivable = %s,
+					total_payable = %s,
+					due_receivables = %s,
+					due_payables = %s,
+					total_project_value = %s,
+					project_profit = %s,
+					profit_percentage = %s
+				WHERE name = %s
+			""", (
+				project.total_proformas,
+				project.total_invoices,
+				project.total_expenses,
+				project.total_paid,
+				project.total_receivable,
+				project.total_payable,
+				project.due_receivables,
+				project.due_payables,
+				project.total_project_value,
+				project.project_profit,
+				project.profit_percentage,
+				self.project
+			))
+			frappe.db.commit()

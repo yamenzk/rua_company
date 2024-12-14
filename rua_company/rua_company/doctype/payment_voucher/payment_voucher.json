@@ -65,6 +65,7 @@
    "in_list_view": 1,
    "label": "Type",
    "options": "\nPay\nReceive",
+   "read_only": 1,
    "reqd": 1
   },
   {
@@ -96,7 +97,7 @@
    "fieldtype": "Column Break"
   },
   {
-   "default": "Now",
+   "default": "Today",
    "fieldname": "date",
    "fieldtype": "Date",
    "label": "Date"
@@ -122,7 +123,7 @@
    "label": "Bank"
   },
   {
-   "default": "Now",
+   "default": "Today",
    "depends_on": "eval:doc.mode != \"Cash\"",
    "fieldname": "claimable_on",
    "fieldtype": "Date",
@@ -132,7 +133,6 @@
    "fieldname": "project",
    "fieldtype": "Link",
    "label": "Project",
-   "mandatory_depends_on": "eval:doc.assign_to_project",
    "options": "Project",
    "read_only": 1,
    "reqd": 1
@@ -164,7 +164,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-12-13 19:28:51.171995",
+ "modified": "2024-12-14 01:18:51.668807",
  "modified_by": "Administrator",
  "module": "Rua Company",
  "name": "Payment Voucher",

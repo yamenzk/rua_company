@@ -16,13 +16,19 @@ rua_company.project_dashboard = {
         listenersAttached = true;
     },
     showAddExpenseDialog: function(frm) {
-        // Function to show add expense dialog
         const dialog = new frappe.ui.Dialog({
             title: 'Add Expense',
             fields: [
                 {
                     fieldtype: 'Section Break',
                     label: 'Expense Details'
+                },
+                {
+                    fieldname: 'party',
+                    fieldtype: 'Link',
+                    options: 'Party',
+                    label: 'Party',
+                    mandatory_depends_on: 'eval:1'
                 },
                 {
                     fieldname: 'item',
@@ -84,20 +90,53 @@ rua_company.project_dashboard = {
 
                 const amount = values.qty * values.rate; 
                 
-                let row = frappe.model.add_child(frm.doc, 'Additional Items', 'additional_items');
-                Object.assign(row, {
-                    ...values,
-                    amount: amount
-                });
-                
-                frm.refresh_field('additional_items');
-                frm.dirty();
-                dialog.hide();
-                frm.save();
-                rua_company.project_dashboard.render(frm);
-                frappe.show_alert({
-                    message: __('Expense added successfully'),
-                    indicator: 'green'
+                // Create Payment Voucher
+                frappe.call({
+                    method: 'frappe.client.insert',
+                    args: {
+                        doc: {
+                            doctype: 'Payment Voucher',
+                            project: frm.doc.name,
+                            type: 'Pay',
+                            party: values.party,
+                            amount: amount,
+                            is_petty_cash: 1
+                        }
+                    },
+                    callback: function(r) {
+                        if (!r.exc) {
+                            let row = frappe.model.add_child(frm.doc, 'Additional Items', 'additional_items');
+                            Object.assign(row, {
+                                ...values,
+                                amount: amount,
+                                payment_voucher: r.message.name
+                            });
+                            
+                            frm.refresh_field('additional_items');
+                            frm.dirty();
+                            dialog.hide();
+                            
+                            // Save the project first
+                            frm.save().then(() => {
+                                // Then submit the Payment Voucher
+                                frappe.call({
+                                    method: 'frappe.client.submit',
+                                    args: {
+                                        doc: r.message
+                                    },
+                                    callback: function(r2) {
+                                        if (!r2.exc) {
+                                            rua_company.project_dashboard.render(frm);
+                                            frappe.show_alert({
+                                                message: __('Expense added successfully'),
+                                                indicator: 'green'
+                                            });
+                                        }
+                                    }
+                                });
+                            });
+                        }
+                    }
                 });
             }
         });
@@ -117,16 +156,25 @@ rua_company.project_dashboard = {
                     label: 'Expense Details'
                 },
                 {
+                    fieldname: 'party',
+                    fieldtype: 'Link',
+                    options: 'Party',
+                    label: 'Party',
+                    read_only: 1,
+                    default: expense.party
+                },
+                {
                     fieldname: 'item',
                     fieldtype: 'Data',
                     label: 'Item',
-                    mandatory_depends_on: 'eval:1',
+                    read_only: 1,
                     default: expense.item
                 },
                 {
                     fieldname: 'description',
                     fieldtype: 'Small Text',
                     label: 'Description',
+                    read_only: 1,
                     default: expense.description
                 },
                 {
@@ -136,12 +184,14 @@ rua_company.project_dashboard = {
                     fieldname: 'width',
                     fieldtype: 'Float',
                     label: 'Width (cm)',
+                    read_only: 1,
                     default: expense.width
                 },
                 {
                     fieldname: 'height',
                     fieldtype: 'Float',
                     label: 'Height (cm)',
+                    read_only: 1,
                     default: expense.height
                 },
                 {
@@ -152,71 +202,51 @@ rua_company.project_dashboard = {
                     fieldname: 'qty',
                     fieldtype: 'Float',
                     label: 'Quantity',
-                    mandatory_depends_on: 'eval:1',
+                    read_only: 1,
                     default: expense.qty
                 },
                 {
                     fieldname: 'rate',
                     fieldtype: 'Currency',
                     label: 'Rate (VAT Inclusive)',
-                    mandatory_depends_on: 'eval:1',
-                    default: expense.rate,
-                    description: 'Please ensure the rate includes VAT'
+                    read_only: 1,
+                    default: expense.rate
                 },
                 {
-                    fieldtype: 'HTML',
-                    options: `
-                        <div class="alert alert-info">
-                            <i class="fa fa-info-circle"></i>
-                            <strong>Note:</strong> The rate should be VAT inclusive.
-                        </div>
-                    `
+                    fieldname: 'amount',
+                    fieldtype: 'Currency',
+                    label: 'Total Amount',
+                    read_only: 1,
+                    default: expense.amount
                 }
             ],
-            primary_action_label: 'Save Changes',
-            primary_action(values) {
-                const amount = values.qty * values.rate;
-                
-                // Find and update the expense
-                const expense_idx = frm.doc.additional_items.findIndex(item => item.idx === idx);
-                if (expense_idx !== -1) {
-                    Object.assign(frm.doc.additional_items[expense_idx], {
-                        ...values,
-                        amount: amount
-                    });
-                    
-                    frm.refresh_field('additional_items');
-                    frm.dirty();
-                    dialog.hide();
-                    frm.save();
-                    rua_company.project_dashboard.render(frm);
-                    frappe.show_alert({
-                        message: __('Expense updated successfully'),
-                        indicator: 'green'
-                    });
-                }
+            primary_action_label: 'Delete Expense',
+            primary_action() {
+                frappe.confirm(
+                    'Are you sure you want to delete this expense?',
+                    () => {
+                        // First cancel and then delete the Payment Voucher if it exists
+                        if (expense.payment_voucher) {
+                            frappe.call({
+                                method: 'frappe.client.cancel',
+                                args: {
+                                    doctype: 'Payment Voucher',
+                                    name: expense.payment_voucher
+                                },
+                                callback: function(r) {
+                                    if (!r.exc) {
+                                        // Refresh the form to reflect the changes
+                                        frm.reload_doc();
+                                        dialog.hide();
+                                    }
+                                }
+                            });
+                        }
+                    }
+                );
             }
         });
 
-        // Add delete button
-        dialog.add_custom_action('Delete', () => {
-            frappe.confirm(
-                __('Are you sure you want to delete this expense?'),
-                () => {
-                    frm.doc.additional_items = frm.doc.additional_items.filter(item => item.idx !== idx);
-                    frm.refresh_field('additional_items');
-                    frm.dirty();
-                    dialog.hide();
-                    frm.save();
-                    rua_company.project_dashboard.render(frm);
-                    frappe.show_alert({
-                        message: __('Expense deleted'),
-                        indicator: 'green'
-                    });
-                }
-            );
-        }, 'red');
-        
         dialog.show();
     }
 };
@@ -2465,7 +2495,7 @@ function showProjectFinancialsDialog(frm) {
                                 
                                 <div class="flow-node highlighted" style="
                                     background: ${colorSet.bg};
-                                    border: 2px solid ${colorSet.bg};
+                                    border: 1px solid ${colorSet.bg};
                                     border-radius: 8px;
                                     padding: 1rem;
                                     margin-bottom: 1rem;">
