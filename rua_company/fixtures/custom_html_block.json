@@ -1,0 +1,13 @@
+[
+ {
+  "docstatus": 0,
+  "doctype": "Custom HTML Block",
+  "html": "<div class=\"header-class\"></div>",
+  "modified": "2024-12-15 14:24:30.516361",
+  "name": "company-name",
+  "private": 0,
+  "roles": [],
+  "script": "async function getCompanyDetails() {\r\n    try {\r\n        // Fetch both values simultaneously using Promise.all\r\n        const [companyName, logoUrl] = await Promise.all([\r\n            frappe.db.get_single_value(\"Rua\", \"company_name\"),\r\n            frappe.db.get_single_value(\"Rua\", \"logo_wide\")\r\n        ]);\r\n        return { companyName, logoUrl };\r\n    } catch (error) {\r\n        console.error(\"Error fetching company details:\", error);\r\n        return { companyName: null, logoUrl: null };\r\n    }\r\n}\r\n\r\nlet header_class_element = root_element.querySelector('.header-class');\r\ngetCompanyDetails().then(({ companyName, logoUrl }) => {\r\n    if (logoUrl) {\r\n        // Create and set up the image element\r\n        let logoImg = document.createElement('img');\r\n        logoImg.src = logoUrl;\r\n        logoImg.alt = companyName || \"Company Logo\";\r\n        logoImg.style.maxWidth = \"100%\";\r\n        logoImg.style.height = \"auto\";\r\n        logoImg.draggable = false;\r\n        \r\n        // Clear existing content and add the image\r\n        header_class_element.innerHTML = '';\r\n        header_class_element.appendChild(logoImg);\r\n\r\n        // Add error handling for image loading\r\n        logoImg.onerror = () => {\r\n            console.log(\"Image failed to load, falling back to company name\");\r\n            header_class_element.textContent = companyName || '';\r\n        };\r\n    } else if (companyName) {\r\n        header_class_element.textContent = companyName;\r\n    }\r\n});",
+  "style": ".header-class {\r\n  font-size: 24px;  /* Larger font size */\r\n  font-weight: bold; /* Make the text bold */\r\n  color: #333;  /* Dark color for the text */\r\n  padding: 10px 20px; /* Padding around the text */\r\n  text-align: center; /* Center the text */\r\n}\r\n.header-class img {\r\n  max-width: 100%; /* Ensure logo scales properly */\r\n  height: auto;    /* Maintain aspect ratio */\r\n}"
+ }
+]

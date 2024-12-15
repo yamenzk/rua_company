@@ -5,6 +5,12 @@ app_description = "Rua Company Management System"
 app_email = "yz.kh@icloud.com"
 app_license = "mit"
 
+fixtures = [
+    {
+        "dt": "Custom HTML Block"
+    }
+]
+
 # Apps
 # ------------------
 
