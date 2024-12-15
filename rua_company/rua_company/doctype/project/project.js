@@ -3,7 +3,7 @@
 
 frappe.ui.form.on("Project", {
   refresh(frm) {
-    if (frm.doc.__islocal) {
+    if (frm.doc.__islocal ) {
       frappe.prompt(
         {
           label: "Project Name",
@@ -372,29 +372,25 @@ function apply_color_coding(frm) {
   // Only proceed if we have more than one scope
   if (!frm.doc.scopes || frm.doc.scopes.length <= 1) {
     // Clear any existing colors
-    frm.fields_dict["scopes"].grid.grid_rows.forEach((row) => {
-      const $row = $(row.row).length
-        ? $(row.row)
-        : $(row.wrapper).find(".grid-row").length
-        ? $(row.wrapper).find(".grid-row")
-        : $(row.wrapper).find('[data-name="' + row.doc.name + '"]');
-      $row.css({
+    frm.fields_dict["scopes"].grid.grid_rows.forEach((grid_row) => {
+      $(grid_row.wrapper).css({
         "background-color": "",
-        color: "",
         "border-color": "",
+      });
+      $(grid_row.wrapper).find(".col").css({
+        color: "",
+        "border-right": "",
       });
     });
 
-    frm.fields_dict["items"].grid.grid_rows.forEach((row) => {
-      const $row = $(row.row).length
-        ? $(row.row)
-        : $(row.wrapper).find(".grid-row").length
-        ? $(row.wrapper).find(".grid-row")
-        : $(row.wrapper).find('[data-name="' + row.doc.name + '"]');
-      $row.css({
+    frm.fields_dict["items"].grid.grid_rows.forEach((grid_row) => {
+      $(grid_row.wrapper).css({
         "background-color": "",
-        color: "",
         "border-color": "",
+      });
+      $(grid_row.wrapper).find(".col").css({
+        color: "",
+        "border-right": "",
       });
     });
     return;
@@ -403,23 +399,18 @@ function apply_color_coding(frm) {
   setTimeout(() => {
     // Color the scopes grid
     if (frm.fields_dict["scopes"].grid.grid_rows) {
-      frm.fields_dict["scopes"].grid.grid_rows.forEach((row, index) => {
-        const scopeNum = row.doc.scope_number;
+      frm.fields_dict["scopes"].grid.grid_rows.forEach((grid_row, index) => {
+        const scopeNum = grid_row.doc.scope_number;
         if (scopeNum) {
           const colorSet = SCOPE_COLORS[(scopeNum - 1) % SCOPE_COLORS.length];
-          const $row = $(row.row).length
-            ? $(row.row)
-            : $(row.wrapper).find(".grid-row").length
-            ? $(row.wrapper).find(".grid-row")
-            : $(row.wrapper).find('[data-name="' + row.doc.name + '"]');
-
-          $row.css({
+          
+          $(grid_row.wrapper).css({
             "background-color": colorSet.bg,
-            color: colorSet.text,
           });
 
-          // Apply border color to cells
-          $row.find(".col").css({
+          // Apply text color to cells
+          $(grid_row.wrapper).find(".col").css({
+            color: colorSet.text,
             "border-right": "0",
           });
         }
@@ -428,23 +419,18 @@ function apply_color_coding(frm) {
 
     // Color the items grid
     if (frm.fields_dict["items"].grid.grid_rows) {
-      frm.fields_dict["items"].grid.grid_rows.forEach((row) => {
-        const scopeNum = row.doc.scope_number;
+      frm.fields_dict["items"].grid.grid_rows.forEach((grid_row) => {
+        const scopeNum = grid_row.doc.scope_number;
         if (scopeNum) {
           const colorSet = SCOPE_COLORS[(scopeNum - 1) % SCOPE_COLORS.length];
-          const $row = $(row.row).length
-            ? $(row.row)
-            : $(row.wrapper).find(".grid-row").length
-            ? $(row.wrapper).find(".grid-row")
-            : $(row.wrapper).find('[data-name="' + row.doc.name + '"]');
-
-          $row.css({
+          
+          $(grid_row.wrapper).css({
             "background-color": colorSet.bg,
-            color: colorSet.text,
           });
 
-          // Apply border color to cells
-          $row.find(".col").css({
+          // Apply text color to cells
+          $(grid_row.wrapper).find(".col").css({
+            color: colorSet.text,
             "border-right": "0",
           });
         }
@@ -923,21 +909,42 @@ function b64toBlob(b64Data, contentType = "", sliceSize = 512) {
 function show_import_dialog(frm) {
   let selected_scope = null;
 
-  // Create a dialog for scope selection and file upload
   const dialog = new frappe.ui.Dialog({
-    title: "Import Items from Excel",
+    title: "Import Items",
     fields: [
       {
         fieldname: "scope_select_html",
         fieldtype: "HTML",
-        options: `<div class="scope-select mb-4"></div>`,
+        options: `
+          <div class="excel-import-container">
+            <div class="excel-scope-section">
+              <div class="excel-scope-header">
+                ${frm.doc.scopes.length > 1 ? 
+                  '<div class="text-lg font-bold mb-3">Choose a Scope</div>' : 
+                  ''
+                }
+              </div>
+              <div class="excel-scope-list"></div>
+            </div>
+            
+            <div class="excel-upload-section mt-6">
+              <div class="flex items-center justify-between mb-4">
+                <div class="text-lg font-bold">Import Your Data</div>
+                <button class="btn btn-default excel-template-btn">
+                  <i class="fa fa-download mr-2"></i>Get Template
+                </button>
+              </div>
+              <div class="excel-file-upload"></div>
+            </div>
+          </div>
+        `,
       },
       {
         fieldname: "upload_file",
         fieldtype: "Attach",
         label: "Upload Excel File",
         reqd: 1,
-        onchange: function () {
+        onchange: function() {
           const file = dialog.get_value("upload_file");
           if (file && selected_scope) {
             import_excel_data(file, selected_scope, dialog, frm);
@@ -950,7 +957,82 @@ function show_import_dialog(frm) {
     ],
   });
 
-  // Function to handle the import
+  // Add custom styles
+  dialog.$wrapper.find('.modal-dialog').css({
+    'max-width': '800px'
+  });
+  
+  dialog.$wrapper.append(`
+    <style>
+      .excel-import-container {
+        padding: 0.5rem;
+      }
+      
+      .excel-scope-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+      }
+      
+      .excel-scope-item {
+        position: relative;
+        border-radius: 8px;
+        border: 2px solid transparent;
+        transition: all 0.2s ease;
+        cursor: pointer;
+        overflow: hidden;
+      }
+      
+      .excel-scope-item:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      }
+      
+      .excel-scope-item.excel-scope-active {
+        border-color: var(--primary);
+      }
+      
+      .excel-scope-content {
+        padding: 1.25rem;
+      }
+      
+      .excel-scope-number {
+        font-size: 1.25rem;
+        font-weight: bold;
+        margin-bottom: 0.5rem;
+      }
+      
+      .excel-scope-desc {
+        font-size: 0.875rem;
+        opacity: 0.8;
+      }
+      
+      .excel-upload-section {
+        background: var(--bg-light-gray);
+        border-radius: 8px;
+        padding: 1.5rem;
+      }
+      
+      .excel-template-btn {
+        padding: 6px 12px;
+        border-radius: 6px;
+        font-size: 0.875rem;
+      }
+      
+      .excel-file-upload {
+        border-radius: 8px;
+        background: white;
+        padding: 1rem;
+      }
+      
+      /* Override Frappe's attach field styling */
+      .excel-file-upload .attach-input-wrap {
+        margin-bottom: 0;
+      }
+    </style>
+  `);
+
   function import_excel_data(file_url, scope, dialog, frm) {
     frappe.call({
       method:
@@ -985,96 +1067,63 @@ function show_import_dialog(frm) {
     });
   }
 
-  // Create scope selection buttons
-  const scope_container =
-    dialog.fields_dict.scope_select_html.$wrapper.find(".scope-select");
-  scope_container.empty();
-
-  // Add instruction text only if there are multiple scopes
-  if (frm.doc.scopes.length > 1) {
-    scope_container.append(`
-            <div class="scope-instruction mb-3" style="font-size: 14px; color: var(--text-muted);">
-                Select a scope to import items into:
-            </div>
-            <div class="scope-buttons d-flex flex-wrap gap-2" style="margin: -4px;">
-            </div>
-        `);
-  } else {
-    scope_container.append(`
-            <div class="scope-buttons d-flex flex-wrap gap-2" style="margin: -4px;">
-            </div>
-        `);
-  }
-
-  const buttons_container = scope_container.find(".scope-buttons");
-
-  // Create buttons for each scope
-  frm.doc.scopes.forEach((scope, index) => {
+  // Create scope cards
+  const scope_container = dialog.fields_dict.scope_select_html.$wrapper.find(".excel-scope-list");
+  
+  frm.doc.scopes.forEach((scope) => {
     const color = SCOPE_COLORS[(scope.scope_number - 1) % SCOPE_COLORS.length];
+    
+    const card = $(`
+      <div class="excel-scope-item" data-scope='${JSON.stringify(scope)}'>
+        <div class="excel-scope-content" style="background: ${color.bg}22">
+          <div class="excel-scope-number" style="color: ${color.text}">
+            Scope ${scope.scope_number}
+          </div>
+          ${scope.description ? 
+            `<div class="excel-scope-desc">${scope.description}</div>` : 
+            ''
+          }
+        </div>
+      </div>
+    `);
 
-    const btn = $(`
-            <div class="scope-button-wrapper" style="margin: 4px;">
-                <button class="btn btn-default btn-scope" 
-                        data-scope='${JSON.stringify(scope)}'
-                        style="min-width: 150px; height: auto; white-space: normal; padding: 8px 15px;">
-                    Scope ${scope.scope_number}${
-      scope.description
-        ? `<br><span style="font-size: 0.9em;">${scope.description}</span>`
-        : ""
-    }
-                </button>
-            </div>
-        `);
-
-    const $button = btn.find(".btn-scope");
-
-    $button.on("click", function () {
+    card.on("click", function() {
       selectScope($(this), scope);
     });
 
-    buttons_container.append(btn);
+    scope_container.append(card);
 
-    // If there's only one scope, automatically select it
+    // Auto-select if only one scope
     if (frm.doc.scopes.length === 1) {
-      selectScope($button, scope);
+      selectScope(card, scope);
     }
   });
 
-  // Function to handle scope selection
-  function selectScope($button, scope) {
-    // Remove active class from all buttons
-    buttons_container
-      .find(".btn-scope")
-      .removeClass("btn-primary")
-      .addClass("btn-default")
-      .css({
-        "background-color": "",
-      });
+  // Move the upload field into our custom container
+  const upload_container = dialog.fields_dict.scope_select_html.$wrapper.find(".excel-file-upload");
+  const upload_field = dialog.fields_dict.upload_file.$wrapper;
+  upload_container.append(upload_field);
 
-    // Add active class to clicked button
-    $button.removeClass("btn-default").css({
-      "background-color":
-        SCOPE_COLORS[(scope.scope_number - 1) % SCOPE_COLORS.length].bg,
-    });
+  // Add template button handler
+  dialog.$wrapper.find('.excel-template-btn').on("click", () => {
+    if (selected_scope) {
+      download_import_template(frm, selected_scope);
+    } else {
+      frappe.msgprint("Please select a scope first");
+    }
+  });
 
+  function selectScope($card, scope) {
+    // Remove active class from all cards
+    scope_container.find(".excel-scope-item").removeClass("excel-scope-active");
+    
+    // Add active class to clicked card
+    $card.addClass("excel-scope-active");
+    
     // Store selected scope
     selected_scope = scope;
 
-    // Show download template button
-    if (!dialog.$wrapper.find(".download-template").length) {
-      const download_btn = $(`
-                <button class="btn btn-sm btn-warning download-template" 
-                        style="margin-right: 15px;">
-                    Download Template
-                </button>
-            `);
-      download_btn.on("click", () => {
-        download_import_template(frm, selected_scope);
-      });
-      dialog.$wrapper.find(".modal-header").append(download_btn);
-    }
-
-    // If file is already uploaded, trigger import
+    // Check if file already uploaded
     const file = dialog.get_value("upload_file");
     if (file) {
       import_excel_data(file, scope, dialog, frm);
@@ -1386,7 +1435,7 @@ function update_scope_totals(frm, scope_number) {
   frappe.model.set_value(scope.doctype, scope.name, {
     total_price: totals.total_price,
     total_cost: totals.total_cost,
-    total_profit: total_price - total_cost,
+    total_profit: totals.total_price - totals.total_cost,
     total_items: totals.total_items,
     total_vat_amount: totals.total_vat_amount,
     total_price_excluding_vat: total_price_excluding_vat,

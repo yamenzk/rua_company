@@ -6,12 +6,16 @@ from frappe.model.document import Document
 from frappe.utils import flt
 import math
 import openpyxl
-from openpyxl.styles import Font, PatternFill, Alignment
+from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
+from openpyxl.drawing.image import Image
 import base64
 from io import BytesIO
 import json
 import re
+import os
+from PIL import Image as PILImage
+import io
 
 
 class Project(Document):
@@ -96,7 +100,7 @@ class Project(Document):
         """Calculate values for a batch of items"""
         for item in items:
             # Calculate area only if needed
-            if item.width >= 0 and item.height >= 0:
+            if item.width and item.height and item.width >= 0 and item.height >= 0:
                 area = (item.width * item.height) / 10000
                 item.area = area
                 
@@ -192,87 +196,147 @@ class Project(Document):
 
 #region Excel Import
 
+def apply_style(cell, style):
+    """Apply a predefined style to a cell"""
+    # Apply each style property if it exists
+    if 'font' in style:
+        cell.font = style['font']
+    if 'fill' in style:
+        cell.fill = style['fill']
+    if 'alignment' in style:
+        cell.alignment = style['alignment']
+    if 'border' in style:
+        cell.border = style['border']
+
+
 @frappe.whitelist()
 def get_import_template(scope):
     scope = json.loads(scope)
     
     # Get project details
     project = frappe.get_doc('Project', scope.get('parent'))
+    company_info = frappe.db.get_singles_dict('Rua')
+    brand_color = company_info.get('brand_color', '#2C3E50').lstrip('#')
     
-    # Create a new workbook and select the active sheet
+    # Create workbook
     wb = openpyxl.Workbook()
     ws = wb.active
     ws.title = "Items Import"
+
+    # Set column widths
+    column_widths = {
+        'A': 20,  # Item
+        'B': 30,  # Description
+        'C': 10,  # Qty
+        'D': 12,  # Width
+        'E': 12,  # Height
+        'F': 15,  # Glass Unit
+        'G': 15,  # Curtain Wall
+        'H': 15,  # Insertion 1
+        'I': 15,  # Insertion 2
+        'J': 15,  # Insertion 3
+        'K': 15,  # Insertion 4
+        'L': 15,  # Profit Percentage
+    }
     
-    # Branding
-    ws.merge_cells('A1:L2')
-    brand_cell = ws.cell(row=1, column=1, value="Rua Company Aluminum & Glass Works")
-    brand_cell.font = Font(size=16, bold=True)
-    brand_cell.alignment = Alignment(horizontal='center', vertical='center')
-    brand_cell.fill = PatternFill(start_color="FBC418", end_color="FBC418", fill_type="solid")
+    for col, width in column_widths.items():
+        ws.column_dimensions[col].width = width
+
+    current_row = 1
     
-    # Project Info
-    project_info_fill = PatternFill(start_color="FFFAE6", end_color="FFFAE6", fill_type="solid")
+    # Add logo if exists
+    if company_info.get('logo_horizontal'):
+        logo_path = frappe.get_site_path('public', company_info.logo_horizontal.lstrip('/'))
+        if os.path.exists(logo_path):
+            with PILImage.open(logo_path) as img:
+                img = img.convert('RGB')
+                max_height = 45  # pixels
+                aspect_ratio = img.width / img.height
+                new_width = int(max_height * aspect_ratio)
+                img = img.resize((new_width, max_height))
+                
+                img_bytes = io.BytesIO()
+                img.save(img_bytes, format='PNG')
+                img_bytes.seek(0)
+                
+                logo = Image(img_bytes)
+                logo.width = new_width
+                logo.height = max_height
+                ws.add_image(logo, 'A1')
+        
+        # Merge cells and set background color
+        ws.merge_cells(f'C{current_row}:L{current_row}')
+        for col in range(2, 13):  # C through L
+            cell = ws.cell(row=current_row, column=col)
+            cell.fill = PatternFill(start_color=brand_color, end_color=brand_color, fill_type='solid')
+                
+        ws.row_dimensions[current_row].height = 40
+        current_row += 1
+
+    # Company Name - Large and prominent
+    ws.row_dimensions[current_row].height = 35
+    company_cell = ws.cell(row=current_row, column=1)
+    company_cell.value = company_info.get('company_name', '')
+    company_cell.font = Font(name='Calibri', size=18, bold=True, color=brand_color)
+    company_cell.alignment = Alignment(horizontal='left', vertical='center', indent=1)
     
-    # Project Name
-    ws.merge_cells('A3:L3')
-    project_cell = ws.cell(row=3, column=1, 
-                          value=f"Project: {project.project_name}")
-    project_cell.font = Font(size=12, bold=True)
-    project_cell.alignment = Alignment(horizontal='center')
-    project_cell.fill = project_info_fill
+    # Project Serial Number and VAT info
+    serial_cell = ws.cell(row=current_row, column=12)
+    serial_cell.value = f"Serial No: {project.serial_number or 'Not Assigned'}  |  Scope: Scope {scope['scope_number']}{' - ' + scope['description'] if scope.get('description') else ''}"
+    serial_cell.font = Font(name='Calibri', size=11, color='666666')
+    serial_cell.alignment = Alignment(horizontal='right', vertical='center')
+    current_row += 1
+
+    # Separator line
+    ws.row_dimensions[current_row].height = 4
+    for col in range(1, 13):  # A through L
+        cell = ws.cell(row=current_row, column=col)
+        cell.fill = PatternFill(start_color=brand_color, end_color=brand_color, fill_type='solid')
+    current_row += 1
+
+    # Project Name and Location
+    ws.row_dimensions[current_row].height = 30
     
-    # Location and Serial Number in the same row
-    ws.merge_cells('A4:F4')
-    location_cell = ws.cell(row=4, column=1,
-                           value=f"Location: {project.location}")
-    location_cell.font = Font(size=11)
-    location_cell.alignment = Alignment(horizontal='center')
-    location_cell.fill = project_info_fill
+    title_cell = ws.cell(row=current_row, column=1)
+    title_cell.value = project.project_name
+    title_cell.font = Font(name='Calibri', size=14, bold=True, color='2C3E50')
+    title_cell.alignment = Alignment(horizontal='left', vertical='center', indent=1)
     
-    ws.merge_cells('G4:L4')
-    serial_cell = ws.cell(row=4, column=7,
-                         value=f"Serial No: {project.serial_number or 'Not Assigned'}")
-    serial_cell.font = Font(size=11)
-    serial_cell.alignment = Alignment(horizontal='center')
-    serial_cell.fill = project_info_fill
-    
-    # Add spacing
-    ws.merge_cells('A5:L5')
-    
-    # Scope Info
-    ws.merge_cells('A6:L6')
-    scope_cell = ws.cell(row=6, column=1, 
-                        value=f"Scope {scope['scope_number']}{' - ' + scope['description'] if scope.get('description') else ''}")
-    scope_cell.font = Font(size=12, bold=True)
-    scope_cell.alignment = Alignment(horizontal='center')
-    scope_cell.fill = project_info_fill
-    
-    # Add spacing
-    ws.merge_cells('A7:L7')
-    
-    # Define headers
+    location_cell = ws.cell(row=current_row, column=12)
+    location_cell.value = f"Location: {project.location}"
+    location_cell.font = Font(name='Calibri', size=11, color='666666')
+    location_cell.alignment = Alignment(horizontal='right', vertical='center')
+    current_row += 2
+
+    # Headers
     headers = [
         'Item*', 'Description', 'Qty*', 'Width*', 'Height*', 'Glass Unit', 
         'Curtain Wall*', 'Insertion 1', 'Insertion 2', 'Insertion 3', 'Insertion 4', 
         'Profit Percentage'
     ]
     
-    # Style for headers
-    header_fill = PatternFill(start_color="FBC418", end_color="FBC418", fill_type="solid")
-    header_font = Font(bold=True, color="000000")  # Black text
+    header_font = Font(name='Calibri', size=11, bold=True, color='2C3E50')
+    header_fill = PatternFill(start_color='F5F7FA', end_color='F5F7FA', fill_type='solid')
+    header_border = Border(
+        bottom=Side(style='thin', color='E5E5E5'),
+        top=Side(style='thin', color='E5E5E5')
+    )
     
-    # Write headers
-    header_row = 8
     for col, header in enumerate(headers, 1):
-        cell = ws.cell(row=header_row, column=col, value=header)
-        cell.fill = header_fill
+        cell = ws.cell(row=current_row, column=col, value=header)
         cell.font = header_font
-        cell.alignment = Alignment(horizontal='center')
-        ws.column_dimensions[get_column_letter(col)].width = 15
-    
-    # Instructions sheet
+        cell.fill = header_fill
+        cell.border = header_border
+        cell.alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
+
+    # Add Instructions sheet
     instructions = wb.create_sheet("Instructions")
+    instructions.merge_cells('A1:D1')
+    title_cell = instructions.cell(row=1, column=1, value="Instructions & Notes")
+    title_cell.font = Font(name='Calibri', size=14, bold=True, color='FFFFFF')
+    title_cell.alignment = Alignment(horizontal='center')
+    title_cell.fill = PatternFill(start_color='2C3E50', end_color='2C3E50', fill_type='solid')
+    
     notes = [
         ("Required Fields:", "Fields marked with * are mandatory"),
         ("Measurements:", "Width and Height should be in millimeters"),
@@ -282,23 +346,14 @@ def get_import_template(scope):
         ("", "Do not modify headers or add rows above the headers")
     ]
     
-    # Style for notes sheet
-    instructions.merge_cells('A1:D1')
-    title_cell = instructions.cell(row=1, column=1, value="Instructions & Notes")
-    title_cell.font = Font(size=14, bold=True)
-    title_cell.alignment = Alignment(horizontal='center')
-    title_cell.fill = PatternFill(start_color="FBC418", end_color="FBC418", fill_type="solid")
-    
-    # Add notes with better formatting
     for i, (title, content) in enumerate(notes, 3):
         if title:
             title_cell = instructions.cell(row=i, column=1, value=title)
-            title_cell.font = Font(bold=True)
-            title_cell.fill = PatternFill(start_color="FFFAE6", end_color="FFFAE6", fill_type="solid")
+            title_cell.font = Font(name='Calibri', bold=True)
+            title_cell.fill = PatternFill(start_color='F5F7FA', end_color='F5F7FA', fill_type='solid')
         content_cell = instructions.cell(row=i, column=2, value=content)
         content_cell.alignment = Alignment(wrap_text=True)
     
-    # Adjust column widths in notes sheet
     instructions.column_dimensions['A'].width = 20
     instructions.column_dimensions['B'].width = 60
     
@@ -309,16 +364,14 @@ def get_import_template(scope):
     
     # Generate filename
     filename = f"RUA_{project.project_name}_{project.serial_number or 'NO_SERIAL'}_{scope['scope_number']}.xlsx"
-    filename = re.sub(r'[^\w\-_.]', '_', filename)  # Replace invalid characters with underscore
+    filename = re.sub(r'[^\w\-_.]', '_', filename)
     
-    # Convert to base64
     content = base64.b64encode(excel_file.getvalue()).decode('utf-8')
     
     return {
         'filename': filename,
         'content': content
     }
-
 @frappe.whitelist()
 def import_items_from_excel(file_url, scope):
     try:
