@@ -337,9 +337,9 @@ function renderDocumentGrid(frm) {
                 padding: 1rem;
             }
             .document-card {
-                background: white;
-                border: 1px solid #e5e7eb;
-                border-radius: 8px;
+                background: var(--card-bg);
+                border: 1px solid var(--border-color);
+                border-radius: var(--border-radius-md);
                 overflow: hidden;
                 transition: transform 0.2s, box-shadow 0.2s;
                 cursor: pointer;
@@ -353,12 +353,12 @@ function renderDocumentGrid(frm) {
                 align-items: center;
                 justify-content: center;
                 min-height: 250px;
-                border: 2px dashed #e5e7eb;
-                background: #f9fafb;
+                border: 2px dashed var(--border-color);
+                background: var(--card-bg);
             }
             .add-document-content {
                 text-align: center;
-                color: #6b7280;
+                color: var(--text-color);
             }
             .add-icon {
                 font-size: 2rem;
@@ -368,12 +368,12 @@ function renderDocumentGrid(frm) {
                 font-weight: 500;
             }
             .add-document-card:hover {
-                border-color: #6b7280;
-                color: #374151;
+                border-color: var(--btn-primary);
+                color: var(--text-color);
             }
             .document-preview {
                 height: 150px;
-                background: #f3f4f6;
+                background: var(--card-bg);
                 display: flex;
                 align-items: center;
                 justify-content: center;

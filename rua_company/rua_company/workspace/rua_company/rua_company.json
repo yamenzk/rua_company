@@ -1,6 +1,6 @@
 {
  "charts": [],
- "content": "[{\"id\":\"06_8tMDPwb\",\"type\":\"custom_block\",\"data\":{\"custom_block_name\":\"company-name\",\"col\":12}},{\"id\":\"SAcweH5SL-\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Projects\",\"col\":4}},{\"id\":\"V2580JRrFD\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Project Bills\",\"col\":4}},{\"id\":\"y3i54sumlJ\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Vouchers\",\"col\":4}},{\"id\":\"eQQArPZNzI\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"uNkDTiWgSW\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"\u2699\ufe0fCompany Settings\",\"col\":4}},{\"id\":\"xO2vyjmkHN\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"\ud83d\udc65Parties\",\"col\":4}}]",
+ "content": "[{\"id\":\"06_8tMDPwb\",\"type\":\"custom_block\",\"data\":{\"custom_block_name\":\"company-name\",\"col\":12}},{\"id\":\"SAcweH5SL-\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Projects\",\"col\":4}},{\"id\":\"V2580JRrFD\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Project Bills\",\"col\":4}},{\"id\":\"y3i54sumlJ\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Vouchers\",\"col\":4}},{\"id\":\"eQQArPZNzI\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"uNkDTiWgSW\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"\u2699\ufe0fCompany Settings\",\"col\":4}},{\"id\":\"xO2vyjmkHN\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"\ud83d\udc65Parties\",\"col\":4}},{\"id\":\"3QYS09cHRW\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"\ud83e\udeaaEmployees\",\"col\":4}}]",
  "creation": "2024-12-15 13:53:31.070512",
  "custom_blocks": [
   {
@@ -18,7 +18,7 @@
  "is_hidden": 0,
  "label": "Rua Company",
  "links": [],
- "modified": "2024-12-16 00:52:12.150724",
+ "modified": "2024-12-16 14:40:25.609089",
  "modified_by": "Administrator",
  "module": "Rua Company",
  "name": "Rua Company",
@@ -51,6 +51,14 @@
    "doc_view": "List",
    "label": "\u2699\ufe0fCompany Settings",
    "link_to": "Rua",
+   "type": "DocType"
+  },
+  {
+   "color": "Yellow",
+   "doc_view": "List",
+   "label": "\ud83e\udeaaEmployees",
+   "link_to": "Employee",
+   "stats_filter": "[]",
    "type": "DocType"
   },
   {
