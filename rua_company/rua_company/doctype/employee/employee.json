@@ -1,0 +1,193 @@
+{
+ "actions": [],
+ "allow_copy": 1,
+ "allow_rename": 1,
+ "autoname": "format:{first_name} {last_name}",
+ "creation": "2024-12-16 12:39:12.437546",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "dashboard_tab",
+  "section_break_ctuv",
+  "html_ylrp",
+  "column_break_anzk",
+  "full_name",
+  "age",
+  "section_break_nwbf",
+  "html_azof",
+  "section_break_czgp",
+  "documents",
+  "employee_tab",
+  "section_break_nufj",
+  "column_break_fcfd",
+  "first_name",
+  "last_name",
+  "date_of_birth",
+  "column_break_aotv",
+  "gender",
+  "nationality",
+  "column_break_gexy",
+  "position",
+  "system_user",
+  "image",
+  "enabled"
+ ],
+ "fields": [
+  {
+   "fieldname": "first_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "First Name",
+   "reqd": 1
+  },
+  {
+   "fieldname": "last_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Last Name",
+   "reqd": 1
+  },
+  {
+   "fieldname": "date_of_birth",
+   "fieldtype": "Date",
+   "label": "Date of Birth"
+  },
+  {
+   "default": "Male",
+   "fieldname": "gender",
+   "fieldtype": "Select",
+   "label": "Gender",
+   "options": "Male\nFemale"
+  },
+  {
+   "fieldname": "nationality",
+   "fieldtype": "Link",
+   "label": "Nationality",
+   "options": "Country"
+  },
+  {
+   "fieldname": "full_name",
+   "fieldtype": "Read Only",
+   "label": "Full Name",
+   "unique": 1
+  },
+  {
+   "fieldname": "age",
+   "fieldtype": "Int",
+   "label": "Age",
+   "read_only": 1
+  },
+  {
+   "fieldname": "system_user",
+   "fieldtype": "Link",
+   "label": "System User",
+   "options": "User"
+  },
+  {
+   "default": "1",
+   "fieldname": "enabled",
+   "fieldtype": "Check",
+   "label": "Enabled"
+  },
+  {
+   "fieldname": "section_break_czgp",
+   "fieldtype": "Section Break",
+   "hidden": 1
+  },
+  {
+   "fieldname": "documents",
+   "fieldtype": "Table",
+   "label": "Documents",
+   "options": "Documents"
+  },
+  {
+   "fieldname": "section_break_nwbf",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "html_azof",
+   "fieldtype": "HTML",
+   "options": "<div id=\"document-manager\"></div>"
+  },
+  {
+   "fieldname": "image",
+   "fieldtype": "Attach Image",
+   "label": "Image"
+  },
+  {
+   "fieldname": "html_ylrp",
+   "fieldtype": "HTML",
+   "options": "<div style=\"display: flex; justify-content: center; align-items: center;\"><img src=\"{{doc.image}}\" style=\"max-height:200px;\"></div>"
+  },
+  {
+   "fieldname": "column_break_anzk",
+   "fieldtype": "Column Break"
+  },
+  {
+   "collapsible_depends_on": "eval:!(doc.__islocal)",
+   "fieldname": "section_break_nufj",
+   "fieldtype": "Section Break",
+   "label": "Employee Details"
+  },
+  {
+   "fieldname": "column_break_gexy",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_fcfd",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_ctuv",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_aotv",
+   "fieldtype": "Column Break"
+  },
+  {
+   "depends_on": "eval:!(doc.__islocal)",
+   "fieldname": "dashboard_tab",
+   "fieldtype": "Tab Break",
+   "label": "Dashboard"
+  },
+  {
+   "fieldname": "position",
+   "fieldtype": "Data",
+   "label": "Position"
+  },
+  {
+   "fieldname": "employee_tab",
+   "fieldtype": "Tab Break",
+   "label": "Employee"
+  }
+ ],
+ "hide_toolbar": 1,
+ "image_field": "image",
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "make_attachments_public": 1,
+ "modified": "2024-12-16 14:24:00.193752",
+ "modified_by": "Administrator",
+ "module": "Rua Company",
+ "name": "Employee",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

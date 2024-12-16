@@ -2638,7 +2638,7 @@ function showScopeDetailsDialog(frm, scopeNumber) {
                                     } kg</div>
                                 </div>
                                 <div class="scope-detail-card">
-                                    <div class="detail-label">SDF</div>
+                                    <div class="detail-label">Powder Coating</div>
                                     <div class="detail-value">${
                                       scope.sdf || 0
                                     }</div>
@@ -3028,7 +3028,7 @@ function showScopeEditDialog(frm, scope = null) {
         {
           fieldname: "sdf",
           fieldtype: "Float",
-          label: "SDF",
+          label: "Powder Coating",
           mandatory_depends_on: "eval:1",
         },
         {

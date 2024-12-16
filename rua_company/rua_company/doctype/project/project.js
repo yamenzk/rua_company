@@ -3,7 +3,7 @@
 
 frappe.ui.form.on("Project", {
   refresh(frm) {
-    if (frm.doc.__islocal ) {
+    if (frm.doc.__islocal) {
       frappe.prompt(
         {
           label: "Project Name",
@@ -71,118 +71,113 @@ frappe.ui.form.on("Project", {
 
     frm.page.clear_actions_menu();
 
-    if (frappe.is_large_screen()) {
-      // Add Generate dropdown items with icons
-      frm
-        .add_custom_button(
-          __("Request for Quotation"),
+    // Add Generate dropdown items with icons
+    frm
+      .add_custom_button(
+        __("Request for Quotation"),
+        function () {
+          create_project_bill(frm, "Request for Quotation");
+        },
+        __("Generate")
+      )
+      .addClass("has-icon")
+      .prepend('<i class="fa fa-file-text-o"></i> ');
+
+    frm
+      .add_custom_button(
+        __("Purchase Order"),
+        function () {
+          create_project_bill(frm, "Purchase Order");
+        },
+        __("Generate")
+      )
+      .addClass("has-icon")
+      .prepend('<i class="fa fa-shopping-cart"></i> ');
+
+    frm
+      .add_custom_button(
+        __("Quotation"),
+        function () {
+          create_project_bill(frm, "Quotation");
+        },
+        __("Generate")
+      )
+      .addClass("has-icon")
+      .prepend('<i class="fa fa-quote-left"></i> ');
+
+    frm
+      .add_custom_button(
+        __("Proforma"),
+        function () {
+          create_project_bill(frm, "Proforma");
+        },
+        __("Generate")
+      )
+      .addClass("has-icon")
+      .prepend('<i class="fa fa-file"></i> ');
+
+    frm
+      .add_custom_button(
+        __("Tax Invoice"),
+        function () {
+          create_project_bill(frm, "Tax Invoice");
+        },
+        __("Generate")
+      )
+      .addClass("has-icon")
+      .prepend('<i class="fa fa-file-text"></i> ');
+
+    frm
+      .add_custom_button(
+        __("Payment Voucher"),
+        function () {
+          create_project_bill(frm, "Payment Voucher");
+        },
+        __("Generate")
+      )
+      .addClass("has-icon")
+      .prepend('<i class="fa fa-money"></i> ');
+
+    // Style the Generate parent button
+    $('.inner-group-button[data-label="Generate"] .btn-default')
+      .removeClass("btn-default")
+      .addClass("btn-warning");
+
+    // Add refresh button
+    frm
+      .add_custom_button(__("Refresh"), function () {
+        frappe.confirm(
+          __("This will clear and repopulate all child tables. Continue?"),
           function () {
-            create_project_bill(frm, "Request for Quotation");
-          },
-          __("Generate")
-        )
-        .addClass("has-icon")
-        .prepend('<i class="fa fa-file-text-o"></i> ');
-
-      frm
-        .add_custom_button(
-          __("Purchase Order"),
-          function () {
-            create_project_bill(frm, "Purchase Order");
-          },
-          __("Generate")
-        )
-        .addClass("has-icon")
-        .prepend('<i class="fa fa-shopping-cart"></i> ');
-
-      frm
-        .add_custom_button(
-          __("Quotation"),
-          function () {
-            create_project_bill(frm, "Quotation");
-          },
-          __("Generate")
-        )
-        .addClass("has-icon")
-        .prepend('<i class="fa fa-quote-left"></i> ');
-
-      frm
-        .add_custom_button(
-          __("Proforma"),
-          function () {
-            create_project_bill(frm, "Proforma");
-          },
-          __("Generate")
-        )
-        .addClass("has-icon")
-        .prepend('<i class="fa fa-file"></i> ');
-
-      frm
-        .add_custom_button(
-          __("Tax Invoice"),
-          function () {
-            create_project_bill(frm, "Tax Invoice");
-          },
-          __("Generate")
-        )
-        .addClass("has-icon")
-        .prepend('<i class="fa fa-file-text"></i> ');
-
-      frm
-        .add_custom_button(
-          __("Payment Voucher"),
-          function () {
-            create_project_bill(frm, "Payment Voucher");
-          },
-          __("Generate")
-        )
-        .addClass("has-icon")
-        .prepend('<i class="fa fa-money"></i> ');
-
-      // Style the Generate parent button
-      $('.inner-group-button[data-label="Generate"] .btn-default')
-        .removeClass("btn-default")
-        .addClass("btn-warning");
-
-      // Add refresh button
-      frm
-        .add_custom_button(__("Refresh"), function () {
-          frappe.confirm(
-            __("This will clear and repopulate all child tables. Continue?"),
-            function () {
-              frappe.call({
-                method:
-                  "rua_company.rua_company.doctype.project.project.refresh_all_tables",
-                args: {
-                  project: frm.doc.name,
-                },
-                freeze: true,
-                freeze_message: __("Refreshing all tables..."),
-                callback: function (r) {
-                  if (r.exc) {
-                    frappe.msgprint({
-                      title: __("Error"),
-                      indicator: "red",
-                      message: __(
-                        "Failed to refresh tables. Please try again."
-                      ),
-                    });
-                    return;
-                  }
-                  frm.reload_doc();
-                  frappe.show_alert({
-                    message: __("All tables refreshed successfully"),
-                    indicator: "green",
+            frappe.call({
+              method:
+                "rua_company.rua_company.doctype.project.project.refresh_all_tables",
+              args: {
+                project: frm.doc.name,
+              },
+              freeze: true,
+              freeze_message: __("Refreshing all tables..."),
+              callback: function (r) {
+                if (r.exc) {
+                  frappe.msgprint({
+                    title: __("Error"),
+                    indicator: "red",
+                    message: __("Failed to refresh tables. Please try again."),
                   });
-                },
-              });
-            }
-          );
-        })
-        .addClass("has-icon")
-        .prepend('<i class="fa fa-refresh"></i>');
-    }
-
+                  return;
+                }
+                frm.reload_doc();
+                frappe.show_alert({
+                  message: __("All tables refreshed successfully"),
+                  indicator: "green",
+                });
+              },
+            });
+          }
+        );
+      })
+      .addClass("has-icon")
+      .prepend('<i class="fa fa-refresh"></i>');
     // Add import button to grid
     if (!frm.doc.__islocal) {
       frm.fields_dict["items"].grid.add_custom_button(
@@ -403,7 +398,7 @@ function apply_color_coding(frm) {
         const scopeNum = grid_row.doc.scope_number;
         if (scopeNum) {
           const colorSet = SCOPE_COLORS[(scopeNum - 1) % SCOPE_COLORS.length];
-          
+
           $(grid_row.wrapper).css({
             "background-color": colorSet.bg,
           });
@@ -423,7 +418,7 @@ function apply_color_coding(frm) {
         const scopeNum = grid_row.doc.scope_number;
         if (scopeNum) {
           const colorSet = SCOPE_COLORS[(scopeNum - 1) % SCOPE_COLORS.length];
-          
+
           $(grid_row.wrapper).css({
             "background-color": colorSet.bg,
           });
@@ -919,9 +914,10 @@ function show_import_dialog(frm) {
           <div class="excel-import-container">
             <div class="excel-scope-section">
               <div class="excel-scope-header">
-                ${frm.doc.scopes.length > 1 ? 
-                  '<div class="text-lg font-bold mb-3">Choose a Scope</div>' : 
-                  ''
+                ${
+                  frm.doc.scopes.length > 1
+                    ? '<div class="text-lg font-bold mb-3">Choose a Scope</div>'
+                    : ""
                 }
               </div>
               <div class="excel-scope-list"></div>
@@ -944,7 +940,7 @@ function show_import_dialog(frm) {
         fieldtype: "Attach",
         label: "Upload Excel File",
         reqd: 1,
-        onchange: function() {
+        onchange: function () {
           const file = dialog.get_value("upload_file");
           if (file && selected_scope) {
             import_excel_data(file, selected_scope, dialog, frm);
@@ -958,10 +954,10 @@ function show_import_dialog(frm) {
   });
 
   // Add custom styles
-  dialog.$wrapper.find('.modal-dialog').css({
-    'max-width': '800px'
+  dialog.$wrapper.find(".modal-dialog").css({
+    "max-width": "800px",
   });
-  
+
   dialog.$wrapper.append(`
     <style>
       .excel-import-container {
@@ -1068,26 +1064,28 @@ function show_import_dialog(frm) {
   }
 
   // Create scope cards
-  const scope_container = dialog.fields_dict.scope_select_html.$wrapper.find(".excel-scope-list");
-  
+  const scope_container =
+    dialog.fields_dict.scope_select_html.$wrapper.find(".excel-scope-list");
+
   frm.doc.scopes.forEach((scope) => {
     const color = SCOPE_COLORS[(scope.scope_number - 1) % SCOPE_COLORS.length];
-    
+
     const card = $(`
       <div class="excel-scope-item" data-scope='${JSON.stringify(scope)}'>
         <div class="excel-scope-content" style="background: ${color.bg}22">
           <div class="excel-scope-number" style="color: ${color.text}">
             Scope ${scope.scope_number}
           </div>
-          ${scope.description ? 
-            `<div class="excel-scope-desc">${scope.description}</div>` : 
-            ''
+          ${
+            scope.description
+              ? `<div class="excel-scope-desc">${scope.description}</div>`
+              : ""
           }
         </div>
       </div>
     `);
 
-    card.on("click", function() {
+    card.on("click", function () {
       selectScope($(this), scope);
     });
 
@@ -1100,12 +1098,13 @@ function show_import_dialog(frm) {
   });
 
   // Move the upload field into our custom container
-  const upload_container = dialog.fields_dict.scope_select_html.$wrapper.find(".excel-file-upload");
+  const upload_container =
+    dialog.fields_dict.scope_select_html.$wrapper.find(".excel-file-upload");
   const upload_field = dialog.fields_dict.upload_file.$wrapper;
   upload_container.append(upload_field);
 
   // Add template button handler
-  dialog.$wrapper.find('.excel-template-btn').on("click", () => {
+  dialog.$wrapper.find(".excel-template-btn").on("click", () => {
     if (selected_scope) {
       download_import_template(frm, selected_scope);
     } else {
@@ -1116,10 +1115,10 @@ function show_import_dialog(frm) {
   function selectScope($card, scope) {
     // Remove active class from all cards
     scope_container.find(".excel-scope-item").removeClass("excel-scope-active");
-    
+
     // Add active class to clicked card
     $card.addClass("excel-scope-active");
-    
+
     // Store selected scope
     selected_scope = scope;
 
