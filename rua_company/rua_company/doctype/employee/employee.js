@@ -543,13 +543,13 @@ function getExpiryStatus(expiryDate) {
             color: 'var(--red-500)',
             message: `Expired ${Math.abs(daysUntilExpiry)} days ago`
         };
-    } else if (daysUntilExpiry <= 30) {
+    } else if (daysUntilExpiry <= 15) {
         return {
             status: 'critical',
             color: 'var(--red-500)',
             message: `Expires in ${daysUntilExpiry} days`
         };
-    } else if (daysUntilExpiry <= 90) {
+    } else if (daysUntilExpiry <= 30) {
         return {
             status: 'warning',
             color: 'var(--yellow-500)',

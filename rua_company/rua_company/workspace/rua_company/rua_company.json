@@ -1,8 +1,12 @@
 {
  "charts": [],
- "content": "[{\"id\":\"06_8tMDPwb\",\"type\":\"custom_block\",\"data\":{\"custom_block_name\":\"company-name\",\"col\":12}},{\"id\":\"SAcweH5SL-\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Projects\",\"col\":4}},{\"id\":\"V2580JRrFD\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Project Bills\",\"col\":4}},{\"id\":\"y3i54sumlJ\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Vouchers\",\"col\":4}},{\"id\":\"eQQArPZNzI\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"uNkDTiWgSW\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"\u2699\ufe0fCompany Settings\",\"col\":4}},{\"id\":\"xO2vyjmkHN\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"\ud83d\udc65Parties\",\"col\":4}},{\"id\":\"3QYS09cHRW\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"\ud83e\udeaaEmployees\",\"col\":4}},{\"id\":\"qalI4oK50Q\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Action Needed\",\"col\":4}}]",
+ "content": "[{\"id\":\"06_8tMDPwb\",\"type\":\"custom_block\",\"data\":{\"custom_block_name\":\"company-name\",\"col\":12}},{\"id\":\"SAcweH5SL-\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Projects\",\"col\":4}},{\"id\":\"V2580JRrFD\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Project Bills\",\"col\":4}},{\"id\":\"y3i54sumlJ\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Vouchers\",\"col\":4}},{\"id\":\"eQQArPZNzI\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"uNkDTiWgSW\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"\u2699\ufe0fCompany Settings\",\"col\":4}},{\"id\":\"xO2vyjmkHN\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"\ud83d\udc65Parties\",\"col\":4}},{\"id\":\"3QYS09cHRW\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"\ud83e\udeaaEmployees\",\"col\":4}},{\"id\":\"XdepQqU2a7\",\"type\":\"spacer\",\"data\":{\"col\":4}},{\"id\":\"EQm_TredKK\",\"type\":\"spacer\",\"data\":{\"col\":4}},{\"id\":\"iV28OMDapo\",\"type\":\"custom_block\",\"data\":{\"custom_block_name\":\"expiring-docs\",\"col\":4}}]",
  "creation": "2024-12-15 13:53:31.070512",
  "custom_blocks": [
+  {
+   "custom_block_name": "expiring-docs",
+   "label": "expiring-docs"
+  },
   {
    "custom_block_name": "company-name",
    "label": "company-name"
@@ -18,7 +22,7 @@
  "is_hidden": 0,
  "label": "Rua Company",
  "links": [],
- "modified": "2024-12-16 14:56:57.339222",
+ "modified": "2024-12-16 16:26:59.159404",
  "modified_by": "Administrator",
  "module": "Rua Company",
  "name": "Rua Company",
@@ -27,11 +31,6 @@
  "parent_page": "",
  "public": 1,
  "quick_lists": [
-  {
-   "document_type": "Employee",
-   "label": "Action Needed",
-   "quick_list_filter": "[[\"Documents\",\"expiry_date\",\"Timespan\",\"this month\",false],[\"Employee\",\"status\",\"=\",\"Enabled\",false]]"
-  },
   {
    "document_type": "Project",
    "label": "Projects",
