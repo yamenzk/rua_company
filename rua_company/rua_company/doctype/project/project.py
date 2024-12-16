@@ -151,20 +151,27 @@ class Project(Document):
         
         # Calculate VAT amount in bulk
         if vat_inclusive:
+            # For VAT inclusive prices, extract VAT from total price
             total_vat = sum(price - (price / vat_factor) for price in overall_prices)
         else:
+            # For VAT exclusive prices, calculate VAT on top of prices
             total_vat = sum(price * (vat_factor - 1) for price in overall_prices)
         scope.total_vat_amount = total_vat
         
-        # Calculate remaining values
-        total_price_excluding_vat = scope.total_price - total_vat
+        # Calculate total price excluding VAT
+        total_price_excluding_vat = scope.total_price - total_vat if vat_inclusive else scope.total_price
         scope.total_price_excluding_vat = total_price_excluding_vat
         
+        # Update total price for VAT exclusive case
+        if not vat_inclusive:
+            scope.total_price = total_price_excluding_vat + total_vat
+        
+        # Calculate retention and final VAT
         retention_factor = 1 - ((scope.retention or 0) / 100)
         price_after_retention = total_price_excluding_vat * retention_factor
         
         scope.price_after_retention = price_after_retention
-        scope.vat_after_retention = price_after_retention * (scope.vat / 100)
+        scope.vat_after_retention = price_after_retention * (vat_factor - 1)
         scope.total_price_after_retention = price_after_retention + scope.vat_after_retention
 
     def calculate_financial_totals_optimized(self):
