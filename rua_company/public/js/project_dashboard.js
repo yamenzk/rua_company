@@ -2,6 +2,29 @@
 frappe.provide("rua_company");
 frappe.provide("rua_company.project_dashboard");
 
+// Function to show contract value edit dialog
+function showContractValueDialog(frm) {
+    new frappe.ui.Dialog({
+        title: __('Edit Contract Value'),
+        fields: [
+            {
+                label: __('Contract Value'),
+                fieldname: 'contract_value',
+                fieldtype: 'Currency',
+                default: frm.doc.contract_value || 0,
+            }
+        ],
+        primary_action_label: __('Update'),
+        primary_action(values) {
+            if (values.contract_value !== undefined) {
+                frm.set_value('contract_value', values.contract_value);
+                frm.save();
+            }
+            this.hide();
+        }
+    }).show();
+}
+
 // Define the dashboard object first
 rua_company.project_dashboard = {
   render: function (frm) {
@@ -695,6 +718,10 @@ function generateDashboardHTML(frm) {
 
 .overview-card.expenses::after {
     background: var(--red);
+}
+
+.overview-card.contract-value::after {
+    background: var(--purple);
 }
 
 .overview-card .label {
@@ -1520,12 +1547,17 @@ function generateDashboardHTML(frm) {
 </div>
     <!-- Project Overview -->
     <div class="project-overview">
+        <div class="overview-card contract-value clickable">
+            <div class="label">Contract Value</div>
+            <div class="amount">${formatCurrency(frm.doc.contract_value || 0)}</div>
+            <div class="metric">Total Contract Value (Manual)</div>
+        </div>
         <div class="overview-card value">
             <div class="label">Project Value</div>
             <div class="amount">${formatCurrency(
               frm.doc.total_project_value
             )}</div>
-            <div class="metric">Total Contract Value (Exc. A/E)</div>
+            <div class="metric">Total Project Value (Exc. A/E)</div>
         </div>
         
         <div class="overview-card profit">
@@ -2027,9 +2059,9 @@ function generateDashboardHTML(frm) {
                     <div class="summary-card">
                         <div class="title">Quotations</div>
                     </div>
-                    <div class="doc-list-container">
                     
                     <!-- Submitted Quotations -->
+                    <div class="doc-list-container">
                     ${
                       (frm.doc.quotations || []).length
                         ? `
@@ -2291,6 +2323,13 @@ function createDashboardContainer(frm) {
 
 // Function to attach event listeners to dashboard elements
 function attachDashboardEventListeners(frm) {
+  const contractValueCard = document.querySelector('.contract-value');
+  if (contractValueCard) {
+      contractValueCard.addEventListener('click', () => {
+          showContractValueDialog(frm);
+      });
+  }
+
   // Project image click handler
   const projectImage = document.querySelector(".project-image");
   if (projectImage) {
@@ -3213,6 +3252,14 @@ function showProjectFinancialsDialog(frm) {
     size: "extra-large",
     fields: [
       {
+        fieldname: 'use_contract_value',
+        label: __('Based on Contract Value'),
+        fieldtype: 'Check',
+        onchange: function() {
+          refreshFinancials();
+        }
+      },
+      {
         fieldname: "financials_html",
         fieldtype: "HTML",
       },
@@ -3230,26 +3277,51 @@ function showProjectFinancialsDialog(frm) {
     totalProfit: 0,
   };
 
+  // Function to refresh financials when toggle changes
+  const refreshFinancials = () => {
+    dialog.fields_dict.financials_html.$wrapper.html(generateFlowchartHTML());
+  };
+
   // Generate flowchart HTML
   const generateFlowchartHTML = () => {
+    // Reset totals
+    Object.keys(projectTotals).forEach(key => projectTotals[key] = 0);
+
+    const useContractValue = dialog.get_value('use_contract_value');
+    const contractValue = frm.doc.contract_value || 0;
+    const totalOriginalPrice = frm.doc.scopes.reduce((sum, scope) => sum + (scope.total_price_excluding_vat || 0), 0);
+
     const scopeFlowcharts = frm.doc.scopes
       .map((scope) => {
-        // Calculate scope totals
-        projectTotals.totalPriceExclVAT += scope.total_price_excluding_vat || 0;
-        projectTotals.totalVAT += scope.total_vat_amount || 0;
-        projectTotals.totalPriceInclVAT += scope.total_price || 0;
-        projectTotals.totalRetention +=
-          (scope.total_price * (scope.retention || 0)) / 100 || 0;
-        projectTotals.totalPriceAfterRetention +=
-          scope.total_price_after_retention || 0;
-        projectTotals.totalCost += scope.total_cost || 0;
-        projectTotals.totalProfit += scope.total_profit || 0;
+        let scopePriceExclVAT = scope.total_price_excluding_vat || 0;
+        let scopeVAT = scope.total_vat_amount || 0;
+        let scopePriceInclVAT = scope.total_price || 0;
+        let scopeRetention = (scope.total_price * (scope.retention || 0)) / 100 || 0;
+        let scopePriceAfterRetention = scope.total_price_after_retention || 0;
+        let scopeCost = scope.total_cost || 0;
+        let scopeProfit = scope.total_profit || 0;
 
-        const colorSet =
-          SCOPE_COLORS[
-            (parseInt(scope.scope_number) - 1) % SCOPE_COLORS.length
-          ];
+        if (useContractValue && totalOriginalPrice > 0) {
+          // Calculate this scope's proportion of the contract value
+          const scopeRatio = (scope.total_price_excluding_vat || 0) / totalOriginalPrice;
+          scopePriceExclVAT = contractValue * scopeRatio;
+          scopeVAT = scopePriceExclVAT * 0.05; // 5% VAT
+          scopePriceInclVAT = scopePriceExclVAT + scopeVAT;
+          scopeRetention = scopePriceInclVAT * (scope.retention || 0) / 100;
+          scopePriceAfterRetention = scopePriceInclVAT - scopeRetention;
+          scopeProfit = scopePriceExclVAT - scopeCost;
+        }
 
+        // Add to project totals
+        projectTotals.totalPriceExclVAT += scopePriceExclVAT;
+        projectTotals.totalVAT += scopeVAT;
+        projectTotals.totalPriceInclVAT += scopePriceInclVAT;
+        projectTotals.totalRetention += scopeRetention;
+        projectTotals.totalPriceAfterRetention += scopePriceAfterRetention;
+        projectTotals.totalCost += scopeCost;
+        projectTotals.totalProfit += scopeProfit;
+
+        const colorSet = SCOPE_COLORS[(parseInt(scope.scope_number) - 1) % SCOPE_COLORS.length];
         return `
                 <div class="scope-flow-container">
                     <div class="scope-header" style="
@@ -3293,7 +3365,7 @@ function showProjectFinancialsDialog(frm) {
                                     font-size: 1.2rem;
                                     font-weight: 600;
                                     color: ${colorSet.text};">${formatCurrency(
-          scope.total_price_excluding_vat
+          scopePriceExclVAT
         )}</div>
                             </div>
                         </div>
@@ -3314,7 +3386,7 @@ function showProjectFinancialsDialog(frm) {
                                     margin-bottom: 1rem;">
                                     <div class="flow-label" style="color: var(--text-muted); font-size: 0.9rem;">VAT Amount</div>
                                     <div class="flow-value" style="font-weight: 500;">${formatCurrency(
-                                      scope.total_vat_amount
+                                      scopeVAT
                                     )}</div>
                                 </div>
                                 
@@ -3331,7 +3403,7 @@ function showProjectFinancialsDialog(frm) {
                                         color: ${
                                           colorSet.text
                                         };">${formatCurrency(
-          scope.total_price
+          scopePriceInclVAT
         )}</div>
                                 </div>
 
@@ -3350,7 +3422,7 @@ function showProjectFinancialsDialog(frm) {
                                             font-size: 0.85rem;">Cost</div>
                                         <div class="flow-value" style="color: var(--red-600);">
                                             ${formatCurrency(
-                                              scope.total_cost
+                                              scopeCost
                                             )}</div>
                                     </div>
                                     <div class="flow-node small positive" style="
@@ -3363,7 +3435,7 @@ function showProjectFinancialsDialog(frm) {
                                             font-size: 0.85rem;">Profit</div>
                                         <div class="flow-value" style="color: var(--green-600);">
                                             ${formatCurrency(
-                                              scope.total_profit
+                                              scopeProfit
                                             )}</div>
                                     </div>
                                 </div>
@@ -3379,7 +3451,7 @@ function showProjectFinancialsDialog(frm) {
                                     margin-bottom: 1rem;">
                                     <div class="flow-label" style="color: var(--text-muted); font-size: 0.9rem;">Price After Retention</div>
                                     <div class="flow-value" style="font-weight: 500;">${formatCurrency(
-                                      scope.price_after_retention
+                                      scopePriceAfterRetention
                                     )}</div>
                                 </div>
                                 <div class="flow-node" style="
@@ -3390,7 +3462,7 @@ function showProjectFinancialsDialog(frm) {
                                     margin-bottom: 1rem;">
                                     <div class="flow-label" style="color: var(--text-muted); font-size: 0.9rem;">VAT After Retention</div>
                                     <div class="flow-value" style="font-weight: 500;">${formatCurrency(
-                                      scope.vat_after_retention
+                                      scopeVAT
                                     )}</div>
                                 </div>
                                 <div class="flow-node highlighted" style="
@@ -3405,7 +3477,7 @@ function showProjectFinancialsDialog(frm) {
                                         color: ${
                                           colorSet.text
                                         };">${formatCurrency(
-          scope.total_price_after_retention
+          scopePriceAfterRetention
         )}</div>
                                 </div>
                             </div>

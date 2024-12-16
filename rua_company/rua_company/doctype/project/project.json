@@ -18,6 +18,7 @@
   "image",
   "column_break_zshe",
   "status",
+  "contract_value",
   "section_break_snka",
   "parties",
   "tab_break_czaf",
@@ -440,13 +441,19 @@
   {
    "fieldname": "section_break_khit",
    "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "contract_value",
+   "fieldtype": "Currency",
+   "label": "Contract Value",
+   "precision": "0"
   }
  ],
  "image_field": "image",
  "index_web_pages_for_search": 1,
  "links": [],
  "make_attachments_public": 1,
- "modified": "2024-12-16 17:50:52.023045",
+ "modified": "2024-12-16 19:26:10.463660",
  "modified_by": "Administrator",
  "module": "Rua Company",
  "name": "Project",
