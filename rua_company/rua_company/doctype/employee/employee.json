@@ -1,9 +1,9 @@
 {
  "actions": [],
  "allow_copy": 1,
- "allow_rename": 1,
  "autoname": "format:{first_name} {last_name}",
  "creation": "2024-12-16 12:39:12.437546",
+ "default_view": "Image",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
@@ -62,18 +62,21 @@
   {
    "fieldname": "nationality",
    "fieldtype": "Link",
+   "in_list_view": 1,
    "label": "Nationality",
    "options": "Country"
   },
   {
    "fieldname": "full_name",
    "fieldtype": "Read Only",
+   "in_list_view": 1,
    "label": "Full Name",
    "unique": 1
   },
   {
    "fieldname": "age",
    "fieldtype": "Int",
+   "in_list_view": 1,
    "label": "Age",
    "read_only": 1
   },
@@ -111,7 +114,7 @@
   {
    "fieldname": "html_ylrp",
    "fieldtype": "HTML",
-   "options": "<div style=\"display: flex; justify-content: center; align-items: center;\"><img src=\"{{doc.image}}\" style=\"max-height:200px;\"></div>"
+   "options": "<div style=\"display: flex; justify-content: center; align-items: center;\">\n  <img src=\"{{doc.image}}\" style=\"max-height:200px;\" draggable=\"false\">\n</div>\n"
   },
   {
    "fieldname": "column_break_anzk",
@@ -148,6 +151,7 @@
   {
    "fieldname": "position",
    "fieldtype": "Data",
+   "in_list_view": 1,
    "label": "Position"
   },
   {
@@ -168,7 +172,7 @@
  "index_web_pages_for_search": 1,
  "links": [],
  "make_attachments_public": 1,
- "modified": "2024-12-16 14:55:51.417770",
+ "modified": "2024-12-16 16:38:41.295039",
  "modified_by": "Administrator",
  "module": "Rua Company",
  "name": "Employee",
@@ -184,6 +188,29 @@
    "read": 1,
    "report": 1,
    "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "RUA Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "RUA Employee",
    "share": 1,
    "write": 1
   }
