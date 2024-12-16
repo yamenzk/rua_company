@@ -72,7 +72,7 @@ doctype_js = {
 # Svg Icons
 # ------------------
 # include app icons in desk
-app_include_icons = "rua_company/icons/rua-icon.svg"
+# app_include_icons = "rua_company/icons/rua-icon.svg"
 
 # Home Pages
 # ----------
