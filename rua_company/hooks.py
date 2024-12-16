@@ -1,3 +1,5 @@
+import frappe
+
 app_name = "rua_company"
 app_title = "Rua Company"
 app_publisher = "Yamen Zakhour"
@@ -17,24 +19,31 @@ fixtures = [
 # required_apps = []
 
 # Each item in the list will be shown as an app in the apps page
-# add_to_apps_screen = [
-# 	{
-# 		"name": "rua_company",
-# 		"logo": "/assets/rua_company/logo.png",
-# 		"title": "Rua Company",
-# 		"route": "/rua_company",
-# 		"has_permission": "rua_company.api.permission.has_app_permission"
-# 	}
-# ]
+
+def get_logo():
+    try:
+        logo = frappe.db.get_single_value("Rua", "logo_icon")
+        return logo if logo else "/assets/rua_company/i-b.png"
+    except Exception:
+        return "/assets/rua_company/i-b.png"
+
+add_to_apps_screen = [
+	{
+		"name": "rua_company",
+		"logo": get_logo(),
+		"title": "Rua Company",
+		"route": "/app/rua-company",
+	}
+]
 
 # Includes in <head>
 # ------------------
 
 # include js, css files in header of desk.html
 # app_include_css = "/assets/rua_company/css/rua_company.css"
-app_include_js = [
-    "/assets/rua_company/js/project_dashboard.js"
-]
+# app_include_js = [
+#     "/assets/rua_company/js/project_dashboard.js"
+# ]
 
 # include js, css files in header of web template
 # web_include_css = "/assets/rua_company/css/rua_company.css"
@@ -63,7 +72,7 @@ doctype_js = {
 # Svg Icons
 # ------------------
 # include app icons in desk
-# app_include_icons = "rua_company/public/icons.svg"
+app_include_icons = "rua_company/icons/rua-icon.svg"
 
 # Home Pages
 # ----------
@@ -95,12 +104,9 @@ doctype_js = {
 # ------------
 
 # before_install = "rua_company.install.before_install"
-# after_install = "rua_company.install.after_install"
+# after_install = "rua_company.after_install"
 
-# Uninstallation
-# ------------
-
-# before_uninstall = "rua_company.uninstall.before_uninstall"
+# before_uninstall = "rua_company.before_uninstall"
 # after_uninstall = "rua_company.uninstall.after_uninstall"
 
 # Integration Setup
