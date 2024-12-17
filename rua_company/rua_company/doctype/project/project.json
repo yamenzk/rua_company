@@ -151,13 +151,11 @@
   {
    "fieldname": "details_tab",
    "fieldtype": "Tab Break",
-   "hidden": 1,
    "label": "Details"
   },
   {
    "fieldname": "draft_billing_tab",
    "fieldtype": "Tab Break",
-   "hidden": 1,
    "label": "Draft Billing"
   },
   {
@@ -218,7 +216,6 @@
   {
    "fieldname": "actual_billing_tab",
    "fieldtype": "Tab Break",
-   "hidden": 1,
    "label": "Actual Billing"
   },
   {
@@ -453,7 +450,7 @@
  "index_web_pages_for_search": 1,
  "links": [],
  "make_attachments_public": 1,
- "modified": "2024-12-16 19:26:10.463660",
+ "modified": "2024-12-17 17:33:52.808487",
  "modified_by": "Administrator",
  "module": "Rua Company",
  "name": "Project",

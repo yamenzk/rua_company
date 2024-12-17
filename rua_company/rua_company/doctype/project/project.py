@@ -393,8 +393,8 @@ def import_items_from_excel(file_url, scope):
         ws = wb.active
         
         items = []
-        # Start from row 9 (right after headers)
-        for row in ws.iter_rows(min_row=9):
+        # Start from row 7 (right after headers)
+        for row in ws.iter_rows(min_row=7):
             # Skip empty rows
             if not any(cell.value for cell in row):
                 continue
