@@ -26,18 +26,14 @@ def calculate_all_values(doc):
         vat_factor = 1 + (vat / 100)
         labour_charges = scope.labour_charges or 0
 
-        if scope_type == "Extra Works":
-            calculate_items_batch_extra_works(
-                scope_items, scope, vat, vat_factor, labour_charges)
-        else:
-            # Calculate ratio once per scope
-            ratio = calculate_aluminum_ratio_optimized(
-                scope, scope_items, vat_factor)
-            scope.ratio = ratio
+        # Calculate ratio once per scope
+        ratio = calculate_aluminum_ratio_optimized(
+            scope, scope_items, vat_factor)
+        scope.ratio = ratio
 
-            # Bulk calculate items with pre-calculated values
-            calculate_items_batch(scope_items, scope, ratio,
-                                  vat, vat_factor, labour_charges)
+        # Bulk calculate items with pre-calculated values
+        calculate_items_batch(scope_items, scope, ratio,
+                                vat, vat_factor, labour_charges)
 
         update_scope_totals_optimized(
             scope, scope_items, vat_factor)
@@ -62,26 +58,15 @@ def calculate_aluminum_ratio_optimized(scope, scope_items, vat_factor):
 
     return round(total / y, 3) if y > 0 else 1
 
-
-def calculate_items_batch_extra_works(items, scope, vat, vat_factor, labour_charges):
-    for item in items:
-        qty = item.qty or 0
-        uom_rate = item.uom_rate or 0
-        overall_price = uom_rate * qty
-        if scope.rounding == "Round up to nearest 5":
-            overall_price = math.ceil(overall_price / 5) * 5
-        item.overall_price = overall_price
-
-
 def calculate_items_batch(items, scope, ratio, vat, vat_factor, labour_charges):
     """Calculate values for a batch of items"""
     for item in items:
         # Calculate area only if needed
-        if item.width and item.height and item.width >= 0 and item.height >= 0:
+        if hasattr(item, 'width') and hasattr(item, 'height') and item.width >= 0 and item.height >= 0:
             area = (item.width * item.height) / 10000
             item.area = area
 
-            if item.glass_unit >= 0:
+            if hasattr(item, 'glass_unit') and item.glass_unit >= 0:
                 vat_multiplier = vat
                 glass_price = item.glass_unit * \
                     area * (1 + (vat_multiplier / 100))

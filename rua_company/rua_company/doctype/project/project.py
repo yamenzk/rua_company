@@ -529,7 +529,15 @@ def add_item(project, scope_number, item_data):
     # Convert item_data from string to dict if needed
     if isinstance(item_data, str):
         item_data = frappe.parse_json(item_data)
-        
+    
+    # Ensure numeric fields are properly converted
+    numeric_fields = ['width', 'height', 'glass_unit', 'curtain_wall', 
+                     'insertion_1', 'insertion_2', 'insertion_3', 'insertion_4', 'qty']
+    
+    for field in numeric_fields:
+        if field in item_data:
+            item_data[field] = flt(item_data[field])
+    
     # Create new item
     new_item = {
         "scope_number": scope_number,
@@ -539,34 +547,20 @@ def add_item(project, scope_number, item_data):
     # Add item to child table
     doc.append("items", new_item)
     
-    # Pre-calculate scope-level values for efficiency
-    vat = scope.vat
-    vat_factor = 1 + (vat / 100)
-    labour_charges = scope.labour_charges or 0
-    
-    # Calculate ratio if needed
-    if scope.type != "Extra Works":
-        ratio = project_calculations.calculate_aluminum_ratio_optimized(
-            scope, [new_item], vat_factor)
-        scope.ratio = ratio
-        
-        # Calculate item values
-        project_calculations.calculate_items_batch(
-            [new_item], scope, ratio, vat, vat_factor, labour_charges)
-    else:
-        project_calculations.calculate_items_batch_extra_works(
-            [new_item], scope, vat, vat_factor, labour_charges)
-    
-    # Update scope totals
-    project_calculations.update_scope_totals_optimized(
-        scope, doc.get("items", {"scope_number": scope_number}), vat_factor)
-    
-    # Calculate financial totals
-    project_calculations.calculate_financial_totals_optimized(doc)
-    
+    # First save to add the item
     doc.save()
+    
+    # Get a fresh copy of the doc with the new item
+    updated_doc = frappe.get_doc("Project", project)
+    
+    # Force recalculation
+    project_calculations.calculate_all_values(updated_doc)
+    
+    # Save again to persist calculations
+    updated_doc.save(ignore_permissions=True)
+    
     return new_item
-
+    
 @frappe.whitelist()
 def get_item_suggestions(doctype, txt, searchfield, start, page_len, filters):
     """Get item suggestions for autocomplete with party history and dimensions"""

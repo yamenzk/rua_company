@@ -2460,14 +2460,7 @@ rua_company.project_dialogs.showItemsDialog = function (frm) {
                     label: 'Insertion 4'
                 }
             ];
-        } else {
-            fields.push({
-                fieldname: 'uom_rate',
-                fieldtype: 'Currency',
-                label: 'UOM Rate',
-                reqd: 1
-            });
-        }
+        } 
     
         // Add profit percentage field
         fields.push(
@@ -2490,12 +2483,23 @@ rua_company.project_dialogs.showItemsDialog = function (frm) {
             fields: fields,
             primary_action_label: 'Add Item',
             primary_action(values) {
+                // Convert numeric fields to numbers
+                const numericFields = ['width', 'height', 'glass_unit', 'curtain_wall', 
+                    'insertion_1', 'insertion_2', 'insertion_3', 'insertion_4', 'qty'];
+                
+                const processedValues = { ...values };
+                numericFields.forEach(field => {
+                    if (field in processedValues) {
+                        processedValues[field] = flt(processedValues[field]);
+                    }
+                });
+                
                 frappe.call({
                     method: "rua_company.rua_company.doctype.project.project.add_item",
                     args: {
                         project: frm.doc.name,
                         scope_number: scope.scope_number,
-                        item_data: values
+                        item_data: processedValues
                     },
                     freeze: true,
                     freeze_message: __("Adding item..."),
