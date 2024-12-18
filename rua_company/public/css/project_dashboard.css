@@ -1,0 +1,900 @@
+/* Project Header - Prefix: rua- */
+.rua-project-header {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 2rem;
+    padding: 1.5rem;
+    background: var(--fg-color);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+}
+
+.rua-header-main {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    min-width: 0;
+}
+
+.rua-header-title-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+}
+
+.rua-header-title {
+    display: flex;
+    align-items: baseline;
+    gap: 0.75rem;
+}
+
+.rua-project-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text-color);
+    margin: 0;
+    line-height: 1.2;
+}
+
+.rua-project-id {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    padding: 0.25rem 0.75rem;
+    background: var(--gray-100);
+    border-radius: 1rem;
+    white-space: nowrap;
+}
+
+.rua-project-status {
+    padding: 0.375rem 1rem;
+    border-radius: 1rem;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+}
+
+.rua-status-open {
+    background: var(--blue-50);
+    color: var(--blue-600);
+    border: 1px solid var(--blue-100);
+}
+
+.rua-status-completed {
+    background: var(--green-50);
+    color: var(--green-600);
+    border: 1px solid var(--green-100);
+}
+
+.rua-status-cancelled {
+    background: var(--red-50);
+    color: var(--red-600);
+    border: 1px solid var(--red-100);
+}
+
+.rua-status-on-hold {
+    background: var(--yellow-50);
+    color: var(--yellow-600);
+    border: 1px solid var(--yellow-100);
+}
+
+.rua-header-meta {
+    display: flex;
+    gap: 1.5rem;
+}
+
+.rua-meta-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--text-muted);
+    font-size: 0.875rem;
+}
+
+.rua-meta-item i {
+    color: var(--primary-color);
+    font-size: 1rem;
+}
+
+.rua-project-parties {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.rua-party-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.375rem 0.75rem;
+    border-radius: 1rem;
+    font-size: 0.8125rem;
+    color: var(--text-color);
+    transition: transform 0.15s ease;
+}
+
+.rua-party-chip:hover {
+    transform: translateY(-1px);
+}
+
+.rua-party-client {
+    background: var(--blue-50);
+    border: 1px solid var(--blue-100);
+}
+
+.rua-party-supplier {
+    background: var(--green-50);
+    border: 1px solid var(--green-100);
+}
+
+.rua-party-consultant {
+    background: var(--purple-50);
+    border: 1px solid var(--purple-100);
+}
+
+.rua-add-party-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.375rem 0.75rem;
+    border: 1px dashed var(--gray-400);
+    border-radius: 1rem;
+    color: var(--text-muted);
+    background: transparent;
+    transition: all 0.15s ease;
+    cursor: pointer;
+}
+
+.rua-add-party-btn:hover {
+    border-style: solid;
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+}
+
+.rua-header-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.rua-action-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: all 0.15s ease;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.rua-primary-btn {
+    background: var(--primary-color);
+    color: white;
+    border: 1px solid var(--primary-color);
+}
+
+.rua-primary-btn:hover {
+    opacity: 0.9;
+}
+
+.rua-secondary-btn {
+    background: transparent;
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+}
+
+.rua-secondary-btn:hover {
+    border-color: var(--text-muted);
+}
+
+/* Responsive Styles */
+@media (max-width: 991px) {
+    .rua-project-header {
+        grid-template-columns: 1fr;
+    }
+
+    .rua-header-actions {
+        flex-direction: row;
+        justify-content: flex-start;
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--border-color);
+    }
+}
+
+@media (max-width: 576px) {
+    .rua-header-title-section {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .rua-header-meta {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .rua-header-actions {
+        flex-direction: column;
+    }
+
+    .rua-action-btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+/* Project Overview */
+.project-overview {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+}
+
+.overview-card {
+    background: var(--fg-color);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 0.75rem;
+    position: relative;
+    transition: all 0.2s ease;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.overview-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(to right, var(--primary-color), transparent);
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    border-radius: 6px 6px 0 0;
+}
+
+.overview-card:hover::before {
+    opacity: 1;
+}
+
+.overview-card:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+}
+
+.overview-card.clickable {
+    cursor: pointer;
+}
+
+.overview-card .label {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-bottom: 0.25rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    position: relative;
+    z-index: 1;
+}
+
+.overview-card .amount {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-color);
+    margin-bottom: 0.5rem;
+    position: relative;
+    z-index: 1;
+}
+
+.overview-card .metric {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.overview-card.profit .amount.metric-positive {
+    color: var(--green-600);
+}
+
+.overview-card.profit .amount.metric-negative {
+    color: var(--red-600);
+}
+
+.overview-card.net .amount {
+    color: var(--blue-600);
+}
+
+.overview-card.value .amount {
+    color: var(--primary-color);
+}
+
+@media (max-width: 768px) {
+    .project-overview {
+        grid-template-columns: 1fr;
+        gap: 0.5rem;
+    }
+}
+
+/* Financial Sections */
+.finance-section {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-lg);
+    margin-bottom: var(--padding-xl);
+    position: relative;
+}
+
+.draft-financing {
+    background: var(--subtle-fg);
+}
+
+.section-header {
+    padding: var(--padding-lg);
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.section-header h2 {
+    color: var(--heading-color);
+    font-size: var(--text-xl);
+    font-weight: 600;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: var(--padding-sm);
+}
+
+.section-header .total-badge {
+    background: var(--bg-purple);
+    color: var(--text-on-purple);
+    padding: var(--padding-xs) var(--padding-sm);
+    border-radius: var(--border-radius);
+    font-size: var(--text-sm);
+    font-weight: 500;
+}
+
+.section-content {
+    padding: var(--padding-lg);
+}
+
+.scope {
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+}
+
+/* Summary Grid */
+.summary-grid-3 {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--padding-lg);
+}
+
+.summary-grid-2 {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--padding-lg);
+}
+
+.summary-block {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-lg);
+    overflow: hidden;
+}
+
+.grid-body input.form-control{
+    background-color: unset;
+    color: unset;
+}
+
+.summary-card {
+    background: var(--subtle-fg);
+    border-radius: 0;
+    border-bottom: 1px solid var(--border-color);
+    padding: var(--padding-lg);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+
+.summary-card .title {
+    color: var(--text-muted);
+    font-size: var(--text-sm);
+}
+
+.summary-card .value {
+    color: var(--text-color);
+    font-size: var(--text-lg);
+    font-weight: 600;
+}
+
+/* Document Lists */
+.doc-list {
+    background: transparent;
+    border: none;
+}
+
+.doc-list-item {
+    padding: var(--padding-md);
+    display: grid;
+    grid-template-columns: 1fr 2fr 0.8fr;
+    gap: var(--padding-sm);
+    align-items: center;
+    border-bottom: 1px solid var(--border-color);
+    transition: background-color 0.2s;
+}
+
+.doc-list-item:last-child {
+    border-bottom: none;
+}
+
+.doc-list-item:hover {
+    background: var(--fg-hover);
+}
+
+.doc-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.doc-info .bill {
+    color: var(--text-color);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.doc-info .amount {
+    color: var(--text-muted);
+    font-size: var(--text-sm);
+}
+
+/* Payment Lists */
+.payment-list-item {
+    padding: var(--padding-md);
+    display: grid;
+    grid-template-columns: 1fr 2fr 0.5fr;
+    gap: var(--padding-sm);
+    align-items: center;
+    border-bottom: 1px solid var(--border-color);
+    transition: background-color 0.2s;
+}
+
+.payment-list-item:hover {
+    background: var(--fg-hover);
+}
+
+.payment-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.payment-info .voucher {
+    color: var(--text-color);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.payment-info .amount {
+    color: var(--text-muted);
+    font-size: var(--text-sm);
+}
+
+.payment-arrow {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: var(--text-lg);
+}
+
+.arrow-incoming {
+    color: var(--green-600);
+}
+
+.arrow-outgoing {
+    color: var(--red-600);
+}
+
+/* Status Chips */
+.status-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: var(--text-xs);
+    font-weight: 500;
+    justify-self: end;
+}
+
+.status-paid {
+    background: var(--bg-green);
+    color: var(--green-600);
+    border: 1px solid var(--green-600);
+}
+
+.status-unpaid {
+    background: var(--bg-red);
+    color: var(--text-on-red);
+    border: 1px solid var(--red-600);
+}
+
+.status-partially-paid {
+    background: var(--bg-yellow);
+    color: var(--text-on-yellow);
+    border: 1px solid var(--yellow-600);
+}
+
+.status-not-billable {
+    background: var(--bg-gray);
+    color: var(--text-on-gray);
+    border: 1px solid var(--gray-600);
+}
+
+.status-submitted {
+    background: var(--bg-green);
+    color: var(--green-600);
+    border: 1px solid var(--green-600);
+}
+
+/* Draft Financing Styles */
+.section-divider {
+    margin: var(--padding-xl) 0;
+    border-top: 1px solid var(--border-color);
+    position: relative;
+}
+
+.section-divider::before {
+    content: '';
+    position: absolute;
+    top: -1px;
+    left: 0;
+    width: 50px;
+    height: 2px;
+    background: var(--primary);
+}
+
+.draft-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: var(--text-xs);
+    font-weight: 500;
+    justify-self: end;
+    background: var(--bg-blue);
+    color: var(--text-on-blue);
+    border: 1px solid var(--blue-600);
+}
+
+.doc-category {
+    padding: var(--padding-sm) var(--padding-md);
+    color: var(--text-muted);
+    font-size: var(--text-sm);
+    font-weight: 500;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.empty-state {
+    padding: var(--padding-lg);
+    text-align: center;
+    color: var(--text-muted);
+    font-size: var(--text-sm);
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+    .summary-grid-3 {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .project-overview,
+    .summary-grid-3,
+    .summary-grid-2 {
+        grid-template-columns: 1fr;
+    }
+    
+    .doc-list-item,
+    .payment-list-item {
+        gap: var(--padding-xs);
+    }
+    
+    .status-chip {
+        justify-self: start;
+    }
+    
+    .doc-info,
+    .payment-info {
+        gap: var(--padding-xs);
+    }
+    
+    .payment-arrow {
+        justify-content: flex-start;
+        padding-top: var(--padding-xs);
+    }
+}
+
+/* Finance Section Styles */
+.finance-section {
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    background: var(--card-bg);
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--card-shadow);
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.section-header h2 {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+/* Additional Expenses Styles */
+.info-panel {
+    background: var(--subtle-fg);
+    padding: 1rem;
+    border-radius: var(--border-radius);
+}
+
+.info-panel p {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: var(--text-xs)
+}
+
+.info-panel i {
+    color: var(--text-muted);
+    margin-right: 0.5rem;
+}
+
+.expenses-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.expense-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: 1rem;
+    transition: all 0.2s ease;
+}
+
+.expense-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-base);
+}
+
+.expense-title {
+    font-weight: 600;
+    color: var(--text-color);
+    margin-bottom: 0.5rem;
+}
+
+.expense-description {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    margin-bottom: 0.75rem;
+    line-height: 1.4;
+}
+
+.expense-amount {
+    color: var(--text-color);
+    font-weight: 500;
+    font-size: 1.125rem;
+}
+
+/* Payment List Container */
+.payment-list-container, .doc-list-container {
+    max-height: 265px;
+    overflow-y: auto;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE and Edge */
+}
+
+.payment-list-container::-webkit-scrollbar, .doc-list-container::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, Opera */
+}
+
+.payment-list-item, .doc-list-item {
+    padding: var(--padding-md);
+    display: grid;
+    grid-template-columns: 1fr 2fr 0.5fr;
+    gap: var(--padding-sm);
+    align-items: center;
+    border-bottom: 1px solid var(--border-color);
+    transition: background-color 0.2s;
+}
+
+.payment-list-item:hover, .doc-list-item:hover {
+    background: var(--fg-hover);
+}
+
+.payment-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.payment-info .voucher {
+    color: var(--text-color);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.payment-info .amount {
+    color: var(--text-muted);
+    font-size: var(--text-sm);
+}
+
+.payment-arrow {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: var(--text-lg);
+}
+
+.arrow-incoming {
+    color: var(--green-600);
+}
+
+.arrow-outgoing {
+    color: var(--red-600);
+}
+
+/* Scopes Section */
+.rua-scopes-section {
+    background: var(--fg-color);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.rua-scopes-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.rua-scopes-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-color);
+    margin: 0;
+}
+
+.rua-scopes-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1rem;
+}
+
+.rua-scope-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 16px;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.rua-scope-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-base);
+}
+
+.rua-scope-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.rua-scope-number {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    font-weight: 600;
+    color: var(--card-bg);
+}
+
+.rua-scope-title {
+    margin: 0;
+    font-size: 1.1em;
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+.rua-scope-stats {
+    display: flex;
+    gap: 16px;
+}
+
+.rua-scope-stat {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-muted);
+    font-size: 0.9em;
+}
+
+.rua-scope-stat i {
+    font-size: 1em;
+}
+
+.rua-add-scope-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 2rem;
+    border: 1px dashed var(--gray-400);
+    border-radius: 8px;
+    color: var(--text-muted);
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.rua-add-scope-card:hover {
+    border-style: solid;
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+    background: var(--fg-color);
+}
+
+.rua-add-scope-card i {
+    font-size: 1.5rem;
+}
+
+.rua-add-scope-card span {
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+@media (max-width: 576px) {
+    .rua-scopes-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .rua-scopes-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 1rem;
+    }
+    
+    .rua-scopes-header .rua-action-btn {
+        width: 100%;
+        justify-content: center;
+    }
+}

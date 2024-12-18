@@ -21,6 +21,7 @@
   "vat_inclusive",
   "vat",
   "total_vat_amount",
+  "type",
   "section_break_eqol",
   "total_items",
   "column_break_vuxp",
@@ -223,12 +224,19 @@
    "label": "VAT After Retention",
    "precision": "2",
    "read_only": 1
+  },
+  {
+   "default": "Openings",
+   "fieldname": "type",
+   "fieldtype": "Select",
+   "label": "Type",
+   "options": "Openings\nLouvers\nHandrails\nCladdings\nPergolas\nSkylights\nShower Partitions"
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-12-12 16:34:59.326619",
+ "modified": "2024-12-17 23:53:28.154983",
  "modified_by": "Administrator",
  "module": "Rua Company",
  "name": "Scopes",

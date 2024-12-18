@@ -434,138 +434,6 @@ function apply_color_coding(frm) {
   }, 100);
 }
 
-// Handle items table scope number and read-only state
-frappe.ui.form.on("Project Items", {
-  before_items_remove: function (frm, cdt, cdn) {
-    const row = locals[cdt][cdn];
-    // Store the scope number in the frm object for use after removal
-    frm.removed_item_scope = row.scope_number;
-  },
-
-  items_remove: function (frm, cdt, cdn) {
-    apply_color_coding(frm);
-
-    // If we have a stored scope number, trigger calculations for all items in that scope
-    if (frm.removed_item_scope) {
-      const scope_items = frm.doc.items.filter(
-        (item) => item.scope_number === frm.removed_item_scope
-      );
-      if (scope_items.length > 0) {
-        // Use the first remaining item to trigger calculations for the whole scope
-        trigger_calculations(frm, scope_items[0]);
-      } else {
-        // If no items left in this scope, update the scope totals to zero
-        update_scope_totals(frm, frm.removed_item_scope);
-      }
-      // Clear the stored scope
-      delete frm.removed_item_scope;
-    }
-  },
-
-  items_add: function (frm, cdt, cdn) {
-    let scopes = frm.doc.scopes || [];
-    if (scopes.length === 0) {
-      frappe.throw(__("Please add at least one scope before adding items"));
-      return false;
-    }
-
-    let row = frappe.get_doc(cdt, cdn);
-
-    // Get the scope number from the grid row's index
-    let grid_row = frm.fields_dict.items.grid.grid_rows.find(
-      (r) => r.doc.name === cdn
-    );
-    let scope_number = grid_row.doc.scope_number;
-
-    // If no scope number is set (new row), use the latest scope
-    if (!scope_number) {
-      let latest_scope = scopes[scopes.length - 1];
-      scope_number = latest_scope.scope_number;
-    }
-
-    // Find the matching scope
-    let matching_scope = scopes.find(
-      (scope) => scope.scope_number === scope_number
-    );
-    if (matching_scope) {
-      row.scope_number = matching_scope.scope_number;
-      row.glass_unit = matching_scope.glass_sqm_price;
-      row.profit_percentage = matching_scope.profit;
-    }
-
-    frm.fields_dict.items.grid.refresh();
-    apply_color_coding(frm);
-    trigger_calculations(frm, row);
-  },
-
-  scope_number: function (frm, cdt, cdn) {
-    let row = frappe.get_doc(cdt, cdn);
-    let scopes = frm.doc.scopes || [];
-
-    // Find the matching scope
-    let matching_scope = scopes.find(
-      (scope) => scope.scope_number === row.scope_number
-    );
-    if (matching_scope) {
-      frappe.model.set_value(
-        cdt,
-        cdn,
-        "glass_unit",
-        matching_scope.glass_sqm_price
-      );
-      frappe.model.set_value(
-        cdt,
-        cdn,
-        "profit_percentage",
-        matching_scope.profit
-      );
-    }
-    apply_color_coding(frm);
-    trigger_calculations(frm, row);
-  },
-
-  width: function (frm, cdt, cdn) {
-    const row = locals[cdt][cdn];
-    trigger_calculations(frm, row);
-  },
-  height: function (frm, cdt, cdn) {
-    const row = locals[cdt][cdn];
-    trigger_calculations(frm, row);
-  },
-  qty: function (frm, cdt, cdn) {
-    const row = locals[cdt][cdn];
-    trigger_calculations(frm, row);
-  },
-  glass_unit: function (frm, cdt, cdn) {
-    const row = locals[cdt][cdn];
-    trigger_calculations(frm, row);
-  },
-  curtain_wall: function (frm, cdt, cdn) {
-    const row = locals[cdt][cdn];
-    trigger_calculations(frm, row);
-  },
-  insertion_1: function (frm, cdt, cdn) {
-    const row = locals[cdt][cdn];
-    trigger_calculations(frm, row);
-  },
-  insertion_2: function (frm, cdt, cdn) {
-    const row = locals[cdt][cdn];
-    trigger_calculations(frm, row);
-  },
-  insertion_3: function (frm, cdt, cdn) {
-    const row = locals[cdt][cdn];
-    trigger_calculations(frm, row);
-  },
-  insertion_4: function (frm, cdt, cdn) {
-    const row = locals[cdt][cdn];
-    trigger_calculations(frm, row);
-  },
-  profit_percentage: function (frm, cdt, cdn) {
-    const row = locals[cdt][cdn];
-    trigger_calculations(frm, row);
-  },
-});
-
 function create_project_bill(frm, bill_type) {
   // Get filtered parties based on bill type
   let party_type;
@@ -609,8 +477,8 @@ function create_project_bill(frm, bill_type) {
 
   function show_party_dialog(outstanding_amounts) {
     // Format party labels based on type and section
-    let party_options = parties.map((p) => {
-      let label;
+    let party_cards = parties.map((p) => {
+      let label, amount_info = "";
       if (bill_type === "Payment Voucher") {
         let amount = outstanding_amounts[p.party] || 0;
         let formatted_amount = format_currency(
@@ -625,105 +493,142 @@ function create_project_bill(frm, bill_type) {
           direction =
             amount > 0 ? "To Receive" : amount < 0 ? "To Pay" : "No Balance";
         }
-        if (p.type === "Supplier" && p.section) {
-          label = `${p.party} (${p.type} - ${p.section}) [${direction}: ${formatted_amount}]`;
-        } else {
-          label = `${p.party} (${p.type}) [${direction}: ${formatted_amount}]`;
-        }
-      } else {
-        if (p.type === "Supplier" && p.section) {
-          label = `${p.party} (${p.type} - ${p.section})`;
-        } else {
-          label = `${p.party} (${p.type})`;
-        }
+        amount_info = `<div class="amount-info ${direction.toLowerCase().replace(' ', '-')}">
+          ${direction}: ${formatted_amount}
+        </div>`;
       }
+
       return {
-        label: label,
-        value: p.party,
+        party: p.party,
+        type: p.type,
+        section: p.section,
+        amount_info: amount_info
       };
     });
 
-    // For non-supplier documents, auto-select the client if there's only one
-    let default_party = null;
-    if (party_type === "Client") {
-      let clients = parties.filter((p) => p.type === "Client");
-      if (clients.length === 1) {
-        default_party = clients[0].party;
+    // Group parties by type for better organization
+    let grouped_parties = {};
+    party_cards.forEach(p => {
+      if (!grouped_parties[p.type]) {
+        grouped_parties[p.type] = [];
       }
-    }
+      grouped_parties[p.type].push(p);
+    });
 
     let fields = [
       {
-        fieldtype: "Select",
-        fieldname: "party",
-        label: __("Select Party"),
-        reqd: 1,
-        options: party_options,
-        default: default_party,
-      },
+        fieldtype: "HTML",
+        fieldname: "party_cards",
+        options: `
+          <div class="party-cards-container">
+            ${Object.entries(grouped_parties).map(([type, parties]) => `
+              <div class="party-type-section">
+                <h6 class="text-muted">${type}</h6>
+                <div class="party-cards-grid">
+                  ${parties.map(p => `
+                    <div class="party-card" data-party="${p.party}">
+                      <div class="party-card-header">
+                        <div class="party-name">${p.party}</div>
+                        ${p.type === "Supplier" && p.section ? 
+                          `<div class="party-section">${p.section}</div>` : 
+                          ''}
+                      </div>
+                      ${p.amount_info}
+                    </div>
+                  `).join('')}
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        `
+      }
     ];
 
-    // Add scope selection if there are scopes (except for Payment Vouchers)
-    if (
-      bill_type !== "Payment Voucher" &&
-      frm.doc.scopes &&
-      frm.doc.scopes.length > 1
-    ) {
-      let scope_options = [
-        {
-          label: __("All Scopes"),
-          value: "0",
-        },
-        ...frm.doc.scopes.map((scope) => ({
-          label: `Scope ${scope.scope_number}: ${scope.description || ""}`,
-          value: scope.scope_number,
-        })),
-      ];
-
-      fields.push({
-        fieldtype: "Select",
-        fieldname: "scope",
-        label: __("Select Scope"),
-        reqd: 1,
-        options: scope_options,
-      });
-    }
-
-    // Add RFQ specific fields
+    // Add RFQ specific fields if needed
     if (bill_type === "Request for Quotation") {
+      fields.push({
+        fieldtype: "HTML",
+        fieldname: "rfq_type_cards",
+        options: `
+          <div class="rfq-type-section">
+            <h6 class="text-muted">${__("RFQ Type")}</h6>
+            <div class="rfq-type-cards">
+              <div class="rfq-type-card" data-type="items">
+                <div class="rfq-icon">
+                  <i class="fa fa-list"></i>
+                </div>
+                <div class="rfq-type-content">
+                  <div class="rfq-type-title">${__("RFQ from Items")}</div>
+                  <div class="rfq-type-desc">${__("Create RFQ from selected project items")}</div>
+                </div>
+              </div>
+              <div class="rfq-type-card" data-type="link">
+                <div class="rfq-icon">
+                  <i class="fa fa-link"></i>
+                </div>
+                <div class="rfq-type-content">
+                  <div class="rfq-type-title">${__("RFQ from Link")}</div>
+                  <div class="rfq-type-desc">${__("Create RFQ using an external link")}</div>
+                </div>
+              </div>
+            </div>
+            <div class="rfq-link-container" style="display: none;">
+              <div class="form-group">
+                <label class="control-label">${__("RFQ URL")}</label>
+                <input type="text" class="form-control rfq-url-input" placeholder="${__("Enter RFQ URL")}">
+                <small class="form-text text-muted">
+                  ${__("Enter the URL for the external RFQ")}
+                </small>
+              </div>
+            </div>
+          </div>
+        `
+      });
+
+      // Add hidden fields to store the values
       fields.push(
         {
-          fieldtype: "Select",
+          fieldtype: "Data",
           fieldname: "rfq_type",
-          label: __("RFQ Type"),
-          reqd: 1,
-          options: [
-            { label: "RFQ from Items", value: "items" },
-            { label: "RFQ from Link", value: "link" },
-          ],
+          hidden: 1
         },
         {
           fieldtype: "Data",
           fieldname: "url",
-          label: __("RFQ URL"),
-          depends_on: "eval:doc.rfq_type=='link'",
+          hidden: 1
         }
       );
     }
 
     let d = new frappe.ui.Dialog({
-      title: __(
-        bill_type === "Payment Voucher"
-          ? "Create Payment Voucher"
-          : "Create Project Bill"
-      ),
+      title: __("Select Party"),
       fields: fields,
-      primary_action_label:
-        bill_type === "Payment Voucher" ? __("Create") : __("Next"),
+      primary_action_label: __("Next"),
       primary_action(values) {
-        // Get selected items
-        d.hide();
+        let selected_party = d.$wrapper.find(".party-card.selected").data("party");
+        if (!selected_party) {
+          frappe.msgprint(__("Please select a party"));
+          return;
+        }
 
+        values.party = selected_party;
+
+        if (bill_type === "Request for Quotation") {
+          values.rfq_type = d.$wrapper.find(".rfq-type-card.selected").data("type");
+          if (!values.rfq_type) {
+            frappe.msgprint(__("Please select an RFQ type"));
+            return;
+          }
+          if (values.rfq_type === "link") {
+            values.url = d.$wrapper.find(".rfq-url-input").val();
+            if (!values.url) {
+              frappe.msgprint(__("Please enter an RFQ URL"));
+              return;
+            }
+          }
+        }
+
+        d.hide();
         if (bill_type === "Payment Voucher") {
           frappe.model.open_mapped_doc({
             method:
@@ -740,8 +645,7 @@ function create_project_bill(frm, bill_type) {
           bill_type === "Request for Quotation" &&
           values.rfq_type === "link"
         ) {
-          // Create RFQ directly with link
-          create_bill_with_scope(frm, bill_type, values.scope || 1, {
+          create_bill_with_scope(frm, bill_type, "0", {
             send_rfq_link: 1,
             url: values.url,
             party: values.party,
@@ -750,123 +654,402 @@ function create_project_bill(frm, bill_type) {
           bill_type === "Request for Quotation" ||
           bill_type === "Purchase Order"
         ) {
-          // Show item selection dialog
-          show_item_selection_dialog(
-            frm,
-            bill_type,
-            values.scope || 1,
-            values.party
-          );
+          show_item_selection_dialog(frm, bill_type, "0", values.party);
         } else {
-          create_bill_with_scope(frm, bill_type, values.scope || 1, {
+          create_bill_with_scope(frm, bill_type, "0", {
             party: values.party,
           });
         }
       },
     });
 
+    // Add custom styles
+    d.$wrapper.find(".party-cards-container").css({
+      "max-height": "60vh",
+      "overflow-y": "auto",
+      "padding": "15px"
+    });
+
+    d.$wrapper.find(".party-type-section").css({
+      "margin-bottom": "25px"
+    });
+
+    d.$wrapper.find(".party-cards-grid").css({
+      "display": "grid",
+      "grid-template-columns": "repeat(2, 1fr)",
+      "gap": "20px",
+      "margin-top": "10px"
+    });
+
+    d.$wrapper.find(".party-card").css({
+      "border": "1px solid var(--border-color)",
+      "border-radius": "8px",
+      "padding": "15px",
+      "cursor": "pointer",
+      "transition": "all 0.2s ease",
+      "background": "var(--card-bg)",
+      "min-width": "200px"
+    });
+
+    d.$wrapper.find(".party-card-header").css({
+      "margin-bottom": "10px"
+    });
+
+    d.$wrapper.find(".party-name").css({
+      "font-weight": "600",
+      "font-size": "1.1em",
+      "color": "var(--text-color)",
+      "margin-bottom": "4px"
+    });
+
+    d.$wrapper.find(".party-section").css({
+      "color": "var(--text-muted)",
+      "font-size": "0.9em"
+    });
+
+    d.$wrapper.find(".amount-info").css({
+      "font-size": "0.9em",
+      "padding": "4px 8px",
+      "border-radius": "4px",
+      "display": "inline-block",
+      "margin-top": "8px"
+    });
+
+    d.$wrapper.find(".amount-info.to-pay").css({
+      "background": "var(--red-50)",
+      "color": "var(--red-600)"
+    });
+
+    d.$wrapper.find(".amount-info.to-receive").css({
+      "background": "var(--green-50)",
+      "color": "var(--green-600)"
+    });
+
+    d.$wrapper.find(".amount-info.no-balance").css({
+      "background": "var(--gray-50)",
+      "color": "var(--gray-600)"
+    });
+
+    // Make the dialog wider to accommodate two cards
+    d.$wrapper.find(".modal-dialog").css({
+      "max-width": "700px"
+    });
+
+    // Add hover effect
+    d.$wrapper.find(".party-card").hover(
+      function() {
+        $(this).css({
+          "box-shadow": "var(--shadow-base)",
+          "border-color": "var(--primary-color)",
+          "transform": "translateY(-2px)"
+        });
+      },
+      function() {
+        if (!$(this).hasClass("selected")) {
+          $(this).css({
+            "box-shadow": "none",
+            "border-color": "var(--border-color)",
+            "transform": "none"
+          });
+        }
+      }
+    );
+
+    // Add click handler for party selection
+    d.$wrapper.find(".party-card").on("click", function() {
+      d.$wrapper.find(".party-card").removeClass("selected").css({
+        "box-shadow": "none",
+        "border-color": "var(--border-color)",
+        "transform": "none",
+        "background": "var(--card-bg)"
+      });
+      
+      $(this).addClass("selected").css({
+        "box-shadow": "var(--shadow-base)",
+        "border-color": "var(--primary-color)",
+        "transform": "translateY(-2px)",
+        "background": "var(--primary-color-light)"
+      });
+    });
+
+    // Add custom styles for RFQ section
+    if (bill_type === "Request for Quotation") {
+      d.$wrapper.find(".rfq-type-section").css({
+        "margin-top": "30px",
+        "padding": "0 15px"
+      });
+
+      d.$wrapper.find(".rfq-type-cards").css({
+        "display": "grid",
+        "grid-template-columns": "repeat(2, 1fr)",
+        "gap": "20px",
+        "margin-top": "10px"
+      });
+
+      d.$wrapper.find(".rfq-type-card").css({
+        "border": "1px solid var(--border-color)",
+        "border-radius": "8px",
+        "padding": "15px",
+        "cursor": "pointer",
+        "transition": "all 0.2s ease",
+        "background": "var(--card-bg)",
+        "display": "flex",
+        "align-items": "center",
+        "gap": "15px"
+      });
+
+      d.$wrapper.find(".rfq-icon").css({
+        "font-size": "1.5em",
+        "color": "var(--text-muted)",
+        "width": "40px",
+        "height": "40px",
+        "display": "flex",
+        "align-items": "center",
+        "justify-content": "center",
+        "background": "var(--bg-light-gray)",
+        "border-radius": "8px"
+      });
+
+      d.$wrapper.find(".rfq-type-title").css({
+        "font-weight": "600",
+        "margin-bottom": "4px"
+      });
+
+      d.$wrapper.find(".rfq-type-desc").css({
+        "color": "var(--text-muted)",
+        "font-size": "0.9em"
+      });
+
+      d.$wrapper.find(".rfq-link-container").css({
+        "margin-top": "20px",
+        "padding": "15px",
+        "border": "1px solid var(--border-color)",
+        "border-radius": "8px",
+        "background": "var(--card-bg)"
+      });
+
+      // Add hover effect for RFQ type cards
+      d.$wrapper.find(".rfq-type-card").hover(
+        function() {
+          $(this).css({
+            "box-shadow": "var(--shadow-base)",
+            "border-color": "var(--primary-color)",
+            "transform": "translateY(-2px)"
+          });
+        },
+        function() {
+          if (!$(this).hasClass("selected")) {
+            $(this).css({
+              "box-shadow": "none",
+              "border-color": "var(--border-color)",
+              "transform": "none"
+            });
+          }
+        }
+      );
+
+      // Add click handler for RFQ type selection
+      d.$wrapper.find(".rfq-type-card").on("click", function() {
+        d.$wrapper.find(".rfq-type-card").removeClass("selected").css({
+          "box-shadow": "none",
+          "border-color": "var(--border-color)",
+          "transform": "none",
+          "background": "var(--card-bg)"
+        });
+        
+        $(this).addClass("selected").css({
+          "box-shadow": "var(--shadow-base)",
+          "border-color": "var(--primary-color)",
+          "transform": "translateY(-2px)",
+          "background": "var(--primary-color-light)"
+        });
+
+        // Show/hide URL input based on selection
+        if ($(this).data("type") === "link") {
+          d.$wrapper.find(".rfq-link-container").slideDown();
+        } else {
+          d.$wrapper.find(".rfq-link-container").slideUp();
+        }
+      });
+    }
+
+    // Add hover effect
+    d.$wrapper.find(".party-card").hover(
+      function() {
+        $(this).css({
+          "box-shadow": "var(--shadow-base)",
+          "border-color": "var(--primary-color)",
+          "transform": "translateY(-2px)"
+        });
+      },
+      function() {
+        if (!$(this).hasClass("selected")) {
+          $(this).css({
+            "box-shadow": "none",
+            "border-color": "var(--border-color)",
+            "transform": "none"
+          });
+        }
+      }
+    );
+
+    // Add click handler for party selection
+    d.$wrapper.find(".party-card").on("click", function() {
+      d.$wrapper.find(".party-card").removeClass("selected").css({
+        "box-shadow": "none",
+        "border-color": "var(--border-color)",
+        "transform": "none",
+        "background": "var(--card-bg)"
+      });
+      
+      $(this).addClass("selected").css({
+        "box-shadow": "var(--shadow-base)",
+        "border-color": "var(--primary-color)",
+        "transform": "translateY(-2px)",
+        "background": "var(--primary-color-light)"
+      });
+    });
+
     d.show();
   }
 }
+
 function show_item_selection_dialog(frm, bill_type, scope, party) {
-  // Get items for the selected scope
-  let items = frm.doc.items.filter(
-    (item) => scope === "0" || String(item.scope_number) === String(scope)
-  );
-  if (!items.length) {
-    frappe.msgprint(__("No items found for the selected scope"));
-    return;
-  }
-  // Create HTML table for item selection
-  let table_html = `
-        <div style="max-height: 500px; overflow-y: auto;">
+  // Get all items since we're not filtering by scope anymore
+  let items = frm.doc.items || [];
+
+  // Create dialog fields
+  let fields = [
+    {
+      fieldtype: "HTML",
+      fieldname: "items_html",
+      options: `
+        <div class="item-selector">
+          <div class="select-actions">
+            <button class="btn btn-xs btn-default select-all">Select All</button>
+            <button class="btn btn-xs btn-default clear-all">Clear All</button>
+          </div>
+          <div class="table-responsive">
             <table class="table table-bordered">
-                <thead>
-                    <tr>
-                        <th style="width: 30px;">
-                            <input type="checkbox" class="select-all" title="Select All">
-                        </th>
-                        <th>${__("Item")}</th>
-                        <th>${__("Description")}</th>
-                        <th>${__("Qty")}</th>
-                        <th>${__("Width")}</th>
-                        <th>${__("Height")}</th>
-                        ${
-                          bill_type === "Purchase Order"
-                            ? `<th>${__("Rate")}</th>`
-                            : ""
-                        }
-                    </tr>
-                </thead>
-                <tbody>
-                    ${items
-                      .map(
-                        (item, idx) => `
-                        <tr>
-                            <td>
-                                <input type="checkbox" class="item-select" data-idx="${idx}">
-                            </td>
-                            <td>${item.item || ""}</td>
-                            <td>${item.description || ""}</td>
-                            <td>${item.qty || ""}</td>
-                            <td>${item.width || ""}</td>
-                            <td>${item.height || ""}</td>
-                            ${
-                              bill_type === "Purchase Order"
-                                ? `<td>${format_currency(
-                                    item.actual_unit_rate || 0,
-                                    frm.doc.currency
-                                  )}</td>`
-                                : ""
-                            }
-                        </tr>
-                    `
-                      )
-                      .join("")}
-                </tbody>
+              <thead>
+                <tr>
+                  <th style="width: 30px;">
+                    <div class="checkbox">
+                      <label>
+                        <input type="checkbox" class="select-all-checkbox">
+                      </label>
+                    </div>
+                  </th>
+                  <th>${__("Item")}</th>
+                  <th>${__("Description")}</th>
+                  <th>${__("Scope")}</th>
+                  <th>${__("Qty")}</th>
+                  <th>${__("Width")}</th>
+                  <th>${__("Height")}</th>
+                  ${bill_type === "Purchase Order" ? `<th>${__("Rate")}</th>` : ""}
+                </tr>
+              </thead>
+              <tbody>
+                ${items.map((item, idx) => `
+                  <tr>
+                    <td>
+                      <div class="checkbox">
+                        <label>
+                          <input type="checkbox" class="item-checkbox" data-idx="${idx}" ${item.selected ? "checked" : ""}>
+                        </label>
+                      </div>
+                    </td>
+                    <td>${item.item || ""}</td>
+                    <td>${item.description || ""}</td>
+                    <td>
+                      <span class="scope-tag">Scope ${item.scope_number || "N/A"}</span>
+                    </td>
+                    <td class="text-right">${item.qty || ""}</td>
+                    <td class="text-right">${item.width || ""}</td>
+                    <td class="text-right">${item.height || ""}</td>
+                    ${bill_type === "Purchase Order" 
+                      ? `<td class="text-right">${format_currency(item.actual_unit_rate || 0, frm.doc.currency)}</td>` 
+                      : ""}
+                  </tr>
+                `).join("")}
+              </tbody>
             </table>
+          </div>
         </div>
-    `;
+      `,
+    },
+  ];
+
   let d = new frappe.ui.Dialog({
     title: __("Select Items"),
-    fields: [
-      {
-        fieldtype: "HTML",
-        fieldname: "items_html",
-        options: table_html,
-      },
-    ],
+    fields: fields,
     primary_action_label: __("Create"),
     primary_action(values) {
       // Get selected items
       let selected_items = [];
-      d.$wrapper.find(".item-select:checked").each(function () {
-        let idx = $(this).data("idx");
-        let item = items[idx];
-        selected_items.push({
-          item: item.item,
-          description: item.description,
-          qty: item.qty,
-          width: item.width,
-          height: item.height,
-          rate:
-            bill_type === "Purchase Order" ? item.actual_unit_rate : undefined,
+      d.$wrapper
+        .find(".item-checkbox:checked")
+        .each(function () {
+          let idx = $(this).data("idx");
+          selected_items.push(items[idx]);
         });
-      });
+
+      if (!selected_items.length) {
+        frappe.msgprint(__("Please select at least one item"));
+        return;
+      }
+
       d.hide();
-      create_bill_with_scope(frm, bill_type, scope, {
-        selected_items: selected_items,
+      create_bill_with_scope(frm, bill_type, "0", {
+        items: selected_items,
         party: party,
       });
     },
   });
-  // Handle select all checkbox
-  d.$wrapper.find(".select-all").on("change", function () {
-    let checked = $(this).prop("checked");
-    d.$wrapper.find(".item-select").prop("checked", checked);
+
+  // Add custom styles
+  d.$wrapper.find(".item-selector").css({
+    "max-height": "70vh",
+    "overflow-y": "auto"
   });
+
+  d.$wrapper.find(".select-actions").css({
+    "margin-bottom": "10px",
+    "display": "flex",
+    "gap": "10px"
+  });
+
+  d.$wrapper.find(".scope-tag").css({
+    "background-color": "var(--bg-light-gray)",
+    "padding": "2px 6px",
+    "border-radius": "4px",
+    "font-size": "0.9em",
+    "color": "var(--text-muted)"
+  });
+
+  // Add event handlers
+  d.$wrapper.find(".select-all, .select-all-checkbox").on("click", function() {
+    let isChecked = $(this).is(":checked");
+    if ($(this).hasClass("select-all")) {
+      isChecked = true;
+      d.$wrapper.find(".select-all-checkbox").prop("checked", true);
+    }
+    d.$wrapper.find(".item-checkbox").prop("checked", isChecked);
+  });
+
+  d.$wrapper.find(".clear-all").on("click", function() {
+    d.$wrapper.find(".item-checkbox, .select-all-checkbox").prop("checked", false);
+  });
+
+  // Handle select all checkbox state based on individual selections
+  d.$wrapper.find(".item-checkbox").on("change", function() {
+    let allChecked = d.$wrapper.find(".item-checkbox:not(:checked)").length === 0;
+    d.$wrapper.find(".select-all-checkbox").prop("checked", allChecked);
+  });
+
   d.show();
 }
+
 function create_bill_with_scope(frm, bill_type, scope, args = {}) {
   frappe.model.open_mapped_doc({
     method: "rua_company.rua_company.doctype.project.project.make_project_bill",
@@ -954,10 +1137,6 @@ function show_import_dialog(frm) {
   });
 
   // Add custom styles
-  dialog.$wrapper.find(".modal-dialog").css({
-    "max-width": "800px",
-  });
-
   dialog.$wrapper.append(`
     <style>
       .excel-import-container {
@@ -1054,7 +1233,7 @@ function show_import_dialog(frm) {
               (item) => item.scope_number === scope.scope_number
             );
             scopeItems.forEach((item) => {
-              trigger_calculations(frm, item);
+              // trigger_calculations(frm, item);
             });
             frm.refresh();
           });
@@ -1159,288 +1338,4 @@ function download_import_template(frm, scope) {
   });
 }
 
-//#endregion
-
-//#region Project Items Calculations
-
-// Main calculation function
-function trigger_calculations(frm, row) {
-  const scope = (frm.doc.scopes || []).find(
-    (s) => s.scope_number === row.scope_number
-  );
-  if (!scope) return;
-
-  calculate_glass_values(frm, row, scope);
-  calculate_aluminum_price(frm, row).then((aluminum_price) => {
-    // Calculate ratio for all items with the same scope
-    const ratio = calculate_aluminum_ratio(frm, row.scope_number);
-
-    // Update all items with the same scope number
-    const promises = (frm.doc.items || []).map((item) => {
-      if (item.scope_number === row.scope_number) {
-        return calculate_remaining_values(frm, item, ratio);
-      }
-      return Promise.resolve();
-    });
-
-    // After all calculations are done, update scope totals
-    Promise.all(promises).then(() => {
-      update_scope_totals(frm, row.scope_number);
-    });
-  });
-}
-
-// Round a number to the nearest 5
-function roundToNearest5(num) {
-  return Math.ceil(num / 5) * 5;
-}
-
-// Calculate area and basic glass calculations
-function calculate_glass_values(frm, row, scope) {
-  // Calculate area
-  if (row.width >= 0 && row.height >= 0) {
-    const area = (row.width * row.height) / 10000;
-    frappe.model.set_value(row.doctype, row.name, "area", area);
-
-    // Calculate glass price and total glass
-    if (row.glass_unit >= 0 && scope) {
-      // If VAT is inclusive, don't add VAT to the price
-      const vat_multiplier = scope.vat_inclusive ? 0 : scope.vat;
-      const glass_price = row.glass_unit * area * (1 + vat_multiplier / 100);
-      frappe.model.set_value(row.doctype, row.name, "glass_price", glass_price);
-
-      if (row.qty >= 0) {
-        frappe.model.set_value(
-          row.doctype,
-          row.name,
-          "total_glass",
-          glass_price * row.qty
-        );
-      }
-    }
-  }
-}
-
-// Calculate aluminum price
-function calculate_aluminum_price(frm, row) {
-  const aluminum_price =
-    (row.curtain_wall || 0) +
-    (row.insertion_1 || 0) +
-    (row.insertion_2 || 0) +
-    (row.insertion_3 || 0) +
-    (row.insertion_4 || 0);
-
-  return frappe.model
-    .set_value(row.doctype, row.name, "aluminum_price", aluminum_price)
-    .then(() => aluminum_price);
-}
-
-// Calculate aluminum ratio for a specific scope
-function calculate_aluminum_ratio(frm, scope_number) {
-  const items = frm.doc.items || [];
-  const scope = (frm.doc.scopes || []).find(
-    (s) => s.scope_number === scope_number
-  );
-
-  if (!scope) return 1;
-
-  // Get all items for this scope
-  const scope_items = items.filter(
-    (item) => item.scope_number === scope_number
-  );
-
-  // Calculate x (sum of VAT amounts)
-  const x = scope_items.reduce((sum, item) => {
-    if (!scope.vat_inclusive) {
-      // If VAT is not inclusive, calculate VAT normally
-      return sum + (item.aluminum_price || 0) * (scope.vat / 100);
-    } else {
-      // If VAT is inclusive, extract VAT from the price
-      // Formula: VAT amount = price - (price / (1 + VAT%))
-      const price = item.aluminum_price || 0;
-      return sum + (price - price / (1 + scope.vat / 100));
-    }
-  }, 0);
-
-  // Calculate y (sum of aluminum_price * qty)
-  const y = scope_items.reduce((sum, item) => {
-    return sum + (item.aluminum_price || 0) * (item.qty || 0);
-  }, 0);
-
-  // Calculate total
-  const total = (scope.aluminum_weight || 0) * (scope.sdf || 0) + y + x;
-
-  // Calculate ratio and round to 3 decimal places
-  const ratio = y > 0 ? Number((total / y).toFixed(3)) : 1;
-
-  // Store the ratio in the scope
-  frappe.model.set_value(scope.doctype, scope.name, "ratio", ratio);
-
-  return ratio;
-}
-
-// Calculate remaining values
-function calculate_remaining_values(frm, row, ratio) {
-  if (row.aluminum_price >= 0) {
-    // Calculate aluminum unit and total
-    const aluminum_unit = row.aluminum_price * ratio;
-    return frappe.model
-      .set_value(row.doctype, row.name, "aluminum_unit", aluminum_unit)
-      .then(() => {
-        if (row.qty >= 0) {
-          return frappe.model.set_value(
-            row.doctype,
-            row.name,
-            "total_aluminum",
-            aluminum_unit * row.qty
-          );
-        }
-      })
-      .then(() => {
-        // Calculate actual unit
-        if (row.glass_price >= 0) {
-          // Find the corresponding scope to get labour_charges
-          const scope = frm.doc.scopes.find(
-            (s) => s.scope_number === row.scope_number
-          );
-          const labour_charges = scope ? scope.labour_charges || 0 : 0;
-
-          const actual_unit = aluminum_unit + row.glass_price + labour_charges;
-          return frappe.model
-            .set_value(row.doctype, row.name, "actual_unit", actual_unit)
-            .then(() => {
-              // Calculate profit and costs
-              if (row.profit_percentage >= 0) {
-                const total_profit =
-                  actual_unit * (row.profit_percentage / 100);
-                return frappe.model
-                  .set_value(
-                    row.doctype,
-                    row.name,
-                    "total_profit",
-                    total_profit
-                  )
-                  .then(() => {
-                    if (row.qty >= 0) {
-                      return frappe.model.set_value(
-                        row.doctype,
-                        row.name,
-                        "total_cost",
-                        actual_unit * row.qty
-                      );
-                    }
-                  })
-                  .then(() => {
-                    const actual_unit_rate = total_profit + actual_unit;
-                    return frappe.model
-                      .set_value(
-                        row.doctype,
-                        row.name,
-                        "actual_unit_rate",
-                        actual_unit_rate
-                      )
-                      .then(() => {
-                        if (row.qty >= 0) {
-                          let overall_price = actual_unit_rate * row.qty;
-
-                          // Find the corresponding scope
-                          const scope = frm.doc.scopes.find(
-                            (s) => s.scope_number === row.scope_number
-                          );
-
-                          // Apply rounding if specified in scope
-                          if (
-                            scope &&
-                            scope.rounding === "Round up to nearest 5"
-                          ) {
-                            overall_price = roundToNearest5(overall_price);
-                          }
-
-                          return frappe.model.set_value(
-                            row.doctype,
-                            row.name,
-                            "overall_price",
-                            overall_price
-                          );
-                        }
-                      });
-                  });
-              }
-            });
-        }
-      });
-  }
-  return Promise.resolve();
-}
-
-// Calculate scope totals
-function update_scope_totals(frm, scope_number) {
-  const scope = (frm.doc.scopes || []).find(
-    (s) => s.scope_number === scope_number
-  );
-  if (!scope) return;
-
-  const scope_items = (frm.doc.items || []).filter(
-    (item) => item.scope_number === scope_number
-  );
-
-  // Calculate totals
-  const totals = scope_items.reduce(
-    (acc, item) => {
-      let vat_amount = 0;
-      const price = item.overall_price || 0;
-
-      if (scope.vat_inclusive) {
-        // If VAT inclusive, extract VAT from the price
-        vat_amount = price - price / (1 + scope.vat / 100);
-      } else {
-        // If VAT not inclusive, calculate VAT normally
-        vat_amount = price * (scope.vat / 100);
-      }
-
-      return {
-        total_price: acc.total_price + price,
-        total_cost: acc.total_cost + (item.total_cost || 0),
-        // total_profit: acc.total_profit + (item.total_profit * item.qty || 0),
-        total_items: acc.total_items + (item.qty || 0),
-        total_vat_amount: acc.total_vat_amount + vat_amount,
-      };
-    },
-    { total_price: 0, total_cost: 0, total_items: 0, total_vat_amount: 0 }
-  );
-
-  // Calculate price excluding VAT
-  const total_price_excluding_vat =
-    totals.total_price - totals.total_vat_amount;
-
-  // Calculate retention-related values
-  const retention_percentage = scope.retention || 0;
-  let price_after_retention = total_price_excluding_vat;
-
-  if (retention_percentage > 0) {
-    // Remove retention percentage from the price
-    price_after_retention =
-      total_price_excluding_vat * (1 - retention_percentage / 100);
-  }
-
-  // Calculate VAT after retention
-  const vat_after_retention = price_after_retention * (scope.vat / 100);
-
-  // Calculate total price after retention
-  const total_price_after_retention =
-    price_after_retention + vat_after_retention;
-
-  // Update scope with calculated totals
-  frappe.model.set_value(scope.doctype, scope.name, {
-    total_price: totals.total_price,
-    total_cost: totals.total_cost,
-    total_profit: totals.total_price - totals.total_cost,
-    total_items: totals.total_items,
-    total_vat_amount: totals.total_vat_amount,
-    total_price_excluding_vat: total_price_excluding_vat,
-    price_after_retention: price_after_retention,
-    vat_after_retention: vat_after_retention,
-    total_price_after_retention: total_price_after_retention,
-  });
-}
 //#endregion

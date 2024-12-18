@@ -40,7 +40,7 @@ add_to_apps_screen = [
 # ------------------
 
 # include js, css files in header of desk.html
-# app_include_css = "/assets/rua_company/css/rua_company.css"
+app_include_css = "/assets/rua_company/css/project_dashboard.css"
 # app_include_js = [
 #     "/assets/rua_company/js/project_dashboard.js"
 # ]
@@ -62,7 +62,14 @@ add_to_apps_screen = [
 # include js in doctype views
 doctype_js = {
     "Project": [
-        "public/js/project_dashboard.js"
+        "public/js/project_dashboard.js",
+        "public/js/project_dialogs.js"
+    ]
+}
+
+doctype_css = {
+    "Project": [
+        "public/css/project_dashboard.css",
     ]
 }
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}

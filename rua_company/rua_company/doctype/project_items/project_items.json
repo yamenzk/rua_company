@@ -12,6 +12,7 @@
   "section_break_qrtd",
   "item",
   "description",
+  "uom_rate",
   "qty",
   "column_break_fozf",
   "width",
@@ -318,12 +319,17 @@
    "label": "Actual Unit Rate",
    "precision": "2",
    "read_only": 1
+  },
+  {
+   "fieldname": "uom_rate",
+   "fieldtype": "Data",
+   "label": "UOM Rate"
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-12-14 04:18:59.048755",
+ "modified": "2024-12-17 18:48:40.908316",
  "modified_by": "Administrator",
  "module": "Rua Company",
  "name": "Project Items",
