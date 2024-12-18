@@ -532,11 +532,16 @@ def add_item(project, scope_number, item_data):
     
     # Ensure numeric fields are properly converted
     numeric_fields = ['width', 'height', 'glass_unit', 'curtain_wall', 
-                     'insertion_1', 'insertion_2', 'insertion_3', 'insertion_4', 'qty']
+                     'insertion_1', 'insertion_2', 'insertion_3', 'insertion_4', 'qty', 'area']
     
     for field in numeric_fields:
         if field in item_data:
             item_data[field] = flt(item_data[field])
+    
+    # Handle manual area flag
+    if item_data.get('manual_area'):
+        item_data['width'] = 0
+        item_data['height'] = 0
     
     # Create new item
     new_item = {

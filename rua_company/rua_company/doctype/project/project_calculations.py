@@ -58,20 +58,26 @@ def calculate_aluminum_ratio_optimized(scope, scope_items, vat_factor):
 
     return round(total / y, 3) if y > 0 else 1
 
+
 def calculate_items_batch(items, scope, ratio, vat, vat_factor, labour_charges):
     """Calculate values for a batch of items"""
     for item in items:
-        # Calculate area only if needed
-        if hasattr(item, 'width') and hasattr(item, 'height') and item.width >= 0 and item.height >= 0:
+        # Calculate area based on manual flag
+        if hasattr(item, 'manual_area') and item.manual_area:
+            area = flt(item.area)
+        elif hasattr(item, 'width') and hasattr(item, 'height') and item.width >= 0 and item.height >= 0:
             area = (item.width * item.height) / 10000
-            item.area = area
+        else:
+            area = 0
+            
+        item.area = area
 
-            if hasattr(item, 'glass_unit') and item.glass_unit >= 0:
-                vat_multiplier = vat
-                glass_price = item.glass_unit * \
-                    area * (1 + (vat_multiplier / 100))
-                item.glass_price = glass_price
-                item.total_glass = glass_price * (item.qty or 0)
+        if hasattr(item, 'glass_unit') and item.glass_unit >= 0:
+            vat_multiplier = vat
+            glass_price = item.glass_unit * \
+                area * (1 + (vat_multiplier / 100))
+            item.glass_price = glass_price
+            item.total_glass = glass_price * (item.qty or 0)
 
         # Calculate aluminum price in one operation
         item.aluminum_price = sum(

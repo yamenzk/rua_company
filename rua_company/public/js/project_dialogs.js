@@ -2050,6 +2050,8 @@ const financialsDialogStyles = `
             color: var(--text-muted);
             font-size: 0.9rem;
             margin-bottom: 0.25rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
         .flow-value {
@@ -2395,17 +2397,32 @@ rua_company.project_dialogs.showItemsDialog = function (frm) {
                     label: 'Dimensions'
                 },
                 {
+                    fieldname: 'manual_area',
+                    fieldtype: 'Check',
+                    label: 'Manual Area',
+                    description: 'Check this to manually enter the area instead of calculating it from width and height'
+                },
+                {
+                    fieldname: 'area',
+                    fieldtype: 'Float',
+                    label: 'Area (sqm)',
+                    depends_on: 'eval:doc.manual_area',
+                    mandatory_depends_on: 'eval:doc.manual_area',
+                },
+                {
                     fieldname: 'width',
                     fieldtype: 'Float',
                     label: 'Width (cm)',
-                    reqd: 1,
+                    depends_on: 'eval:!doc.manual_area',
+                    mandatory_depends_on: 'eval:!doc.manual_area',
                     min: 0
                 },
                 {
                     fieldname: 'height',
                     fieldtype: 'Float',
                     label: 'Height (cm)',
-                    reqd: 1,
+                    depends_on: 'eval:!doc.manual_area',
+                    mandatory_depends_on: 'eval:!doc.manual_area',
                     min: 0
                 },
                 {
@@ -2506,7 +2523,12 @@ rua_company.project_dialogs.showItemsDialog = function (frm) {
                     callback: function(r) {
                         if (!r.exc) {
                             addItemDialog.hide();
-                            frm.reload_doc();
+                            frm.reload_doc().then(() => {
+                                const itemsHtml = dialog.fields_dict.items_html.$wrapper;
+                                renderItemsTable(frm.doc.items.filter(item => 
+                                    currentScope === "all" || item.scope_number === currentScope
+                                ));
+                            });
                             frappe.show_alert({
                                 message: __("Item added successfully"),
                                 indicator: "green"
