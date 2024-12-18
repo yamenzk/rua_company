@@ -2160,6 +2160,15 @@ rua_company.project_dialogs.showItemsDialog = function (frm) {
     size: "extra-large",
     fields: [
       {
+        fieldname: "actions_section",
+        fieldtype: "Section Break",
+        label: "Actions",
+      },
+      {
+        fieldname: "actions_html",
+        fieldtype: "HTML",
+      },
+      {
         fieldname: "filters_section",
         fieldtype: "Section Break",
         label: "Filters",
@@ -2800,6 +2809,79 @@ rua_company.project_dialogs.showItemsDialog = function (frm) {
     filterItems();
   });
 
+  // Add "Continue on Excel" button and its handlers
+  dialog.fields_dict.actions_html.$wrapper.html(`
+    <div class="d-flex justify-content-end mb-3">
+      <button class="btn btn-default btn-sm btn-continue-excel">
+        <i class="fa fa-file-excel-o mr-1"></i>${__("Continue on Excel")}
+      </button>
+    </div>
+  `);
+
+  dialog.$wrapper.find('.btn-continue-excel').on('click', () => {
+    frappe.call({
+      method: 'rua_company.rua_company.doctype.project.excel_handler.get_items_template',
+      args: {
+        project_name: frm.doc.name
+      },
+      callback: (r) => {
+        if (r.message) {
+          // Create a file upload dialog
+          const upload_dialog = new frappe.ui.Dialog({
+            title: __('Upload Excel File'),
+            fields: [
+              {
+                fieldname: 'instructions',
+                fieldtype: 'HTML',
+                options: `
+                  <div class="alert alert-info">
+                    1. <a href="${r.message}" target="_blank">Download the template</a><br>
+                    2. Fill in the items information<br>
+                    3. Upload the filled template below
+                  </div>
+                `
+              },
+              {
+                fieldname: 'excel_file',
+                fieldtype: 'Attach',
+                label: __('Upload Excel File'),
+                reqd: 1
+              }
+            ],
+            primary_action_label: __('Import'),
+            primary_action: () => {
+              const file_url = upload_dialog.get_value('excel_file');
+              if (!file_url) {
+                frappe.throw(__('Please upload a file first'));
+                return;
+              }
+
+              frappe.call({
+                method: 'rua_company.rua_company.doctype.project.excel_handler.import_items_from_excel',
+                args: {
+                  project_name: frm.doc.name,
+                  file_url: file_url
+                },
+                callback: (r) => {
+                  if (r.message) {
+                    frappe.show_alert({
+                      message: r.message.message,
+                      indicator: 'green'
+                    });
+                    upload_dialog.hide();
+                    dialog.hide();
+                    frm.reload_doc();
+                  }
+                }
+              });
+            }
+          });
+          upload_dialog.show();
+        }
+      }
+    });
+  });
+
   // Initialize
   renderScopeChips();
   filterItems();
@@ -3073,9 +3155,8 @@ function generateScopeDialogStyles() {
             }
 
             .flow-value {
+                font-weight: 600;
                 font-size: 0.875rem;
-                font-weight: 500;
-                color: var(--text-color);
             }
 
             .flow-value.positive {
