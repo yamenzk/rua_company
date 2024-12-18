@@ -40,6 +40,24 @@ class Project(Document):
         """Get party details from project"""
         return next((p for p in self.parties if p.party == party_name), None)
 
+    @frappe.whitelist()
+    def add_scope(self, scope_data):
+        """Add a new scope to the project"""
+        scope_data = frappe.parse_json(scope_data)
+        
+        if not self.scopes:
+            self.scopes = []
+            
+        next_scope_number = (
+            max([s.scope_number for s in self.scopes]) + 1 if self.scopes else 1
+        )
+        
+        scope_data['scope_number'] = next_scope_number
+        self.append('scopes', scope_data)
+        self.save()
+        
+        return self.scopes[-1]
+
 #region Excel Import
 
 def apply_style(cell, style):

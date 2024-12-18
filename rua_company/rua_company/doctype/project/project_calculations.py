@@ -62,6 +62,16 @@ def calculate_aluminum_ratio_optimized(scope, scope_items, vat_factor):
 def calculate_items_batch(items, scope, ratio, vat, vat_factor, labour_charges):
     """Calculate values for a batch of items"""
     for item in items:
+        # Reset specific fields for non-Openings/Skylights types
+        if scope.type not in ["Openings", "Skylights"]:
+            fields_to_reset = [
+                'total_aluminum', 'aluminum_unit', 'aluminum_price',
+                'insertion_1', 'insertion_2', 'insertion_3', 'insertion_4',
+                'curtain_wall', 'total_glass', 'glass_price', 'glass_unit'
+            ]
+            for field in fields_to_reset:
+                setattr(item, field, 0)
+
         # Calculate area based on manual flag
         if hasattr(item, 'manual_area') and item.manual_area:
             area = flt(item.area)
@@ -71,40 +81,64 @@ def calculate_items_batch(items, scope, ratio, vat, vat_factor, labour_charges):
             area = 0
             
         item.area = area
-
-        if hasattr(item, 'glass_unit') and item.glass_unit >= 0:
-            vat_multiplier = vat
-            glass_price = item.glass_unit * \
-                area * (1 + (vat_multiplier / 100))
-            item.glass_price = glass_price
-            item.total_glass = glass_price * (item.qty or 0)
-
-        # Calculate aluminum price in one operation
-        item.aluminum_price = sum(
-            getattr(item, field) or 0
-            for field in ['curtain_wall', 'insertion_1', 'insertion_2', 'insertion_3', 'insertion_4']
-        )
-
-        # Calculate remaining values in sequence to minimize recalculations
         qty = item.qty or 0
-        aluminum_unit = item.aluminum_price * ratio
-        item.aluminum_unit = aluminum_unit
-        item.total_aluminum = aluminum_unit * qty
 
-        actual_unit = aluminum_unit + (item.glass_price or 0) + labour_charges
-        item.actual_unit = actual_unit
+        if scope.type in ["Openings", "Skylights"]:
+            # Original calculation logic for Openings and Skylights
+            if hasattr(item, 'glass_unit') and item.glass_unit >= 0:
+                vat_multiplier = vat
+                glass_price = item.glass_unit * area * (1 + (vat_multiplier / 100))
+                item.glass_price = glass_price
+                item.total_glass = glass_price * qty
 
-        profit_factor = (item.profit_percentage or 0) / 100
-        item.total_profit = actual_unit * profit_factor
-        item.total_cost = actual_unit * qty
+            item.aluminum_price = sum(
+                getattr(item, field) or 0
+                for field in ['curtain_wall', 'insertion_1', 'insertion_2', 'insertion_3', 'insertion_4']
+            )
 
-        actual_unit_rate = item.total_profit + actual_unit
-        item.actual_unit_rate = actual_unit_rate
+            aluminum_unit = item.aluminum_price * ratio
+            item.aluminum_unit = aluminum_unit
+            item.total_aluminum = aluminum_unit * qty
 
-        overall_price = actual_unit_rate * qty
-        if scope.rounding == "Round up to nearest 5":
-            overall_price = math.ceil(overall_price / 5) * 5
-        item.overall_price = overall_price
+            actual_unit = aluminum_unit + (item.glass_price or 0) + labour_charges
+            item.actual_unit = actual_unit
+
+            profit_factor = (item.profit_percentage or 0) / 100
+            item.total_profit = actual_unit * profit_factor
+            item.total_cost = actual_unit * qty
+
+            actual_unit_rate = item.total_profit + actual_unit
+            item.actual_unit_rate = actual_unit_rate
+
+            overall_price = actual_unit_rate * qty
+            if scope.rounding == "Round up to nearest 5":
+                overall_price = math.ceil(overall_price / 5) * 5
+            item.overall_price = overall_price
+
+        else:
+            # For all non-Openings/Skylights types
+            actual_unit_rate = item.actual_unit_rate or 0
+            profit_factor = (item.profit_percentage or 0) / 100
+            
+            # Calculate total_profit from actual_unit_rate
+            item.total_profit = actual_unit_rate * profit_factor
+            
+            # Calculate actual_unit by removing profit and adding labour charges
+            actual_unit = actual_unit_rate - item.total_profit + labour_charges
+            item.actual_unit = actual_unit
+            
+            # Calculate total cost
+            item.total_cost = actual_unit * qty
+            
+            if scope.type in ["Handrails", "Cladding"]:
+                # For Handrails and Cladding, use qty only
+                item.overall_price = qty * actual_unit_rate
+            else:
+                # For other types, use qty and area
+                item.overall_price = qty * area * actual_unit_rate
+
+            if scope.rounding == "Round up to nearest 5":
+                item.overall_price = math.ceil(item.overall_price / 5) * 5
 
 
 def update_scope_totals_optimized(scope, scope_items, vat_factor):
@@ -364,7 +398,7 @@ def update_project_bill_tables(bill_doc):
                 party
             )
             VALUES (%s, %s, %s, 'Project', %s, %s, %s, %s, %s, %s, %s)
-            """, (
+        """, (
             frappe.generate_hash(),
             bill_doc.project,
             table_field,

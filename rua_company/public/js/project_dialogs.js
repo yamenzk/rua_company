@@ -863,7 +863,6 @@ rua_company.project_dialogs.showScopeDetailsDialog = function (frm, scope) {
           fieldname: "labour_charges",
           fieldtype: "Currency",
           label: "Labour Charges",
-          reqd: 1,
           default: scope.labour_charges,
         },
         {
@@ -877,11 +876,10 @@ rua_company.project_dialogs.showScopeDetailsDialog = function (frm, scope) {
           fieldtype: "Column Break",
         },
         {
-          fieldname: "powder_coating",
+          fieldname: "sdf",
           fieldtype: "Currency",
           label: "Powder Coating",
           reqd: 1,
-          default: scope.sdf,
         },
         {
           fieldname: "profit",
@@ -920,8 +918,7 @@ rua_company.project_dialogs.showScopeDetailsDialog = function (frm, scope) {
           if (scope_idx !== -1) {
             // Update the scope with new values
             Object.assign(frm.doc.scopes[scope_idx], {
-              ...values,
-              sdf: values.powder_coating, // Map powder_coating to sdf field
+              ...values
             });
 
             // Update items using this scope
@@ -1403,7 +1400,6 @@ rua_company.project_dialogs.showScopeEditDialog = function (frm, scope = null) {
           fieldname: "labour_charges",
           fieldtype: "Currency",
           label: "Labour Charges",
-          mandatory_depends_on: "eval:1",
         },
         {
           fieldname: "profit",
@@ -1451,11 +1447,10 @@ rua_company.project_dialogs.showScopeEditDialog = function (frm, scope = null) {
             mandatory_depends_on: "eval:1",
           },
           {
-            fieldname: "powder_coating",
+            fieldname: "sdf",
             fieldtype: "Currency",
             label: "Powder Coating",
             mandatory_depends_on: "eval:1",
-            default: scope.powder_coating,
           },
         ];
       }
@@ -1539,28 +1534,28 @@ rua_company.project_dialogs.showScopeEditDialog = function (frm, scope = null) {
             }
           } else {
             // Add new scope logic
-            if (!frm.doc.scopes) {
-              frm.doc.scopes = [];
-            }
-
-            const next_scope_number =
-              frm.doc.scopes.length > 0
-                ? Math.max(...frm.doc.scopes.map((s) => s.scope_number)) + 1
-                : 1;
-
-            frm.doc.scopes.push({
+            const scope_data = {
               ...values,
-              scope_number: next_scope_number,
-            });
+              type: selected_type,
+            };
 
-            frm.refresh_field("scopes");
-            frm.dirty();
-            dialog.hide();
-            frm.save();
-            rua_company.project_dashboard.render(frm);
-            frappe.show_alert({
-              message: __("Scope {0} added", [next_scope_number]),
-              indicator: "green",
+            frappe.call({
+              method: "add_scope",
+              doc: frm.doc,
+              args: {
+                scope_data: scope_data,
+              },
+              callback: function (r) {
+                if (!r.exc) {
+                  dialog.hide();
+                  frm.reload_doc();
+                  rua_company.project_dashboard.render(frm);
+                  frappe.show_alert({
+                    message: __("Scope {0} added", [r.message.scope_number]),
+                    indicator: "green",
+                  });
+                }
+              },
             });
           }
         },
@@ -2363,8 +2358,9 @@ rua_company.project_dialogs.showItemsDialog = function (frm) {
     function showAddItemDialog(frm, scopeNumber) {
         const scope = frm.doc.scopes.find(s => s.scope_number === scopeNumber);
         if (!scope) return;
-    
+
         const isOpeningsOrSkylight = scope.type === "Openings" || scope.type === "Skylights";
+        const isHandrailOrCladding = scope.type === "Handrails" || scope.type === "Cladding";
         
         let fields = [
             {
@@ -2387,7 +2383,7 @@ rua_company.project_dialogs.showItemsDialog = function (frm) {
                 min: 1
             }
         ];
-    
+
         if (isOpeningsOrSkylight) {
             fields = [
                 ...fields,
@@ -2477,8 +2473,63 @@ rua_company.project_dialogs.showItemsDialog = function (frm) {
                     label: 'Insertion 4'
                 }
             ];
-        } 
-    
+        } else {
+            // Add actual_unit_rate field for non-Openings/Skylights types
+            fields.push(
+                {
+                    fieldname: 'pricing_section',
+                    fieldtype: 'Section Break',
+                    label: 'Pricing Details'
+                },
+                {
+                    fieldname: 'actual_unit_rate',
+                    fieldtype: 'Currency',
+                    label: 'Unit Rate (Including Profit)',
+                    reqd: 1
+                }
+            );
+
+            // Add area fields for types other than Handrails/Cladding
+            if (!isHandrailOrCladding) {
+                fields.splice(3, 0, // Insert after qty field
+                    {
+                        fieldname: 'dimensions_section',
+                        fieldtype: 'Section Break',
+                        label: 'Dimensions'
+                    },
+                    {
+                        fieldname: 'manual_area',
+                        fieldtype: 'Check',
+                        label: 'Manual Area',
+                        description: 'Check this to manually enter the area instead of calculating it from width and height'
+                    },
+                    {
+                        fieldname: 'area',
+                        fieldtype: 'Float',
+                        label: 'Area (sqm)',
+                        depends_on: 'eval:doc.manual_area',
+                        mandatory_depends_on: 'eval:doc.manual_area',
+                    },
+                    {
+                        fieldname: 'width',
+                        fieldtype: 'Float',
+                        label: 'Width (cm)',
+                        depends_on: 'eval:!doc.manual_area',
+                        mandatory_depends_on: 'eval:!doc.manual_area',
+                        min: 0
+                    },
+                    {
+                        fieldname: 'height',
+                        fieldtype: 'Float',
+                        label: 'Height (cm)',
+                        depends_on: 'eval:!doc.manual_area',
+                        mandatory_depends_on: 'eval:!doc.manual_area',
+                        min: 0
+                    }
+                );
+            }
+        }
+
         // Add profit percentage field
         fields.push(
             {
@@ -2494,7 +2545,7 @@ rua_company.project_dialogs.showItemsDialog = function (frm) {
                 reqd: 1
             }
         );
-    
+
         const addItemDialog = new frappe.ui.Dialog({
             title: `Add Item to Scope ${scope.scope_number}`,
             fields: fields,
@@ -2502,7 +2553,8 @@ rua_company.project_dialogs.showItemsDialog = function (frm) {
             primary_action(values) {
                 // Convert numeric fields to numbers
                 const numericFields = ['width', 'height', 'glass_unit', 'curtain_wall', 
-                    'insertion_1', 'insertion_2', 'insertion_3', 'insertion_4', 'qty'];
+                    'insertion_1', 'insertion_2', 'insertion_3', 'insertion_4', 'qty',
+                    'actual_unit_rate'];
                 
                 const processedValues = { ...values };
                 numericFields.forEach(field => {
@@ -2542,151 +2594,176 @@ rua_company.project_dialogs.showItemsDialog = function (frm) {
         addItemDialog.show();
     }
 
-  function renderItemsTable(items) {
-    const headers = [
-      { label: "Item Details", cols: ["Item", "Description"], color: "blue" },
-      { label: "Dimensions", cols: ["Width", "Height"], color: "purple" },
-      { label: "Glass", cols: ["Unit", "Price", "Total"], color: "green" },
-      { label: "Aluminum", cols: ["Unit", "Price", "Total"], color: "orange" },
-      { label: "Total", cols: ["Overall Price"], color: "red" },
-    ];
-
-    // Group items by scope
-    const groupedItems = {};
-    items.forEach((item) => {
-      if (!groupedItems[item.scope_number]) {
-        groupedItems[item.scope_number] = [];
+    function renderItemsTable(items) {
+      // Function to get headers based on scope type
+      function getHeadersForScopeType(scopeType = "Other") {
+          if (!scopeType) {
+              console.warn("No scope type provided, using default headers");
+              scopeType = "Other";
+          }
+          const baseHeaders = [
+              { label: "Item Details", cols: ["Item", "Description"], color: "blue" }
+          ];
+  
+          if (scopeType === "Openings" || scopeType === "Skylights") {
+              return [
+                  ...baseHeaders,
+                  { label: "Dimensions", cols: ["Width", "Height"], color: "purple" },
+                  { label: "Glass", cols: ["Unit", "Price", "Total"], color: "green" },
+                  { label: "Aluminum", cols: ["Unit", "Price", "Total"], color: "orange" },
+                  { label: "Total", cols: ["Overall Price"], color: "red" }
+              ];
+          } else if (scopeType === "Handrails" || scopeType === "Cladding") {
+              return [
+                  ...baseHeaders,
+                  { label: "Quantity", cols: ["QTY"], color: "purple" },
+                  { label: "Pricing", cols: ["Unit Rate", "Total Cost"], color: "green" },
+                  { label: "Total", cols: ["Overall Price"], color: "red" }
+              ];
+          } else {
+              // For other types (Louvers, Pergolas, Shower Partitions)
+              return [
+                  ...baseHeaders,
+                  { label: "Dimensions", cols: ["Width", "Height", "Area"], color: "purple" },
+                  { label: "Quantity", cols: ["QTY"], color: "orange" },
+                  { label: "Pricing", cols: ["Unit Rate", "Total Cost"], color: "green" },
+                  { label: "Total", cols: ["Overall Price"], color: "red" }
+              ];
+          }
       }
-      groupedItems[item.scope_number].push(item);
-    });
-
-    const tableHTML = `
-            <div class="items-table-container">
-                <table class="table table-bordered items-table" style="margin: 0">
-                    <thead>
-                        <tr class="header-group">
-                            ${headers
-                              .map(
-                                (group) => `
-                                <th colspan="${group.cols.length}" class="text-center"
-                                    style="background: var(--bg-${group.color}); color: var(--text-on-${group.color});">
-                                    ${group.label}
-                                </th>
-                            `
-                              )
-                              .join("")}
-                        </tr>
-                        <tr>
-                            ${headers
-                              .map((group) =>
-                                group.cols
-                                  .map(
-                                    (col) => `
-                                    <th style="background: var(--subtle-accent);">
-                                        ${col}
-                                    </th>
-                                `
-                                  )
-                                  .join("")
-                              )
-                              .join("")}
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${Object.entries(groupedItems)
-                          .map(([scopeNumber, scopeItems]) => {
-                            const scope = frm.doc.scopes.find(
-                              (s) => s.scope_number === scopeNumber
-                            );
-                            const colorSet =
-                              SCOPE_COLORS[
-                                (parseInt(scopeNumber) - 1) %
-                                  SCOPE_COLORS.length
-                              ];
-                            return `
-                                <tr class="scope-header">
-                                    <td colspan="${headers.reduce(
-                                      (sum, h) => sum + h.cols.length,
-                                      0
-                                    )}"
-                                        style="background: ${
-                                          colorSet.bg
-                                        }; color: ${
-                              colorSet.text
-                            }; font-weight: 600;">
-                                        Scope ${scopeNumber}
-                                    </td>
-                                </tr>
-                                ${scopeItems
-                                  .map(
-                                    (item) => `
-                                    <tr class="item-row" style="background: ${
-                                      colorSet.bg
-                                    }10;">
-                                        <td class="item-cell">${
-                                          item.item || ""
-                                        }</td>
-                                        <td class="desc-cell">${
-                                          item.description || ""
-                                        }</td>
-                                        <td class="text-center">${
-                                          item.width || 0
-                                        }cm</td>
-                                        <td class="text-center">${
-                                          item.height || 0
-                                        }cm</td>
-                                        <td>${formatCurrency(
-                                          item.glass_unit
-                                        )}</td>
-                                        <td class="text-right">${formatCurrency(
-                                          item.glass_price
-                                        )}</td>
-                                        <td class="text-right">${formatCurrency(
-                                          item.total_glass
-                                        )}</td>
-                                        <td>${formatCurrency(
-                                          item.aluminum_unit
-                                        )}</td>
-                                        <td class="text-right">${formatCurrency(
-                                          item.aluminum_price
-                                        )}</td>
-                                        <td class="text-right">${formatCurrency(
-                                          item.total_aluminum
-                                        )}</td>
-                                        <td class="text-right total-cell">${formatCurrency(
-                                          item.overall_price
-                                        )}</td>
-                                    </tr>
-                                    <tr class="formula-row" style="background: ${
-                                      colorSet.bg
-                                    }05;">
-                                        <td colspan="2"></td>
-                                        <td colspan="2" class="formula-cell glass-formula area-formula">
-                                        Area: ${item.area || 0}sqm
-                                        </td>
-                                        <td colspan="6" class="formula-cell glass-formula actual-formula">
-                                            [Actual Unit (Inc. Labour): ${formatCurrency(
-                                              item.actual_unit
-                                            )}] + [Profit: ${formatCurrency(
-                                      item.total_profit
-                                    )}] = [Actual Unit Rate: ${formatCurrency(
-                                      item.actual_unit_rate
-                                    )}] × [QTY: ${item.qty}]
-                                        </td>
-                                        <td></td>
-                                    </tr>
-                                `
-                                  )
-                                  .join("")}
-                            `;
-                          })
-                          .join("")}
-                    </tbody>
-                </table>
-            </div>
-        `;
-
-    dialog.fields_dict.items_html.$wrapper.html(tableHTML);
+  
+      // Group items by scope
+      console.log('Available scopes:', frm.doc.scopes.map(s => ({ number: s.scope_number, type: s.type })));
+      console.log('Items to render:', items);
+      
+      const groupedItems = {};
+      items.forEach(item => {
+          const scopeNum = String(item.scope_number);
+          if (!groupedItems[scopeNum]) {
+              groupedItems[scopeNum] = [];
+          }
+          groupedItems[scopeNum].push(item);
+      });
+  
+      let tableHTML = '<div class="items-table-container">';
+  
+      Object.entries(groupedItems).forEach(([scopeNumber, scopeItems]) => {
+          // Convert scope numbers to strings for consistent comparison
+          const scope = frm.doc.scopes.find(s => String(s.scope_number) === String(scopeNumber));
+          if (!scope) {
+              console.warn(`Scope ${scopeNumber} not found`);
+              return;
+          }
+          const headers = getHeadersForScopeType(scope.type || "Other");
+          const colorSet = SCOPE_COLORS[(parseInt(scopeNumber) - 1) % SCOPE_COLORS.length];
+  
+          tableHTML += `
+              <table class="table table-bordered items-table" style="margin-bottom: 2rem;">
+                  <thead>
+                      <tr class="header-group">
+                          ${headers.map(group => `
+                              <th colspan="${group.cols.length}" class="text-center"
+                                  style="background: var(--bg-${group.color}); color: var(--text-on-${group.color});">
+                                  ${group.label}
+                              </th>
+                          `).join("")}
+                      </tr>
+                      <tr>
+                          ${headers.map(group => 
+                              group.cols.map(col => `
+                                  <th style="background: var(--subtle-accent);">
+                                      ${col}
+                                  </th>
+                              `).join("")
+                          ).join("")}
+                      </tr>
+                  </thead>
+                  <tbody>
+                      <tr class="scope-header">
+                          <td colspan="${headers.reduce((sum, h) => sum + h.cols.length, 0)}"
+                              style="background: ${colorSet.bg}; color: ${colorSet.text}; font-weight: 600;">
+                              Scope ${scopeNumber}: ${scope.type}
+                          </td>
+                      </tr>
+                      ${scopeItems.map(item => {
+                          let itemRow = '';
+                          if (scope.type === "Openings" || scope.type === "Skylights") {
+                              itemRow = `
+                                  <tr class="item-row" style="background: ${colorSet.bg}10;">
+                                      <td class="item-cell">${item.item || ""}</td>
+                                      <td class="desc-cell">${item.description || ""}</td>
+                                      <td class="text-center">${item.width || 0}cm</td>
+                                      <td class="text-center">${item.height || 0}cm</td>
+                                      <td>${formatCurrency(item.glass_unit)}</td>
+                                      <td class="text-right">${formatCurrency(item.glass_price)}</td>
+                                      <td class="text-right">${formatCurrency(item.total_glass)}</td>
+                                      <td>${formatCurrency(item.aluminum_unit)}</td>
+                                      <td class="text-right">${formatCurrency(item.aluminum_price)}</td>
+                                      <td class="text-right">${formatCurrency(item.total_aluminum)}</td>
+                                      <td class="text-right total-cell">${formatCurrency(item.overall_price)}</td>
+                                  </tr>`;
+                          } else if (scope.type === "Handrails" || scope.type === "Cladding") {
+                              itemRow = `
+                                  <tr class="item-row" style="background: ${colorSet.bg}10;">
+                                      <td class="item-cell">${item.item || ""}</td>
+                                      <td class="desc-cell">${item.description || ""}</td>
+                                      <td class="text-center">${item.qty || 0}</td>
+                                      <td class="text-right">${formatCurrency(item.actual_unit_rate)}</td>
+                                      <td class="text-right">${formatCurrency(item.total_cost)}</td>
+                                      <td class="text-right total-cell">${formatCurrency(item.overall_price)}</td>
+                                  </tr>`;
+                          } else {
+                              itemRow = `
+                                  <tr class="item-row" style="background: ${colorSet.bg}10;">
+                                      <td class="item-cell">${item.item || ""}</td>
+                                      <td class="desc-cell">${item.description || ""}</td>
+                                      <td class="text-center">${item.width || 0}cm</td>
+                                      <td class="text-center">${item.height || 0}cm</td>
+                                      <td class="text-center">${item.area || 0}sqm</td>
+                                      <td class="text-center">${item.qty || 0}</td>
+                                      <td class="text-right">${formatCurrency(item.actual_unit_rate)}</td>
+                                      <td class="text-right">${formatCurrency(item.total_cost)}</td>
+                                      <td class="text-right total-cell">${formatCurrency(item.overall_price)}</td>
+                                  </tr>`;
+                          }
+  
+                          // Add formula row based on scope type
+                          let formulaRow = '';
+                          if (scope.type === "Openings" || scope.type === "Skylights") {
+                              formulaRow = `
+                                  <tr class="formula-row" style="background: ${colorSet.bg}05;">
+                                      <td colspan="2"></td>
+                                      <td colspan="2" class="formula-cell glass-formula area-formula">
+                                          Area: ${item.area || 0}sqm
+                                      </td>
+                                      <td colspan="6" class="formula-cell glass-formula actual-formula">
+                                          [Actual Unit (Inc. Labour): ${formatCurrency(item.actual_unit)}] + 
+                                          [Profit: ${formatCurrency(item.total_profit)}] = 
+                                          [Actual Unit Rate: ${formatCurrency(item.actual_unit_rate)}] × 
+                                          [QTY: ${item.qty}]
+                                      </td>
+                                      <td></td>
+                                  </tr>`;
+                          } else {
+                              const colspan = headers.reduce((sum, h) => sum + h.cols.length, 0);
+                              formulaRow = `
+                                  <tr class="formula-row" style="background: ${colorSet.bg}05;">
+                                      <td colspan="${colspan}" class="formula-cell glass-formula actual-formula">
+                                          [Actual Unit (Inc. Labour): ${formatCurrency(item.actual_unit)}] + 
+                                          [Profit: ${formatCurrency(item.total_profit)}] = 
+                                          [Actual Unit Rate: ${formatCurrency(item.actual_unit_rate)}]
+                                      </td>
+                                  </tr>`;
+                          }
+  
+                          return itemRow + formulaRow;
+                      }).join("")}
+                  </tbody>
+              </table>`;
+      });
+  
+      tableHTML += '</div>';
+      dialog.fields_dict.items_html.$wrapper.html(tableHTML);
   }
 
   function filterItems() {
@@ -2866,11 +2943,12 @@ function deleteScope(frm, scopeNumber) {
       );
       frm.refresh_field("scopes");
       frm.dirty();
-      frm.save();
-      rua_company.project_dashboard.render(frm);
-      frappe.show_alert({
-        message: __("Scope {0} removed", [scope.scope_number]),
-        indicator: "green",
+      frm.save().then(() => {
+        rua_company.project_dashboard.render(frm);
+        frappe.show_alert({
+          message: __("Scope {0} removed", [scope.scope_number]),
+          indicator: "green",
+        });
       });
     }
   );
