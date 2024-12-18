@@ -22,41 +22,37 @@ def calculate_all_values(doc):
 
         # Pre-calculate scope-level values
         vat = scope.vat or 0
-        vat_inclusive = scope.vat_inclusive
         scope_type = scope.type
         vat_factor = 1 + (vat / 100)
         labour_charges = scope.labour_charges or 0
 
         if scope_type == "Extra Works":
             calculate_items_batch_extra_works(
-                scope_items, scope, vat, vat_inclusive, vat_factor, labour_charges)
+                scope_items, scope, vat, vat_factor, labour_charges)
         else:
             # Calculate ratio once per scope
             ratio = calculate_aluminum_ratio_optimized(
-                scope, scope_items, vat_factor, vat_inclusive)
+                scope, scope_items, vat_factor)
             scope.ratio = ratio
 
             # Bulk calculate items with pre-calculated values
             calculate_items_batch(scope_items, scope, ratio,
-                                  vat, vat_inclusive, vat_factor, labour_charges)
+                                  vat, vat_factor, labour_charges)
 
         update_scope_totals_optimized(
-            scope, scope_items, vat_factor, vat_inclusive)
+            scope, scope_items, vat_factor)
 
     # Calculate financial totals
     calculate_financial_totals_optimized(doc)
 
 
-def calculate_aluminum_ratio_optimized(scope, scope_items, vat_factor, vat_inclusive):
+def calculate_aluminum_ratio_optimized(scope, scope_items, vat_factor):
     """Optimized aluminum ratio calculation"""
     aluminum_prices = [(item.aluminum_price or 0) for item in scope_items]
     quantities = [(item.qty or 0) for item in scope_items]
 
     # Calculate VAT amounts in bulk
-    if vat_inclusive:
-        x = sum(price - (price / vat_factor) for price in aluminum_prices)
-    else:
-        x = sum(price * (vat_factor - 1) for price in aluminum_prices)
+    x = sum(price * (vat_factor - 1) for price in aluminum_prices)
 
     # Calculate y in bulk
     y = sum(price * qty for price, qty in zip(aluminum_prices, quantities))
@@ -67,7 +63,7 @@ def calculate_aluminum_ratio_optimized(scope, scope_items, vat_factor, vat_inclu
     return round(total / y, 3) if y > 0 else 1
 
 
-def calculate_items_batch_extra_works(items, scope, vat, vat_inclusive, vat_factor, labour_charges):
+def calculate_items_batch_extra_works(items, scope, vat, vat_factor, labour_charges):
     for item in items:
         qty = item.qty or 0
         uom_rate = item.uom_rate or 0
@@ -77,7 +73,7 @@ def calculate_items_batch_extra_works(items, scope, vat, vat_inclusive, vat_fact
         item.overall_price = overall_price
 
 
-def calculate_items_batch(items, scope, ratio, vat, vat_inclusive, vat_factor, labour_charges):
+def calculate_items_batch(items, scope, ratio, vat, vat_factor, labour_charges):
     """Calculate values for a batch of items"""
     for item in items:
         # Calculate area only if needed
@@ -86,7 +82,7 @@ def calculate_items_batch(items, scope, ratio, vat, vat_inclusive, vat_factor, l
             item.area = area
 
             if item.glass_unit >= 0:
-                vat_multiplier = 0 if vat_inclusive else vat
+                vat_multiplier = vat
                 glass_price = item.glass_unit * \
                     area * (1 + (vat_multiplier / 100))
                 item.glass_price = glass_price
@@ -120,7 +116,7 @@ def calculate_items_batch(items, scope, ratio, vat, vat_inclusive, vat_factor, l
         item.overall_price = overall_price
 
 
-def update_scope_totals_optimized(scope, scope_items, vat_factor, vat_inclusive):
+def update_scope_totals_optimized(scope, scope_items, vat_factor):
     """Optimized scope totals calculation"""
     # Calculate basic totals in bulk
     overall_prices = [item.overall_price or 0 for item in scope_items]
@@ -133,23 +129,15 @@ def update_scope_totals_optimized(scope, scope_items, vat_factor, vat_inclusive)
     scope.total_items = sum(quantities)
 
     # Calculate VAT amount in bulk
-    if vat_inclusive:
-        # For VAT inclusive prices, extract VAT from total price
-        total_vat = sum(price - (price / vat_factor)
-                        for price in overall_prices)
-    else:
-        # For VAT exclusive prices, calculate VAT on top of prices
-        total_vat = sum(price * (vat_factor - 1) for price in overall_prices)
+    total_vat = sum(price * (vat_factor - 1) for price in overall_prices)
     scope.total_vat_amount = total_vat
 
     # Calculate total price excluding VAT
-    total_price_excluding_vat = scope.total_price - \
-        total_vat if vat_inclusive else scope.total_price
+    total_price_excluding_vat = scope.total_price - total_vat
     scope.total_price_excluding_vat = total_price_excluding_vat
 
     # Update total price for VAT exclusive case
-    if not vat_inclusive:
-        scope.total_price = total_price_excluding_vat + total_vat
+    scope.total_price = total_price_excluding_vat + total_vat
 
     # Calculate retention and final VAT
     retention_factor = 1 - ((scope.retention or 0) / 100)

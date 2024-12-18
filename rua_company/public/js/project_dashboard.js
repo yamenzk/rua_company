@@ -90,24 +90,24 @@ function formatStatus(status) {
 
 // Helper function to render document list items
 function renderDocListItems(items, emptyMessage = 'No items found') {
-  if (!items?.length) return `<div class="empty-state">${emptyMessage}</div>`;
+  if (!items?.length) return `<div class="rua-finance-empty">${emptyMessage}</div>`;
   
   return items.map(row => {
     const style = getScopeStyle(row.scope);
     return `
-      <div class="doc-list-item">
-        <div class="scope" style="background: ${style.bg}; color: ${style.text};">
-          ${row.scope || ""}
+      <div class="rua-finance-doc">
+        <div class="rua-finance-doc-scope" style="background: var(--gray-100); color: var(--text-muted);">
+          ${row.bill_number || "<i class='fa fa-file-text-o'></i>"}
         </div>
-        <div class="doc-info">
-          <a href="/app/project-bill/${row.bill}" class="bill">${row.bill}</a>
-          <div class="amount">${formatCurrency(row.grand_total)}</div>
+        <div class="rua-finance-doc-content">
+          <a href="/app/project-bill/${row.bill}" class="rua-finance-doc-link">${row.bill}</a>
+          <div class="rua-finance-doc-amount">${formatCurrency(row.grand_total)}</div>
         </div>
         ${row.status ? `
-          <span class="status-chip status-${(row.status || "").toLowerCase().replace(" ", "-")}">
+          <div class="rua-finance-doc-status rua-finance-status-${(row.status || "").toLowerCase().replace(" ", "-")}">
             ${formatStatus(row.status)}
-          </span>
-        ` : `<span class="draft-badge">Draft</span>`}
+          </div>
+        ` : `<div class="rua-finance-doc-draft">Draft</div>`}
       </div>
     `;
   }).join('');
@@ -115,17 +115,14 @@ function renderDocListItems(items, emptyMessage = 'No items found') {
 
 // Helper function to render payment list items
 function renderPaymentListItems(items, direction = 'incoming', emptyMessage = 'No payments found') {
-  if (!items?.length) return `<div class="empty-state">${emptyMessage}</div>`;
+  if (!items?.length) return `<div class="rua-finance-empty">${emptyMessage}</div>`;
   
   return items.map(row => `
-    <div class="payment-list-item">
-      <div class="date">${formatDate(row.date)}</div>
-      <div class="payment-info">
-        <a href="/app/payment-voucher/${row.voucher}" class="voucher">${row.voucher}</a>
-        <div class="amount">${formatCurrency(row.amount)}</div>
-      </div>
-      <div class="payment-arrow arrow-${direction}">
-        ${direction === 'incoming' ? '↓' : '↑'}
+    <div class="rua-finance-payment">
+      <div class="rua-finance-payment-date">${formatDate(row.date)}</div>
+      <div class="rua-finance-payment-content">
+        <a href="/app/payment-voucher/${row.voucher}" class="rua-finance-payment-link">${row.voucher}</a>
+        <div class="rua-finance-payment-value">${formatCurrency(row.amount)}</div>
       </div>
     </div>
   `).join('');
@@ -134,22 +131,25 @@ function renderPaymentListItems(items, direction = 'incoming', emptyMessage = 'N
 // Helper function to render document category section
 function renderDocumentCategory(items, categoryTitle) {
   return items?.length ? `
-    <div class="doc-category">${categoryTitle}</div>
+    <div class="rua-finance-category">${categoryTitle}</div>
     ${renderDocListItems(items)}
   ` : '';
 }
 
 // Helper function to render document block with multiple categories
 function renderDocumentBlock(submittedDocs, draftDocs, blockTitle, emptyMessage) {
+  const totalAmount = [...(submittedDocs || []), ...(draftDocs || [])].reduce((sum, doc) => sum + (doc.grand_total || 0), 0);
+  
   return `
-    <div class="summary-block">
-      <div class="summary-card">
-        <div class="title">${blockTitle}</div>
+    <div class="rua-finance-block">
+      <div class="rua-finance-block-header">
+        <div class="rua-finance-block-title">${blockTitle}</div>
+        <div class="rua-finance-block-amount">${formatCurrency(totalAmount)}</div>
       </div>
-      <div class="doc-list-container">
+      <div class="rua-doc-list-container">
         ${submittedDocs?.length ? renderDocumentCategory(submittedDocs, `Submitted ${blockTitle}`) : ''}
         ${draftDocs?.length ? renderDocumentCategory(draftDocs, `Draft ${blockTitle}`) : ''}
-        ${!submittedDocs?.length && !draftDocs?.length ? `<div class="empty-state">${emptyMessage}</div>` : ''}
+        ${!submittedDocs?.length && !draftDocs?.length ? `<div class="rua-finance-empty">${emptyMessage}</div>` : ''}
       </div>
     </div>
   `;
@@ -170,9 +170,9 @@ function renderScopeItem(scope, index, items) {
     const style = getScopeStyle(scope.scope_number);
     
     return `
-        <div class="rua-scope-card" data-scope="${scope.scope_number}">
+        <div class="rua-scope-card" data-scope-number="${scope.scope_number}">
             <div class="rua-scope-header">
-                <div class="rua-scope-number" style="background: ${style.text}">${scope.scope_number}</div>
+                <div class="rua-scope-number" style="background: ${style.text}; color: ${style.bg};">${scope.scope_number}</div>
                 <h4 class="rua-scope-title">${scope.description || `Scope ${scope.scope_number}`}</h4>
             </div>
             
@@ -193,10 +193,12 @@ function renderScopeItem(scope, index, items) {
 // Helper function to render expense card
 function renderExpenseCard(item) {
     return `
-        <div class="expense-card clickable" data-item-idx="${item.idx}">
-            <div class="expense-title">${item.item || "Untitled"}</div>
-            ${item.description ? `<div class="expense-description">${item.description}</div>` : ""}
-            <div class="expense-amount">${formatCurrency(item.amount || 0)}</div>
+        <div class="rua-expense-card" data-item-idx="${item.idx}">
+            <div class="rua-expense-content">
+                <div class="rua-expense-title">${item.item || "Untitled"}</div>
+                ${item.description ? `<div class="rua-expense-description">${item.description}</div>` : ""}
+                <div class="rua-expense-amount">${formatCurrency(item.amount || 0)}</div>
+            </div>
         </div>
     `;
 }
@@ -204,20 +206,24 @@ function renderExpenseCard(item) {
 // Helper function to render additional expenses section
 function renderAdditionalExpenses(expenses, totalAmount) {
     return `
-        <div class="finance-section additional-expenses">
-            <div class="section-header">
-                <h2>Additional Expenses</h2>
-                <span class="total-badge">Total: ${formatCurrency(totalAmount || 0)}</span>
+        <div class="finance-section draft-financing">
+            <div class="rua-finance-header">
+                <div class="rua-finance-header-content">
+                    <h2 class="rua-finance-title">Additional Expenses</h2>
+                    <div class="rua-finance-badge">${formatCurrency(totalAmount || 0)}</div>
+                </div>
+                <div class="rua-finance-info">
+                    <i class="fa fa-info-circle"></i>
+                    Expenses listed here are automatically processed as paid. The total amount is incorporated into the final payable sum.
+                </div>
             </div>
-            <div class="info-panel mb-3">
-                <p><i class="fa fa-info-circle"></i> Expenses listed here are automatically processed as paid. The total amount is incorporated into the final payable sum and adjusted in the balance calculation.</p>
-            </div>
-            <div class="expenses-grid">
+            
+            <div class="rua-expense-grid">
                 ${(expenses || []).map(item => renderExpenseCard(item)).join("")}
-                <div class="expense-card add-expense clickable" style="background: var(--fg-color); border: 1px dashed var(--gray-400);">
-                    <div class="expense-add-content" style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%;">
-                        <i class="fa fa-plus" style="font-size: 20px; color: var(--text-muted);"></i>
-                        <div style="color: var(--text-muted); margin-top: 8px;">Add Expense</div>
+                <div class="rua-expense-card rua-expense-add">
+                    <div class="rua-expense-add-content">
+                        <i class="fa fa-plus"></i>
+                        <span>Add Expense</span>
                     </div>
                 </div>
             </div>
@@ -228,17 +234,17 @@ function renderAdditionalExpenses(expenses, totalAmount) {
 // Define event listener configurations
 const eventListenerConfig = [
     {
-        selector: '.contract-value',
+        selector: '.rua-contract-value',
         event: 'click',
         handler: frm => () => rua_company.project_dashboard.showContractValueDialog(frm)
     },
     {
-        selector: '.party-tag.add-party',
+        selector: '.rua-add-party-btn',
         event: 'click',
         handler: frm => () => rua_company.project_dashboard.showManagePartiesDialog(frm)
     },
     {
-        selector: '.scope-item:not(.add-scope)',
+        selector: '.rua-scope-card',
         event: 'click',
         handler: frm => function(e) {
             if (!$(e.target).closest(".scope-actions").length) {
@@ -248,7 +254,7 @@ const eventListenerConfig = [
         }
     },
     {
-        selector: '.add-scope',
+        selector: '.add-scope-btn',
         event: 'click',
         handler: frm => () => rua_company.project_dashboard.showScopeEditDialog(frm)
     },
@@ -263,7 +269,7 @@ const eventListenerConfig = [
         handler: frm => () => rua_company.project_dashboard.showProjectFinancialsDialog(frm)
     },
     {
-        selector: '.expense-card.clickable:not(.add-expense)',
+        selector: '.rua-expense-card.clickable:not(.rua-expense-add)',
         event: 'click',
         handler: frm => function() {
             const idx = this.dataset.itemIdx;
@@ -271,7 +277,7 @@ const eventListenerConfig = [
         }
     },
     {
-        selector: '.expense-card.add-expense',
+        selector: '.rua-expense-add',
         event: 'click',
         handler: frm => () => rua_company.project_dashboard.showAddExpenseDialog(frm)
     },
@@ -291,7 +297,7 @@ const eventListenerConfig = [
         }
     },
     {
-        selector: '.project-name',
+        selector: '.rua-project-title',
         event: 'click',
         handler: frm => () => {
             frappe.prompt({
@@ -306,7 +312,7 @@ const eventListenerConfig = [
         }
     },
     {
-        selector: '.project-location',
+        selector: '.rua-project-location',
         event: 'click',
         handler: frm => () => {
             frappe.prompt({
@@ -338,6 +344,7 @@ function generateDashboardHTML(frm) {
     const dashboardHTML = `
 <div class="rua-dashboard">
     <div class="rua-project-header">
+    <div class="flex space-between gap-2 ">
         <div class="rua-header-main">
             <div class="rua-header-title-section">
                 <div class="rua-header-title">
@@ -350,7 +357,7 @@ function generateDashboardHTML(frm) {
             </div>
 
             <div class="rua-header-meta">
-                <div class="rua-meta-item">
+                <div class="rua-meta-item rua-project-location">
                     <i class="fa fa-map-marker"></i>
                     <span>${frm.doc.location || "Location not specified"}</span>
                 </div>
@@ -372,24 +379,42 @@ function generateDashboardHTML(frm) {
                     Add Party
                 </button>
             </div>
-        </div>
 
-        <div class="rua-header-actions">
-            <button class="rua-action-btn rua-primary-btn view-items-btn">
-                <i class="fa fa-list"></i>
-                View Items
-            </button>
-            <button class="rua-action-btn rua-secondary-btn project-financials-btn">
-                <i class="fa fa-money"></i>
-                Financials
-            </button>
+            <div class="project-overview">
+                <div class="overview-card clickable rua-contract-value">
+                    <div class="label">Contract Value</div>
+                    <div class="amount value">${formatCurrency(frm.doc.contract_value || 0)}</div>
+                    <div class="metric">Total project value</div>
+                </div>
+                
+                <div class="overview-card">
+                    <div class="label">Project Profit</div>
+                    <div class="amount ${(frm.doc.project_profit || 0) >= 0 ? "metric-positive" : "metric-negative"}">
+                        ${formatCurrency(frm.doc.project_profit)}
+                    </div>
+                    <div class="metric">
+                        ${(frm.doc.profit_percentage || 0).toFixed(1)}% margin
+                    </div>
+                </div>
+            </div>
+
+            <div class="rua-header-actions">
+                <button class="rua-action-btn rua-primary-btn view-items-btn">
+                    <i class="fa fa-list"></i>
+                    View Items
+                </button>
+                <button class="rua-action-btn rua-secondary-btn project-financials-btn">
+                    <i class="fa fa-money"></i>
+                    Financials
+                </button>
+            </div>
         </div>
     </div>
 
     <div class="rua-scopes-section">
         <div class="rua-scopes-header">
             <h3 class="rua-scopes-title">Project Scopes</h3>
-            <button class="rua-action-btn rua-secondary-btn">
+            <button class="rua-action-btn rua-secondary-btn add-scope-btn">
                 <i class="fa fa-plus"></i>
                 Add Scope
             </button>
@@ -399,78 +424,48 @@ function generateDashboardHTML(frm) {
             ${scopesHTML}
         </div>
     </div>
-
-    <!-- Project Overview -->
-    <div class="project-overview">
-        <div class="overview-card clickable">
-            <div class="label">Contract Value</div>
-            <div class="amount value">${formatCurrency(frm.doc.contract_value || 0)}</div>
-            <div class="metric">Total project value</div>
-        </div>
-        
-        <div class="overview-card">
-            <div class="label">Project Profit</div>
-            <div class="amount ${(frm.doc.project_profit || 0) >= 0 ? "metric-positive" : "metric-negative"}">
-                ${formatCurrency(frm.doc.project_profit)}
-            </div>
-            <div class="metric">
-                ${(frm.doc.profit_percentage || 0).toFixed(1)}% margin
-            </div>
-        </div>
-        
-        <div class="overview-card">
-            <div class="label">Net Position</div>
-            <div class="amount net">${formatCurrency((frm.doc.due_receivables || 0) - (frm.doc.due_payables || 0))}</div>
-            <div class="metric">Receivables - Payables</div>
-        </div>
     </div>
 
     <!-- Receivables Section -->
-    <div class="finance-section">
-        <div class="section-header">
-            <h2>Receivables</h2>
-            <span class="total-badge">Due: ${formatCurrency(
-              frm.doc.due_receivables
-            )}</span>
+    <div class="finance-section draft-financing">
+        <div class="rua-finance-header">
+            <div class="rua-finance-header-content">
+                <h2 class="rua-finance-title">Receivables</h2>
+                <div class="rua-finance-badge">Due: ${formatCurrency(frm.doc.due_receivables)}</div>
+            </div>
         </div>
         
-        <div class="section-content">
-            <div class="summary-grid-3">
+        <div class="rua-finance-body">
+            <div class="rua-finance-grid rua-finance-grid-3">
                 <!-- Proformas Block -->
-                <div class="summary-block">
-                    <div class="summary-card">
-                        <div class="title">Total Proformas</div>
-                        <div class="value">${formatCurrency(
-                          frm.doc.total_proformas
-                        )}</div>
+                <div class="rua-finance-block">
+                    <div class="rua-finance-block-header">
+                        <div class="rua-finance-block-title">Proformas</div>
+                        <div class="rua-finance-block-amount">${formatCurrency(frm.doc.total_proformas)}</div>
                     </div>
-                    <div class="doc-list-container">
+                    <div class="rua-finance-list">
                         ${renderDocListItems(frm.doc.proformas, 'No proformas found')}
                     </div>
                 </div>
 
                 <!-- Invoices Block -->
-                <div class="summary-block">
-                    <div class="summary-card">
-                        <div class="title">Total Invoices</div>
-                        <div class="value">${formatCurrency(
-                          frm.doc.total_invoices
-                        )}</div>
+                <div class="rua-finance-block">
+                    <div class="rua-finance-block-header">
+                        <div class="rua-finance-block-title">Invoices</div>
+                        <div class="rua-finance-block-amount">${formatCurrency(frm.doc.total_invoices)}</div>
                     </div>
-                    <div class="doc-list-container">
+                    <div class="rua-finance-list">
                         ${renderDocListItems(frm.doc.invoices, 'No invoices found')}
                     </div>
                 </div>
 
                 <!-- Received Payments Block -->
-                <div class="summary-block">
-                    <div class="summary-card">
-                        <div class="title">Total Received</div>
-                        <div class="value">${formatCurrency(
-                          frm.doc.total_received
-                        )}</div>
+                <div class="rua-finance-block">
+                    <div class="rua-finance-block-header">
+                        <div class="rua-finance-block-title">Received</div>
+                        <div class="rua-finance-block-amount">${formatCurrency(frm.doc.total_received)}</div>
                     </div>
-                    <div class="payment-list-container">
+                    <div class="rua-finance-list">
                         ${renderPaymentListItems(frm.doc.received_table, 'incoming', 'No payments received')}
                     </div>
                 </div>
@@ -479,51 +474,44 @@ function generateDashboardHTML(frm) {
     </div>
 
     <!-- Payables Section -->
-    <div class="finance-section">
-        <div class="section-header">
-            <h2>Payables</h2>
-            <span class="total-badge">Due: ${formatCurrency(
-              frm.doc.due_payables
-            )}</span>
+    <div class="finance-section draft-financing">
+        <div class="rua-finance-header">
+            <div class="rua-finance-header-content">
+                <h2 class="rua-finance-title">Payables</h2>
+                <div class="rua-finance-badge">Due: ${formatCurrency(frm.doc.due_payables)}</div>
+            </div>
         </div>
         
-        <div class="section-content">
-            <div class="summary-grid-2">
+        <div class="rua-finance-body">
+            <div class="rua-finance-grid rua-finance-grid-2">
                 <!-- Purchase Orders Block -->
-                <div class="summary-block">
-                    <div class="summary-card">
-                        <div class="title">Total Purchase Orders</div>
-                        <div class="value">${formatCurrency(
-                          frm.doc.total_expenses
-                        )}</div>
+                <div class="rua-finance-block">
+                    <div class="rua-finance-block-header">
+                        <div class="rua-finance-block-title">Purchase Orders</div>
+                        <div class="rua-finance-block-amount">${formatCurrency(frm.doc.total_expenses)}</div>
                     </div>
-                    <div class="doc-list-container">
+                    <div class="rua-finance-list">
                         ${renderDocListItems(frm.doc.lpos, 'No purchase orders found')}
                     </div>
                 </div>
 
                 <!-- Paid Payments Block -->
-                <div class="summary-block">
-                    <div class="summary-card">
-                        <div class="title">Total Paid</div>
-                        <div class="value">${formatCurrency(
-                          frm.doc.total_paid
-                        )}</div>
+                <div class="rua-finance-block">
+                    <div class="rua-finance-block-header">
+                        <div class="rua-finance-block-title">Paid</div>
+                        <div class="rua-finance-block-amount">${formatCurrency(frm.doc.total_paid)}</div>
                     </div>
-                    <div class="payment-list-container">
+                    <div class="rua-finance-list">
                         ${renderPaymentListItems(frm.doc.paid_table, 'outgoing', 'No payments made')}
                         ${frm.doc.total_additional_expenses > 0 ? `
-                        <div class="payment-list-item">
-                            <div class="date" style="font-weight: bold;">AUTO</div>
-                            <div class="payment-info">
-                                <p class="voucher" style="margin: 0">Additional expenses</p>
-                                <div class="amount">${formatCurrency(
-                                  frm.doc.total_additional_expenses
-                                )}</div>
+                        <div class="rua-finance-payment">
+                            <div class="rua-finance-payment-date">AUTO</div>
+                            <div class="rua-finance-payment-content">
+                                <div class="rua-finance-payment-text">Additional expenses</div>
+                                <div class="rua-finance-payment-value">${formatCurrency(frm.doc.total_additional_expenses)}</div>
                             </div>
-                            <div class="payment-arrow arrow-outgoing">↑</div>
                         </div>
-                        ` : ""}
+                        ` : ''}
                     </div>
                 </div>
             </div>
@@ -537,54 +525,48 @@ function generateDashboardHTML(frm) {
         </div>
         
         <div class="section-content">
-            <div class="summary-grid-3">
+            <div class="rua-finance-grid rua-finance-grid-3">
                 <!-- Proforma Drafts -->
-                <div class="summary-block">
-                    <div class="summary-card">
-                        <div class="title">Proforma Drafts</div>
-                    </div>
-                    <div class="doc-list-container">
-                        ${renderDocListItems(frm.doc.proforma_drafts, 'No proforma drafts found')}
-                    </div>
-                </div>
-
-                <!-- LPO Drafts -->
-                <div class="summary-block">
-                    <div class="summary-card">
-                        <div class="title">Purchase Order Drafts</div>
-                    </div>
-                    <div class="doc-list-container">
-                        ${renderDocListItems(frm.doc.lpo_drafts, 'No purchase order drafts found')}
-                    </div>
-                </div>
-
+                ${renderDocumentBlock(
+                    null,
+                    frm.doc.proforma_drafts,
+                    "Proformas",
+                    "No proforma drafts found"
+                )}
+                
                 <!-- Invoice Drafts -->
-                <div class="summary-block">
-                    <div class="summary-card">
-                        <div class="title">Invoice Drafts</div>
-                    </div>
-                    <div class="doc-list-container">
-                        ${renderDocListItems(frm.doc.invoice_drafts, 'No invoice drafts found')}
-                    </div>
-                </div>
+                ${renderDocumentBlock(
+                    null,
+                    frm.doc.invoice_drafts,
+                    "Invoices",
+                    "No invoice drafts found"
+                )}
+                
+                <!-- LPO Drafts -->
+                ${renderDocumentBlock(
+                    null,
+                    frm.doc.lpo_drafts,
+                    "Purchase Orders",
+                    "No purchase order drafts found"
+                )}
             </div>
 
             <!-- Second Row: Quotations and RFQs -->
-            <div class="summary-grid-2" style="margin-top: var(--padding-lg);">
+            <div class="rua-finance-grid rua-finance-grid-2" style="margin-top: var(--padding-lg);">
                 <!-- Quotations Block -->
                 ${renderDocumentBlock(
-                  frm.doc.quotations,
-                  frm.doc.quotation_drafts,
-                  'Quotations',
-                  'No quotations found'
+                    frm.doc.quotations,
+                    frm.doc.quotation_drafts,
+                    "Quotations",
+                    "No quotations found"
                 )}
-
+                
                 <!-- RFQs Block -->
                 ${renderDocumentBlock(
-                  frm.doc.rfqs,
-                  frm.doc.rfq_drafts,
-                  'RFQs',
-                  'No RFQs found'
+                    frm.doc.rfqs,
+                    frm.doc.rfq_drafts,
+                    "RFQs",
+                    "No RFQs found"
                 )}
             </div>
         </div>

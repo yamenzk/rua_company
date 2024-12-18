@@ -512,6 +512,62 @@ def get_party_outstanding_amounts(project, parties):
 #endregion
 
 @frappe.whitelist()
+def add_item(project, scope_number, item_data):
+    """Add an item to a project scope and calculate all values
+    
+    Args:
+        project (str): Project name
+        scope_number (str): Scope number
+        item_data (dict): Item data including all required fields
+    """
+    doc = frappe.get_doc("Project", project)
+    scope = next((s for s in doc.scopes if str(s.scope_number) == str(scope_number)), None)
+    
+    if not scope:
+        frappe.throw(f"Scope {scope_number} not found in project {project}")
+        
+    # Convert item_data from string to dict if needed
+    if isinstance(item_data, str):
+        item_data = frappe.parse_json(item_data)
+        
+    # Create new item
+    new_item = {
+        "scope_number": scope_number,
+        **item_data
+    }
+    
+    # Add item to child table
+    doc.append("items", new_item)
+    
+    # Pre-calculate scope-level values for efficiency
+    vat = scope.vat
+    vat_factor = 1 + (vat / 100)
+    labour_charges = scope.labour_charges or 0
+    
+    # Calculate ratio if needed
+    if scope.type != "Extra Works":
+        ratio = project_calculations.calculate_aluminum_ratio_optimized(
+            scope, [new_item], vat_factor)
+        scope.ratio = ratio
+        
+        # Calculate item values
+        project_calculations.calculate_items_batch(
+            [new_item], scope, ratio, vat, vat_factor, labour_charges)
+    else:
+        project_calculations.calculate_items_batch_extra_works(
+            [new_item], scope, vat, vat_factor, labour_charges)
+    
+    # Update scope totals
+    project_calculations.update_scope_totals_optimized(
+        scope, doc.get("items", {"scope_number": scope_number}), vat_factor)
+    
+    # Calculate financial totals
+    project_calculations.calculate_financial_totals_optimized(doc)
+    
+    doc.save()
+    return new_item
+
+@frappe.whitelist()
 def get_item_suggestions(doctype, txt, searchfield, start, page_len, filters):
     """Get item suggestions for autocomplete with party history and dimensions"""
     try:
