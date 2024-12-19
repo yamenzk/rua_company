@@ -222,13 +222,13 @@
    "fieldname": "type",
    "fieldtype": "Select",
    "label": "Type",
-   "options": "Openings\nLouvers\nHandrails\nCladdings\nPergolas\nSkylights\nShower Partitions"
+   "options": "Openings\nLouvers\nHandrails\nCladding\nPergolas\nSkylights\nShower Partitions\nCustom"
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-12-18 16:27:04.142068",
+ "modified": "2024-12-19 05:12:08.524364",
  "modified_by": "Administrator",
  "module": "Rua Company",
  "name": "Scopes",

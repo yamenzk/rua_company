@@ -1200,17 +1200,17 @@ rua_company.project_dialogs.showScopeEditDialog = function (frm, scope = null) {
     },
     {
       type: "Louvers",
-      icon: "sliders-h",
+      icon: "bars",
       description: "Ventilation and sun shading systems",
     },
     {
       type: "Handrails",
-      icon: "grip-lines",
+      icon: "window-minimize",
       description: "Balustrades and safety rails",
     },
     {
-      type: "Claddings",
-      icon: "layer-group",
+      type: "Cladding",
+      icon: "pause",
       description: "Exterior wall coverings",
     },
     {
@@ -1220,13 +1220,18 @@ rua_company.project_dialogs.showScopeEditDialog = function (frm, scope = null) {
     },
     {
       type: "Skylights",
-      icon: "sun",
+      icon: "sun-o",
       description: "Roof windows and light openings",
     },
     {
       type: "Shower Partitions",
       icon: "shower",
       description: "Bathroom dividers and enclosures",
+    },
+    {
+      type: "Custom",
+      icon: "pencil-square-o",
+      description: "Quick add openings without calculations",
     },
   ];
 
@@ -1309,6 +1314,7 @@ rua_company.project_dialogs.showScopeEditDialog = function (frm, scope = null) {
       width: "40px",
       height: "40px",
       display: "flex",
+      "flex-shrink": "0",
       "align-items": "center",
       "justify-content": "center",
       background: "var(--bg-light-gray)",
@@ -2151,500 +2157,401 @@ const financialsDialogStyles = `
     </style>
 `;
 
-// Items Dialog
+// Project Items Dialog
 rua_company.project_dialogs.showItemsDialog = function (frm) {
   let currentScope = "all";
-
+  
   const dialog = new frappe.ui.Dialog({
-    title: "Project Items",
-    size: "extra-large",
-    fields: [
-      {
-        fieldname: "actions_section",
-        fieldtype: "Section Break",
-        label: "Actions",
-      },
-      {
-        fieldname: "actions_html",
-        fieldtype: "HTML",
-      },
-      {
-        fieldname: "filters_section",
-        fieldtype: "Section Break",
-        label: "Filters",
-      },
-      {
-        fieldname: "scope_chips_html",
-        fieldtype: "HTML",
-      },
-      {
-        fieldname: "search",
-        fieldtype: "Data",
-        label: "Search Items",
-        placeholder: "Search by item or description...",
-      },
-      {
-        fieldname: "items_html",
-        fieldtype: "HTML",
-      },
-    ],
+      title: "Project Items",
+      size: "extra-large",
+      fields: [
+          {
+              fieldname: "header_section",
+              fieldtype: "Section Break",
+              label: "Overview & Actions",
+          },
+          {
+              fieldname: "header_html",
+              fieldtype: "HTML",
+          },
+          {
+              fieldname: "scope_section",
+              fieldtype: "Section Break",
+              label: "Scopes",
+          },
+          {
+              fieldname: "scope_cards_html",
+              fieldtype: "HTML",
+          },
+          {
+              fieldname: "items_section",
+              fieldtype: "Section Break",
+              label: "Items",
+          },
+          {
+              fieldname: "items_html",
+              fieldtype: "HTML",
+          }
+      ]
   });
 
   // Add custom styles
   dialog.$wrapper.append(`
-        <style>
-            .scope-chips {
-                display: flex;
-                flex-wrap: wrap;
-                gap: var(--padding-xs);
-                padding: var(--padding-sm) 0;
-            }
-            
-            .scope-chip {
-                padding: 6px 16px;
-                border-radius: 20px;
-                cursor: pointer;
-                font-size: var(--text-sm);
-                transition: all 0.2s;
-                font-weight: 500;
-            }
-            
-            .scope-chip:hover {
-                opacity: 0.9;
-                transform: translateY(-1px);
-            }
-
-            .scope-chip.active {
-                font-weight: 600;
-            }
-            
-            .items-table-container {
-                max-height: 60vh;
-                overflow-y: auto;
-                border-radius: var(--border-radius-lg);
-                background: var(--card-bg);
-            }
-            
-            .items-table {
-                margin-bottom: 0;
-                border-collapse: separate;
-                border-spacing: 0;
-            }
-            
-            .items-table th {
-                position: sticky;
-                top: 0;
-                z-index: 1;
-                font-weight: 600;
-                white-space: nowrap;
-                padding: var(--padding-sm);
-                border-color: var(--table-border-color);
-            }
-            
-            .items-table .header-group th {
-                top: 0;
-                padding: 12px;
-                font-weight: 600;
-                text-transform: uppercase;
-                font-size: var(--text-sm);
-                letter-spacing: 0.5px;
-                border-color: var(--table-border-color);
-            }
-
-            .items-table .header-group th:first-child {
-                border-top-left-radius: var(--border-radius-lg);
-            }
-
-            .items-table .header-group th:last-child {
-                border-top-right-radius: var(--border-radius-lg);
-            }
-            
-            .scope-header td {
-                padding: 10px var(--padding-lg);
-                border-color: var(--table-border-color);
-            }
-            
-            .items-table td {
-                padding: var(--padding-sm);
-                vertical-align: middle;
-                border-color: var(--table-border-color);
-            }
-            
-            .formula-row td {
-                border-top: none;
-                padding-top: 0;
-                padding-bottom: var(--padding-sm);
-            }
-
-            .formula-cell {
-                color: var(--text-muted);
-                font-size: var(--text-xs);
-                font-family: var(--font-family-monospace);
-                background: var(--subtle-fg);
-                margin: 0 var(--padding-xs);
-            }
-
-            .area-formula {
-                color: var(--text-muted);
-                padding: var(--padding-xs) var(--padding-sm);
-                text-align: center;
-                font-weight: bold;
-                background-color: var(--bg-purple);
-                color: var(--text-on-purple)
-            }
-
-            .actual-formula {
-                color: var(--text-muted);
-                padding: var(--padding-xs) var(--padding-sm);
-            }
-            
-            .item-cell {
-                font-weight: 500;
-                min-width: 120px;
-            }
-            
-            .desc-cell {
-                min-width: 200px;
-                color: var(--text-muted);
-            }
-            
-            .total-cell {
-                font-weight: 600;
-                color: var(--text-color);
-            }
-            
-            .text-right {
-                text-align: right;
-            }
-            
-            .text-center {
-                text-align: center;
-            }
-        </style>
-    `);
-
-    function renderScopeChips() {
-        // Ensure scope numbers are strings for consistent comparison
-        const scopeChips = ["all", ...frm.doc.scopes.map((s) => s.scope_number.toString())];
-        const chipsHTML = `
-            <div class="scope-chips-container" style="display: flex; justify-content: space-between; align-items: center;">
-                <div class="scope-chips">
-                    ${scopeChips.map((scope, index) => {
-                        const isAll = scope === "all";
-                        const colorSet = isAll
-                            ? { bg: "var(--fg-color)", text: "var(--text-color)" }
-                            : SCOPE_COLORS[(parseInt(scope) - 1) % SCOPE_COLORS.length];
-                        const isActive = currentScope === scope;
-                        return `
-                            <div class="scope-chip ${isActive ? "active" : ""}" 
-                                 data-scope="${scope}"
-                                 style="background: ${colorSet.bg}; 
-                                        color: ${colorSet.text};
-                                        border: 2px solid ${isActive ? colorSet.text : "transparent"};
-                                        box-shadow: ${isActive ? `0 2px 6px ${colorSet.bg}` : "none"};
-                                        transform: ${isActive ? "translateY(-2px)" : "none"}">
-                                ${isAll ? "All Scopes" : `Scope ${scope}`}
-                            </div>
-                        `;
-                    }).join("")}
-                </div>
-                ${currentScope !== "all" ? `
-                    <button class="btn btn-primary btn-sm add-item-btn">
-                        <i class="fa fa-plus"></i> Add Item
-                    </button>
-                ` : ''}
-            </div>
-        `;
-        dialog.fields_dict.scope_chips_html.$wrapper.html(chipsHTML);
-    
-        // Add click handler for Add Item button
-        dialog.$wrapper.find('.add-item-btn').on('click', () => {
-            showAddItemDialog(frm, currentScope);
-        });
-    }
-    
-    // Add Item Dialog
-    function showAddItemDialog(frm, scopeNumber) {
-        const scope = frm.doc.scopes.find(s => s.scope_number === scopeNumber);
-        if (!scope) return;
-
-        const isOpeningsOrSkylight = scope.type === "Openings" || scope.type === "Skylights";
-        const isHandrailOrCladding = scope.type === "Handrails" || scope.type === "Cladding";
-        
-        let fields = [
-            {
-                fieldname: 'item',
-                fieldtype: 'Data',
-                label: 'Item',
-                reqd: 1
-            },
-            {
-                fieldname: 'description',
-                fieldtype: 'Data',
-                label: 'Description'
-            },
-            {
-                fieldname: 'qty',
-                fieldtype: 'Int',
-                label: 'Quantity',
-                reqd: 1,
-                default: 1,
-                min: 1
-            }
-        ];
-
-        if (isOpeningsOrSkylight) {
-            fields = [
-                ...fields,
-                {
-                    fieldname: 'dimensions_section',
-                    fieldtype: 'Section Break',
-                    label: 'Dimensions'
-                },
-                {
-                    fieldname: 'manual_area',
-                    fieldtype: 'Check',
-                    label: 'Manual Area',
-                    description: 'Check this to manually enter the area instead of calculating it from width and height'
-                },
-                {
-                    fieldname: 'area',
-                    fieldtype: 'Float',
-                    label: 'Area (sqm)',
-                    depends_on: 'eval:doc.manual_area',
-                    mandatory_depends_on: 'eval:doc.manual_area',
-                },
-                {
-                    fieldname: 'width',
-                    fieldtype: 'Float',
-                    label: 'Width (cm)',
-                    depends_on: 'eval:!doc.manual_area',
-                    mandatory_depends_on: 'eval:!doc.manual_area',
-                    min: 0
-                },
-                {
-                    fieldname: 'height',
-                    fieldtype: 'Float',
-                    label: 'Height (cm)',
-                    depends_on: 'eval:!doc.manual_area',
-                    mandatory_depends_on: 'eval:!doc.manual_area',
-                    min: 0
-                },
-                {
-                    fieldname: 'glass_section',
-                    fieldtype: 'Section Break',
-                    label: 'Glass Details'
-                },
-                {
-                    fieldname: 'glass_unit',
-                    fieldtype: 'Float',
-                    label: 'Glass Unit',
-                    default: scope.glass_sqm_price,
-                    reqd: 1
-                },
-                {
-                    fieldname: 'aluminum_section',
-                    fieldtype: 'Section Break',
-                    label: 'Aluminum Details'
-                },
-                {
-                    fieldname: 'curtain_wall',
-                    fieldtype: 'Float',
-                    label: 'Curtain Wall',
-                    reqd: 1
-                },
-                {
-                    fieldname: 'col_break1',
-                    fieldtype: 'Column Break'
-                },
-                {
-                    fieldname: 'insertion_1',
-                    fieldtype: 'Float',
-                    label: 'Insertion 1'
-                },
-                {
-                    fieldname: 'insertion_2',
-                    fieldtype: 'Float',
-                    label: 'Insertion 2'
-                },
-                {
-                    fieldname: 'col_break2',
-                    fieldtype: 'Column Break'
-                },
-                {
-                    fieldname: 'insertion_3',
-                    fieldtype: 'Float',
-                    label: 'Insertion 3'
-                },
-                {
-                    fieldname: 'insertion_4',
-                    fieldtype: 'Float',
-                    label: 'Insertion 4'
-                }
-            ];
-        } else {
-            // Add actual_unit_rate field for non-Openings/Skylights types
-            fields.push(
-                {
-                    fieldname: 'pricing_section',
-                    fieldtype: 'Section Break',
-                    label: 'Pricing Details'
-                },
-                {
-                    fieldname: 'actual_unit_rate',
-                    fieldtype: 'Currency',
-                    label: 'Unit Rate (Including Profit)',
-                    reqd: 1
-                }
-            );
-
-            // Add area fields for types other than Handrails/Cladding
-            if (!isHandrailOrCladding) {
-                fields.splice(3, 0, // Insert after qty field
-                    {
-                        fieldname: 'dimensions_section',
-                        fieldtype: 'Section Break',
-                        label: 'Dimensions'
-                    },
-                    {
-                        fieldname: 'manual_area',
-                        fieldtype: 'Check',
-                        label: 'Manual Area',
-                        description: 'Check this to manually enter the area instead of calculating it from width and height'
-                    },
-                    {
-                        fieldname: 'area',
-                        fieldtype: 'Float',
-                        label: 'Area (sqm)',
-                        depends_on: 'eval:doc.manual_area',
-                        mandatory_depends_on: 'eval:doc.manual_area',
-                    },
-                    {
-                        fieldname: 'width',
-                        fieldtype: 'Float',
-                        label: 'Width (cm)',
-                        depends_on: 'eval:!doc.manual_area',
-                        mandatory_depends_on: 'eval:!doc.manual_area',
-                        min: 0
-                    },
-                    {
-                        fieldname: 'height',
-                        fieldtype: 'Float',
-                        label: 'Height (cm)',
-                        depends_on: 'eval:!doc.manual_area',
-                        mandatory_depends_on: 'eval:!doc.manual_area',
-                        min: 0
-                    }
-                );
-            }
-        }
-
-        // Add profit percentage field
-        fields.push(
-            {
-                fieldname: 'profit_section',
-                fieldtype: 'Section Break',
-                label: 'Profit Details'
-            },
-            {
-                fieldname: 'profit_percentage',
-                fieldtype: 'Percent',
-                label: 'Profit Percentage',
-                default: scope.profit,
-                reqd: 1
-            }
-        );
-
-        const addItemDialog = new frappe.ui.Dialog({
-            title: `Add Item to Scope ${scope.scope_number}`,
-            fields: fields,
-            primary_action_label: 'Add Item',
-            primary_action(values) {
-                // Convert numeric fields to numbers
-                const numericFields = ['width', 'height', 'glass_unit', 'curtain_wall', 
-                    'insertion_1', 'insertion_2', 'insertion_3', 'insertion_4', 'qty',
-                    'actual_unit_rate'];
-                
-                const processedValues = { ...values };
-                numericFields.forEach(field => {
-                    if (field in processedValues) {
-                        processedValues[field] = flt(processedValues[field]);
-                    }
-                });
-                
-                frappe.call({
-                    method: "rua_company.rua_company.doctype.project.project.add_item",
-                    args: {
-                        project: frm.doc.name,
-                        scope_number: scope.scope_number,
-                        item_data: processedValues
-                    },
-                    freeze: true,
-                    freeze_message: __("Adding item..."),
-                    callback: function(r) {
-                        if (!r.exc) {
-                            addItemDialog.hide();
-                            frm.reload_doc().then(() => {
-                                const itemsHtml = dialog.fields_dict.items_html.$wrapper;
-                                renderItemsTable(frm.doc.items.filter(item => 
-                                    currentScope === "all" || item.scope_number === currentScope
-                                ));
-                            });
-                            frappe.show_alert({
-                                message: __("Item added successfully"),
-                                indicator: "green"
-                            });
-                        }
-                    }
-                });
-            }
-        });
-    
-        addItemDialog.show();
-    }
-
-    function renderItemsTable(items) {
-      // Function to get headers based on scope type
-      function getHeadersForScopeType(scopeType = "Other") {
-          if (!scopeType) {
-              console.warn("No scope type provided, using default headers");
-              scopeType = "Other";
+      <style>
+          /* Header Styles */
+          .items-header {
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              gap: 1rem;
+              padding: 1rem;
+              background: var(--card-bg);
+              border-radius: 8px;
+              border: 1px solid var(--border-color);
+              margin-bottom: 1rem;
           }
-          const baseHeaders = [
-              { label: "Item Details", cols: ["Item", "Description"], color: "blue" }
-          ];
-  
-          if (scopeType === "Openings" || scopeType === "Skylights") {
-              return [
-                  ...baseHeaders,
-                  { label: "Dimensions", cols: ["Width", "Height"], color: "purple" },
-                  { label: "Glass", cols: ["Unit", "Price", "Total"], color: "green" },
-                  { label: "Aluminum", cols: ["Unit", "Price", "Total"], color: "orange" },
-                  { label: "Total", cols: ["Overall Price"], color: "red" }
-              ];
-          } else if (scopeType === "Handrails" || scopeType === "Cladding") {
-              return [
-                  ...baseHeaders,
-                  { label: "Quantity", cols: ["QTY"], color: "purple" },
-                  { label: "Pricing", cols: ["Unit Rate", "Total Cost"], color: "green" },
-                  { label: "Total", cols: ["Overall Price"], color: "red" }
-              ];
-          } else {
-              // For other types (Louvers, Pergolas, Shower Partitions)
-              return [
-                  ...baseHeaders,
-                  { label: "Dimensions", cols: ["Width", "Height", "Area"], color: "purple" },
-                  { label: "Quantity", cols: ["QTY"], color: "orange" },
-                  { label: "Pricing", cols: ["Unit Rate", "Total Cost"], color: "green" },
-                  { label: "Total", cols: ["Overall Price"], color: "red" }
-              ];
+
+          .search-container {
+              flex: 1;
+              max-width: 400px;
+              position: relative;
           }
-      }
-  
-      // Group items by scope
-      console.log('Available scopes:', frm.doc.scopes.map(s => ({ number: s.scope_number, type: s.type })));
-      console.log('Items to render:', items);
-      
+
+          .search-input {
+              width: 100%;
+              padding: 8px 12px 8px 36px;
+              border: 1px solid var(--border-color);
+              border-radius: 6px;
+              background: var(--fg-color);
+          }
+
+          .search-icon {
+              position: absolute;
+              left: 12px;
+              top: 50%;
+              transform: translateY(-50%);
+              color: var(--text-muted);
+          }
+
+          .excel-btn {
+              background: var(--green-500);
+              color: white;
+              border: none;
+              padding: 8px 16px;
+              border-radius: 6px;
+              display: flex;
+              align-items: center;
+              gap: 8px;
+              transition: all 0.2s;
+              font-weight: 500;
+          }
+
+          .excel-btn:hover {
+              background: var(--green-600);
+              transform: translateY(-1px);
+          }
+
+          /* Scope Cards Styles */
+          .scope-cards-container {
+              display: grid;
+              grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+              gap: 1rem;
+              padding: 1rem 0;
+          }
+
+          .scope-card {
+              background: var(--card-bg);
+              border: 2px solid var(--border-color);
+              border-radius: 8px;
+              overflow: hidden;
+              transition: all 0.2s;
+              cursor: pointer;
+          }
+
+          .scope-card:hover {
+              transform: translateY(-2px);
+              box-shadow: var(--shadow-sm);
+          }
+
+          .scope-card.active {
+              border-color: var(--primary-color);
+              box-shadow: var(--shadow-md);
+          }
+
+          .scope-card-header {
+              padding: 1rem;
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+          }
+
+          .scope-card-title {
+              font-weight: 600;
+              font-size: 1.1rem;
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+              width: 100%;
+              gap: 8px;
+          }
+
+          .scope-card-body {
+              padding: 0.75rem 1rem;
+              border-top: 1px solid var(--border-color);
+              background: var(--fg-color);
+          }
+
+          .scope-card-stats {
+              display: grid;
+              grid-template-columns: 1fr 1fr;
+              gap: 0.5rem;
+          }
+
+          .stat-item {
+              display: flex;
+              flex-direction: column;
+          }
+
+          .stat-label {
+              font-size: 0.75rem;
+              color: var(--text-muted);
+          }
+
+          .stat-value {
+              font-weight: 500;
+              color: var(--text-color);
+          }
+
+          .scope-number-badge {
+              padding: 2px 8px;
+              border-radius: 12px;
+              font-size: 0.8rem;
+              margin-left: 8px;
+              font-weight: 500;
+          }
+
+          /* Items Table Styles */
+          .items-table-container {
+              margin-top: 1rem;
+              background: var(--card-bg);
+              border-radius: 8px;
+              border: 1px solid var(--border-color);
+              max-height: 65vh;
+              overflow: auto;
+          }
+
+          .items-table {
+              width: 100%;
+              margin: 0;
+              border-collapse: separate;
+              border-spacing: 0;
+          }
+
+          .items-table th {
+              position: sticky;
+              top: 0;
+              z-index: 10;
+              background: var(--fg-color);
+              padding: 12px 16px;
+              font-weight: 600;
+              color: var(--text-color);
+              border-bottom: 2px solid var(--border-color);
+              border-right: 1px solid var(--border-color);
+              white-space: nowrap;
+              box-shadow: 0 1px 0 0 var(--border-color);
+          }
+
+          .items-table .header-group th {
+              position: sticky;
+              top: 0;
+              z-index: 11;
+              background: var(--fg-color);
+              border-bottom: 2px solid var(--border-color);
+              border-right: 1px solid var(--border-color);
+              color: var(--text-color);
+              text-transform: uppercase;
+              font-size: 0.85rem;
+              letter-spacing: 0.5px;
+              padding: 10px 16px;
+          }
+
+          .items-table td {
+              padding: 12px 16px;
+              vertical-align: middle;
+              border-bottom: 1px solid var(--border-color);
+              border-right: 1px solid var(--border-color);
+          }
+
+          .items-table td:last-child,
+          .items-table th:last-child {
+              border-right: none;
+          }
+
+          .item-row {
+              transition: background-color 0.2s;
+          }
+
+          .item-row:hover {
+              background-color: var(--fg-hover-color) !important;
+          }
+
+          .item-cell {
+              font-weight: 600;
+              color: var(--text-color);
+          }
+
+          .desc-cell {
+              color: var(--text-muted);
+              font-size: 0.9rem;
+              max-width: 300px;
+          }
+
+          .text-right {
+              text-align: right;
+              font-family: var(--font-family-monospace);
+          }
+
+          .total-cell {
+              font-weight: 600;
+              color: var(--text-color);
+              background: var(--bg-color);
+              border-radius: 4px;
+              padding: 8px 12px;
+          }
+
+          /* Formula Rows */
+          .formula-row td {
+              border-bottom: 1px solid var(--border-color);
+          }
+
+          .formula-cell {
+              color: var(--text-muted);
+              font-size: 0.85rem;
+              font-family: var(--font-family-monospace);
+              background: var(--bg-light-gray);
+              border: 1px solid var(--border-color);
+              margin: 4px;
+              border-radius: 4px;
+              padding: 8px 12px;
+          }
+
+          .area-formula {
+              color: var(--text-color);
+              padding: 4px 8px;
+              border-radius: 4px;
+              display: inline-block;
+              margin-right: 8px;
+              background: var(--disabled-control-bg);
+              border: 1px solid var(--border-color);
+          }
+
+          .actual-formula {
+              color: var(--text-color);
+              padding: 4px 8px;
+              border-radius: 4px;
+              display: inline-block;
+              background: var(--disabled-control-bg);
+              border: 1px solid var(--border-color);
+          }
+
+          /* Responsive Styles */
+          @media (max-width: 1024px) {
+              .scope-cards-container {
+                  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+              }
+          }
+      </style>
+  `);
+
+  function renderHeader() {
+      const headerHtml = `
+          <div class="items-header">
+              <div class="search-container">
+                  <i class="fa fa-search search-icon"></i>
+                  <input type="text" class="search-input" placeholder="Search items by name or description...">
+              </div>
+              <button class="excel-btn">
+                  <i class="fa fa-file-excel-o"></i>
+                  Continue on Excel
+              </button>
+          </div>
+      `;
+      dialog.fields_dict.header_html.$wrapper.html(headerHtml);
+
+      // Add search handler
+      dialog.$wrapper.find('.search-input').on('input', function() {
+          filterItems($(this).val());
+      });
+
+      // Add excel button handler
+      dialog.$wrapper.find('.excel-btn').on('click', () => {
+          handleExcelExport(frm);
+      });
+  }
+
+  function renderScopeCards() {
+      const scopes = [
+          { id: 'all', name: 'All Scopes', icon: 'list' },
+          ...frm.doc.scopes.map(scope => ({
+              id: scope.scope_number,
+              name: scope.description || `Untitled Scope`,
+              type: scope.type,
+              itemCount: frm.doc.items.filter(item => item.scope_number === scope.scope_number).length,
+              totalValue: frm.doc.items
+                  .filter(item => item.scope_number === scope.scope_number)
+                  .reduce((sum, item) => sum + (item.overall_price || 0), 0)
+          }))
+      ];
+
+      const cardsHtml = `
+          <div class="scope-cards-container">
+              ${scopes.map(scope => {
+                  const isAll = scope.id === 'all';
+                  const colorSet = isAll 
+                      ? { bg: 'var(--fg-color)', text: 'var(--text-color)' }
+                      : SCOPE_COLORS[(parseInt(scope.id) - 1) % SCOPE_COLORS.length];
+                  
+                  return `
+                      <div class="scope-card ${currentScope === scope.id ? 'active' : ''}" 
+                           data-scope="${scope.id}">
+                          <div class="scope-card-header" style="background: var(--subtle-fg); color: ${colorSet.text}">
+                              <div class="scope-card-title">
+                                  ${scope.name}
+                                  ${!isAll ? `<span class="scope-number-badge" style="background: ${colorSet.bg}; color: ${colorSet.text}">${scope.id}</span>` : ''}
+                              </div>
+                          </div>
+                          ${!isAll ? `
+                              <div class="scope-card-body">
+                                  <div class="scope-card-stats">
+                                      <div class="stat-item">
+                                          <span class="stat-label">Items</span>
+                                          <span class="stat-value">${scope.itemCount}</span>
+                                      </div>
+                                      <div class="stat-item">
+                                          <span class="stat-label">Total Value</span>
+                                          <span class="stat-value">${formatCurrency(scope.totalValue)}</span>
+                                      </div>
+                                  </div>
+                              </div>
+                          ` : ''}
+                      </div>
+                  `;
+              }).join('')}
+          </div>
+      `;
+
+      dialog.fields_dict.scope_cards_html.$wrapper.html(cardsHtml);
+
+      // Add click handlers
+      dialog.$wrapper.find('.scope-card').on('click', function() {
+          currentScope = $(this).data('scope');
+          dialog.$wrapper.find('.scope-card').removeClass('active');
+          $(this).addClass('active');
+          filterItems();
+      });
+  }
+
+  function renderItemsTable(items) {
       const groupedItems = {};
       items.forEach(item => {
           const scopeNum = String(item.scope_number);
@@ -2653,26 +2560,22 @@ rua_company.project_dialogs.showItemsDialog = function (frm) {
           }
           groupedItems[scopeNum].push(item);
       });
-  
+
       let tableHTML = '<div class="items-table-container">';
-  
+
       Object.entries(groupedItems).forEach(([scopeNumber, scopeItems]) => {
-          // Convert scope numbers to strings for consistent comparison
           const scope = frm.doc.scopes.find(s => String(s.scope_number) === String(scopeNumber));
-          if (!scope) {
-              console.warn(`Scope ${scopeNumber} not found`);
-              return;
-          }
-          const headers = getHeadersForScopeType(scope.type || "Other");
+          if (!scope) return;
+
+          const headers = getHeadersForScopeType(scope.type);
           const colorSet = SCOPE_COLORS[(parseInt(scopeNumber) - 1) % SCOPE_COLORS.length];
-  
+
           tableHTML += `
-              <table class="table table-bordered items-table" style="margin-bottom: 2rem;">
+              <table class="items-table">
                   <thead>
                       <tr class="header-group">
                           ${headers.map(group => `
-                              <th colspan="${group.cols.length}" class="text-center"
-                                  style="background: var(--bg-${group.color}); color: var(--text-on-${group.color});">
+                              <th colspan="${group.cols.length}" class="text-center">
                                   ${group.label}
                               </th>
                           `).join("")}
@@ -2680,9 +2583,7 @@ rua_company.project_dialogs.showItemsDialog = function (frm) {
                       <tr>
                           ${headers.map(group => 
                               group.cols.map(col => `
-                                  <th style="background: var(--subtle-accent);">
-                                      ${col}
-                                  </th>
+                                  <th>${col}</th>
                               `).join("")
                           ).join("")}
                       </tr>
@@ -2690,203 +2591,388 @@ rua_company.project_dialogs.showItemsDialog = function (frm) {
                   <tbody>
                       <tr class="scope-header">
                           <td colspan="${headers.reduce((sum, h) => sum + h.cols.length, 0)}"
-                              style="background: ${colorSet.bg}; color: ${colorSet.text}; font-weight: 600;">
-                              Scope ${scopeNumber}: ${scope.type}
+                              style="background: ${colorSet.bg}; color: ${colorSet.text};">
+                              ${scope.description || 'Untitled Scope'}
+                              <span class="scope-number-badge">Scope ${scopeNumber}</span>
                           </td>
                       </tr>
-                      ${scopeItems.map(item => {
-                          let itemRow = '';
-                          if (scope.type === "Openings" || scope.type === "Skylights") {
-                              itemRow = `
-                                  <tr class="item-row" style="background: ${colorSet.bg}10;">
-                                      <td class="item-cell">${item.item || ""}</td>
-                                      <td class="desc-cell">${item.description || ""}</td>
-                                      <td class="text-center">${item.width || 0}cm</td>
-                                      <td class="text-center">${item.height || 0}cm</td>
-                                      <td>${formatCurrency(item.glass_unit)}</td>
-                                      <td class="text-right">${formatCurrency(item.glass_price)}</td>
-                                      <td class="text-right">${formatCurrency(item.total_glass)}</td>
-                                      <td>${formatCurrency(item.aluminum_unit)}</td>
-                                      <td class="text-right">${formatCurrency(item.aluminum_price)}</td>
-                                      <td class="text-right">${formatCurrency(item.total_aluminum)}</td>
-                                      <td class="text-right total-cell">${formatCurrency(item.overall_price)}</td>
-                                  </tr>`;
-                          } else if (scope.type === "Handrails" || scope.type === "Cladding") {
-                              itemRow = `
-                                  <tr class="item-row" style="background: ${colorSet.bg}10;">
-                                      <td class="item-cell">${item.item || ""}</td>
-                                      <td class="desc-cell">${item.description || ""}</td>
-                                      <td class="text-center">${item.qty || 0}</td>
-                                      <td class="text-right">${formatCurrency(item.actual_unit_rate)}</td>
-                                      <td class="text-right">${formatCurrency(item.total_cost)}</td>
-                                      <td class="text-right total-cell">${formatCurrency(item.overall_price)}</td>
-                                  </tr>`;
-                          } else {
-                              itemRow = `
-                                  <tr class="item-row" style="background: ${colorSet.bg}10;">
-                                      <td class="item-cell">${item.item || ""}</td>
-                                      <td class="desc-cell">${item.description || ""}</td>
-                                      <td class="text-center">${item.width || 0}cm</td>
-                                      <td class="text-center">${item.height || 0}cm</td>
-                                      <td class="text-center">${item.area || 0}sqm</td>
-                                      <td class="text-center">${item.qty || 0}</td>
-                                      <td class="text-right">${formatCurrency(item.actual_unit_rate)}</td>
-                                      <td class="text-right">${formatCurrency(item.total_cost)}</td>
-                                      <td class="text-right total-cell">${formatCurrency(item.overall_price)}</td>
-                                  </tr>`;
-                          }
-  
-                          // Add formula row based on scope type
-                          let formulaRow = '';
-                          if (scope.type === "Openings" || scope.type === "Skylights") {
-                              formulaRow = `
-                                  <tr class="formula-row" style="background: ${colorSet.bg}05;">
-                                      <td colspan="2"></td>
-                                      <td colspan="2" class="formula-cell glass-formula area-formula">
-                                          Area: ${item.area || 0}sqm
-                                      </td>
-                                      <td colspan="6" class="formula-cell glass-formula actual-formula">
-                                          [Actual Unit (Inc. Labour): ${formatCurrency(item.actual_unit)}] + 
-                                          [Profit: ${formatCurrency(item.total_profit)}] = 
-                                          [Actual Unit Rate: ${formatCurrency(item.actual_unit_rate)}] × 
-                                          [QTY: ${item.qty}]
-                                      </td>
-                                      <td></td>
-                                  </tr>`;
-                          } else {
-                              const colspan = headers.reduce((sum, h) => sum + h.cols.length, 0);
-                              formulaRow = `
-                                  <tr class="formula-row" style="background: ${colorSet.bg}05;">
-                                      <td colspan="${colspan}" class="formula-cell glass-formula actual-formula">
-                                          [Actual Unit (Inc. Labour): ${formatCurrency(item.actual_unit)}] + 
-                                          [Profit: ${formatCurrency(item.total_profit)}] = 
-                                          [Actual Unit Rate: ${formatCurrency(item.actual_unit_rate)}]
-                                      </td>
-                                  </tr>`;
-                          }
-  
-                          return itemRow + formulaRow;
-                      }).join("")}
+                      ${generateScopeItems(scopeItems, scope, colorSet)}
                   </tbody>
-              </table>`;
+              </table>
+          `;
       });
-  
+
       tableHTML += '</div>';
       dialog.fields_dict.items_html.$wrapper.html(tableHTML);
   }
 
-  function filterItems() {
-    const searchText = (dialog.get_value("search") || "").toLowerCase();
+  function generateScopeItems(items, scope, colorSet) {
+      return items.map(item => {
+          let itemRow = '';
+          let formulaRow = '';
+
+          if (scope.type === "Openings" || scope.type === "Skylights") {
+            itemRow = generateOpeningsRow(item, colorSet);
+            formulaRow = generateOpeningsFormula(item, colorSet);
+        } else if (scope.type === "Handrails" || scope.type === "Cladding") {
+            itemRow = generateHandrailsRow(item, colorSet);
+            formulaRow = generateHandrailsFormula(item, colorSet);
+        } else {
+            itemRow = generateStandardRow(item, colorSet);
+            formulaRow = generateStandardFormula(item, colorSet);
+        }
+
+        return itemRow + formulaRow;
+    }).join('');
+}
+
+function generateOpeningsRow(item, colorSet) {
+    return `
+        <tr class="item-row" style="background: ${colorSet.bg}10;">
+            <td class="item-cell">${item.item || ""}</td>
+            <td class="desc-cell">${item.description || ""}</td>
+            <td class="text-center">${item.width || 0}cm</td>
+            <td class="text-center">${item.height || 0}cm</td>
+            <td>${formatCurrency(item.glass_unit)}</td>
+            <td class="text-right">${formatCurrency(item.glass_price)}</td>
+            <td class="text-right">${formatCurrency(item.total_glass)}</td>
+            <td>${formatCurrency(item.aluminum_unit)}</td>
+            <td class="text-right">${formatCurrency(item.aluminum_price)}</td>
+            <td class="text-right">${formatCurrency(item.total_aluminum)}</td>
+            <td class="text-right total-cell">${formatCurrency(item.overall_price)}</td>
+        </tr>
+    `;
+}
+
+function generateOpeningsFormula(item, colorSet) {
+    return `
+        <tr class="formula-row" style="background: ${colorSet.bg}05;">
+            <td colspan="4" class="formula-cell">
+                <div class="d-flex align-items-center justify-content-between">
+                    <span class="area-formula">Area: ${item.width || 0}cm × ${item.height || 0}cm = ${item.area || 0}sqm</span>
+                </div>
+            </td>
+            <td colspan="3" class="formula-cell">
+                <div class="d-flex flex-column">
+                    <span class="mb-1">Glass Calculation:</span>
+                    <span class="actual-formula">
+                        ${item.area || 0}sqm × ${formatCurrency(item.glass_unit)} = ${formatCurrency(item.glass_price)}
+                    </span>
+                </div>
+            </td>
+            <td colspan="3" class="formula-cell">
+                <div class="d-flex flex-column">
+                    <span class="mb-1">Aluminum Calculation:</span>
+                    <span class="actual-formula">
+                        ${item.area || 0}sqm × ${formatCurrency(item.aluminum_unit)} = ${formatCurrency(item.aluminum_price)}
+                    </span>
+                </div>
+            </td>
+            <td class="formula-cell text-right">
+                <div class="d-flex flex-column">
+                    <span class="text-muted mb-1">Total:</span>
+                    <span class="font-weight-bold">${formatCurrency(item.overall_price)}</span>
+                </div>
+            </td>
+        </tr>
+    `;
+}
+
+function generateHandrailsRow(item, colorSet) {
+    return `
+        <tr class="item-row" style="background: ${colorSet.bg}10;">
+            <td class="item-cell">${item.item || ""}</td>
+            <td class="desc-cell">${item.description || ""}</td>
+            <td class="text-center">${item.qty || 0}</td>
+            <td class="text-right">${formatCurrency(item.actual_unit_rate)}</td>
+            <td class="text-right">${formatCurrency(item.total_cost)}</td>
+            <td class="text-right total-cell">${formatCurrency(item.overall_price)}</td>
+        </tr>
+    `;
+}
+
+function generateHandrailsFormula(item, colorSet) {
+    return `
+        <tr class="formula-row" style="background: ${colorSet.bg}05;">
+            <td colspan="3" class="formula-cell">
+                <div class="d-flex align-items-center">
+                    <span class="actual-formula">
+                        [Actual Unit (Inc. Labour): ${formatCurrency(item.actual_unit)}] + 
+                        [Profit: ${formatCurrency(item.total_profit)}] = 
+                        [Unit Rate: ${formatCurrency(item.actual_unit_rate)}]
+                    </span>
+                </div>
+            </td>
+            <td colspan="3" class="formula-cell text-right">
+                <div class="d-flex flex-column">
+                    <span class="text-muted mb-1">Final Calculation:</span>
+                    <span class="actual-formula">
+                        ${item.qty || 0} × ${formatCurrency(item.actual_unit_rate)} = ${formatCurrency(item.overall_price)}
+                    </span>
+                </div>
+            </td>
+        </tr>
+    `;
+}
+
+function generateStandardRow(item, colorSet) {
+    return `
+        <tr class="item-row" style="background: ${colorSet.bg}10;">
+            <td class="item-cell">${item.item || ""}</td>
+            <td class="desc-cell">${item.description || ""}</td>
+            <td class="text-center">${item.width || 0}cm</td>
+            <td class="text-center">${item.height || 0}cm</td>
+            <td class="text-center">${item.area || 0}sqm</td>
+            <td class="text-center">${item.qty || 0}</td>
+            <td class="text-right">${formatCurrency(item.actual_unit_rate)}</td>
+            <td class="text-right">${formatCurrency(item.total_cost)}</td>
+            <td class="text-right total-cell">${formatCurrency(item.overall_price)}</td>
+        </tr>
+    `;
+}
+
+function generateStandardFormula(item, colorSet) {
+    return `
+        <tr class="formula-row" style="background: ${colorSet.bg}05;">
+            <td colspan="5" class="formula-cell">
+                <div class="d-flex align-items-center justify-content-between">
+                    <span class="area-formula">Area: ${item.width || 0}cm × ${item.height || 0}cm = ${item.area || 0}sqm</span>
+                </div>
+            </td>
+            <td colspan="4" class="formula-cell text-right">
+                <div class="d-flex flex-column">
+                    <span class="text-muted mb-1">Final Calculation:</span>
+                    <span class="actual-formula">
+                        ${item.area || 0}sqm × ${item.qty || 0} × ${formatCurrency(item.actual_unit_rate)} = ${formatCurrency(item.overall_price)}
+                    </span>
+                </div>
+            </td>
+        </tr>
+    `;
+}
+
+function filterItems() {
+    const searchText = (dialog.$wrapper.find('.search-input').val() || "").toLowerCase();
     let filteredItems = frm.doc.items;
 
     if (currentScope !== "all") {
-      filteredItems = filteredItems.filter(
-        (item) => item.scope_number === currentScope
-      );
+        filteredItems = filteredItems.filter(item => String(item.scope_number) === String(currentScope));
     }
 
     if (searchText) {
-      filteredItems = filteredItems.filter(
-        (item) =>
-          (item.item && item.item.toLowerCase().includes(searchText)) ||
-          (item.description &&
-            item.description.toLowerCase().includes(searchText))
-      );
+        filteredItems = filteredItems.filter(item =>
+            (item.item && item.item.toLowerCase().includes(searchText)) ||
+            (item.description && item.description.toLowerCase().includes(searchText))
+        );
     }
 
     renderItemsTable(filteredItems);
-  }
+}
 
-  // Add event listeners
-  dialog.fields_dict.search.df.onchange = filterItems;
-
-  // Add click handler for scope chips
-  dialog.$wrapper.on("click", ".scope-chip", function () {
-    currentScope = $(this).data("scope");
-    dialog.$wrapper.find(".scope-chip").removeClass("active");
-    $(this).addClass("active");
-    renderScopeChips();
-    filterItems();
-  });
-
-  // Add "Continue on Excel" button and its handlers
-  dialog.fields_dict.actions_html.$wrapper.html(`
-    <div class="d-flex justify-content-end mb-3">
-      <button class="btn btn-default btn-sm btn-continue-excel">
-        <i class="fa fa-file-excel-o mr-1"></i>${__("Continue on Excel")}
-      </button>
-    </div>
-  `);
-
-  dialog.$wrapper.find('.btn-continue-excel').on('click', () => {
-    frappe.call({
+function handleExcelExport(frm) {
+  frappe.call({
       method: 'rua_company.rua_company.doctype.project.excel_handler.get_items_template',
+      freeze: true,
+      freeze_message: __("Generating Excel Template..."),
       args: {
-        project_name: frm.doc.name
+          project_name: frm.doc.name
       },
       callback: (r) => {
-        if (r.message) {
-          // Create a file upload dialog
-          const upload_dialog = new frappe.ui.Dialog({
-            title: __('Upload Excel File'),
-            fields: [
-              {
-                fieldname: 'instructions',
-                fieldtype: 'HTML',
-                options: `
-                  <div class="alert alert-info">
-                    1. <a href="${r.message}" target="_blank">Download the template</a><br>
-                    2. Fill in the items information<br>
-                    3. Upload the filled template below
-                  </div>
-                `
-              },
-              {
-                fieldname: 'excel_file',
-                fieldtype: 'Attach',
-                label: __('Upload Excel File'),
-                reqd: 1
-              }
-            ],
-            primary_action_label: __('Import'),
-            primary_action: () => {
-              const file_url = upload_dialog.get_value('excel_file');
-              if (!file_url) {
-                frappe.throw(__('Please upload a file first'));
-                return;
-              }
+          if (r.message) {
+              const upload_dialog = new frappe.ui.Dialog({
+                  title: __('Import Items from Excel'),
+                  fields: [
+                      {
+                          fieldname: 'instructions',
+                          fieldtype: 'HTML',
+                          options: `
+                              <div class="excel-import-steps">
+                                  <div class="step">
+                                      <div class="step-number">1</div>
+                                      <div class="step-content">
+                                          <div class="step-title">Download Template</div>
+                                          <div class="step-action">
+                                              <a href="${r.message}" class="btn btn-primary btn-sm download-template" target="_blank">
+                                                  <i class="fa fa-download"></i> Download Excel Template
+                                              </a>
+                                          </div>
+                                      </div>
+                                  </div>
+                                  <div class="step">
+                                      <div class="step-number">2</div>
+                                      <div class="step-content">
+                                          <div class="step-title">Fill Template</div>
+                                          <div class="step-desc">Add your items following the template structure</div>
+                                          <div class="import-tips">
+                                              <div class="tip-header">
+                                                  <i class="fa fa-lightbulb-o"></i> Important Tips
+                                              </div>
+                                              <ul>
+                                                  <li>Keep the column headers unchanged</li>
+                                                  <li>Do not change scope settings from the sheet</li>
+                                              </ul>
+                                          </div>
+                                      </div>
+                                  </div>
+                                  <div class="step">
+                                      <div class="step-number">3</div>
+                                      <div class="step-content">
+                                          <div class="step-title">Upload File</div>
+                                          <div class="step-desc">Select your completed Excel file below</div>
+                                      </div>
+                                  </div>
+                              </div>
+                              <style>
+                                  .excel-import-steps {
+                                      padding: 1rem 0;
+                                  }
+                                  .step {
+                                      display: flex;
+                                      gap: 1rem;
+                                      padding: 1rem;
+                                      margin-bottom: 1rem;
+                                      background: var(--card-bg);
+                                      border: 1px solid var(--border-color);
+                                      border-radius: 8px;
+                                  }
+                                  .step-number {
+                                      width: 28px;
+                                      height: 28px;
+                                      background: var(--bg-light-gray);
+                                      color: var(--text-muted);
+                                      border-radius: 50%;
+                                      display: flex;
+                                      align-items: center;
+                                      justify-content: center;
+                                      font-weight: 600;
+                                      flex-shrink: 0;
+                                  }
+                                  .step-content {
+                                      flex: 1;
+                                  }
+                                  .step-title {
+                                      font-weight: 600;
+                                      color: var(--text-color);
+                                      margin-bottom: 0.5rem;
+                                  }
+                                  .step-desc {
+                                      color: var(--text-muted);
+                                      font-size: 0.9rem;
+                                      margin-bottom: 0.5rem;
+                                  }
+                                  .step-action {
+                                      margin-top: 0.5rem;
+                                  }
+                                  .download-template {
+                                      text-decoration: none !important;
+                                  }
+                                  .download-template:hover {
+                                      text-decoration: none;
+                                  }
+                                  .import-tips {
+                                      margin-top: 0.75rem;
+                                      padding: 0.75rem;
+                                      background: var(--bg-light-gray);
+                                      border-radius: 6px;
+                                  }
+                                  .tip-header {
+                                      display: flex;
+                                      align-items: center;
+                                      gap: 0.5rem;
+                                      font-weight: 500;
+                                      margin-bottom: 0.5rem;
+                                      color: var(--heading-color);
+                                  }
+                                  .import-tips ul {
+                                      margin: 0;
+                                      padding-left: 1.5rem;
+                                      color: var(--text-muted);
+                                  }
+                                  .import-tips li {
+                                      margin-bottom: 0.25rem;
+                                  }
+                              </style>
+                          `
+                      },
+                      {
+                          fieldname: 'excel_file',
+                          fieldtype: 'Attach',
+                          label: __('Select Excel File'),
+                          reqd: 1
+                      }
+                  ],
+                  primary_action_label: __('Import Items'),
+                  primary_action: () => {
+                      const file_url = upload_dialog.get_value('excel_file');
+                      if (!file_url) {
+                          frappe.throw(__('Please upload a file first'));
+                          return;
+                      }
 
-              frappe.call({
-                method: 'rua_company.rua_company.doctype.project.excel_handler.import_items_from_excel',
-                args: {
-                  project_name: frm.doc.name,
-                  file_url: file_url
-                },
-                callback: (r) => {
-                  if (r.message) {
-                    frappe.show_alert({
-                      message: r.message.message,
-                      indicator: 'green'
-                    });
-                    upload_dialog.hide();
-                    dialog.hide();
-                    frm.reload_doc();
+                      frappe.call({
+                          method: 'rua_company.rua_company.doctype.project.excel_handler.import_items_from_excel',
+                          args: {
+                              project_name: frm.doc.name,
+                              file_url: file_url
+                          },
+                          callback: (r) => {
+                              if (r.message) {
+                                  frappe.show_alert({
+                                      message: r.message.message,
+                                      indicator: 'green'
+                                  });
+                                  upload_dialog.hide();
+                                  dialog.hide();
+                                  frm.reload_doc();
+                              }
+                          }
+                      });
                   }
-                }
               });
-            }
-          });
-          upload_dialog.show();
-        }
+              upload_dialog.show();
+          }
       }
-    });
   });
+}
 
-  // Initialize
-  renderScopeChips();
-  filterItems();
+// Get headers for each scope type
+function getHeadersForScopeType(scopeType = "Other") {
+    const baseHeaders = [
+        { label: "Item Details", cols: ["Item", "Description"] }
+    ];
 
-  dialog.show();
+    if (scopeType === "Openings" || scopeType === "Skylights") {
+        return [
+            ...baseHeaders,
+            { label: "Dimensions", cols: ["Width", "Height"] },
+            { label: "Glass", cols: ["Unit", "Price", "Total"] },
+            { label: "Aluminum", cols: ["Unit", "Price", "Total"] },
+            { label: "Total", cols: ["Overall Price"] }
+        ];
+    } else if (scopeType === "Handrails" || scopeType === "Cladding") {
+        return [
+            ...baseHeaders,
+            { label: "Quantity", cols: ["QTY"] },
+            { label: "Pricing", cols: ["Unit Rate", "Total Cost"] },
+            { label: "Total", cols: ["Overall Price"] }
+        ];
+    } else {
+        return [
+            ...baseHeaders,
+            { label: "Dimensions", cols: ["Width", "Height", "Area"] },
+            { label: "Quantity", cols: ["QTY"] },
+            { label: "Pricing", cols: ["Unit Rate", "Total Cost"] },
+            { label: "Total", cols: ["Overall Price"] }
+        ];
+    }
+}
+
+// Initialize
+renderHeader();
+renderScopeCards();
+filterItems();
+
+dialog.show();
 };
 
 // Contract Value Dialog
@@ -3113,8 +3199,8 @@ function generateScopeDialogStyles() {
             .flow-card {
                 background: var(--fg-color);
                 border: 1px solid var(--border-color);
-                border-radius: 6px;
-                padding: 0.75rem;
+                border-radius: var(--border-radius-lg);
+                padding: 1rem;
                 min-width: 180px;
                 text-align: center;
                 position: relative;
@@ -3170,15 +3256,15 @@ function generateScopeDialogStyles() {
             .flow-split {
                 display: flex;
                 justify-content: space-around;
-                margin-top: 1.5rem;
-                gap: 1.5rem;
+                margin-top: 2rem;
+                gap: 2rem;
             }
 
             .flow-column {
                 display: flex;
                 flex-direction: column;
                 align-items: center;
-                gap: 0.75rem;
+                gap: 1rem;
                 position: relative;
                 flex: 1;
                 max-width: 45%;
@@ -3236,7 +3322,7 @@ function generateScopeDialogStyles() {
 
                 .flow-column {
                     max-width: 100%;
-                    margin-bottom: 1.5rem;
+                    margin-bottom: 2rem;
                 }
 
                 .flow-card {
