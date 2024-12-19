@@ -2290,7 +2290,6 @@ rua_company.project_dialogs.showItemsDialog = function (frm) {
               font-size: 1.1rem;
               display: flex;
               align-items: center;
-              justify-content: space-between;
               width: 100%;
               gap: 8px;
           }
@@ -2326,7 +2325,7 @@ rua_company.project_dialogs.showItemsDialog = function (frm) {
               padding: 2px 8px;
               border-radius: 12px;
               font-size: 0.8rem;
-              margin-left: 8px;
+              margin-right: 8px;
               font-weight: 500;
           }
 
@@ -2488,6 +2487,245 @@ rua_company.project_dialogs.showItemsDialog = function (frm) {
           handleExcelExport(frm);
       });
   }
+   // Add Item Dialog
+   function showAddItemDialog(frm, scopeNumber) {
+    const scope = frm.doc.scopes.find(s => s.scope_number === scopeNumber);
+    if (!scope) return;
+
+    const isOpeningsOrSkylight = scope.type === "Openings" || scope.type === "Skylights";
+    const isHandrailOrCladding = scope.type === "Handrails" || scope.type === "Cladding";
+    
+    let fields = [
+        {
+            fieldname: 'item',
+            fieldtype: 'Data',
+            label: 'Item',
+            reqd: 1
+        },
+        {
+            fieldname: 'description',
+            fieldtype: 'Data',
+            label: 'Description'
+        },
+        {
+            fieldname: 'qty',
+            fieldtype: 'Int',
+            label: 'Quantity',
+            reqd: 1,
+            default: 1,
+            min: 1
+        }
+    ];
+
+    if (isOpeningsOrSkylight) {
+        fields = [
+            ...fields,
+            {
+                fieldname: 'dimensions_section',
+                fieldtype: 'Section Break',
+                label: 'Dimensions'
+            },
+            {
+                fieldname: 'manual_area',
+                fieldtype: 'Check',
+                label: 'Manual Area',
+                description: 'Check this to manually enter the area instead of calculating it from width and height'
+            },
+            {
+                fieldname: 'area',
+                fieldtype: 'Float',
+                label: 'Area (sqm)',
+                depends_on: 'eval:doc.manual_area',
+                mandatory_depends_on: 'eval:doc.manual_area',
+            },
+            {
+                fieldname: 'width',
+                fieldtype: 'Float',
+                label: 'Width (cm)',
+                depends_on: 'eval:!doc.manual_area',
+                mandatory_depends_on: 'eval:!doc.manual_area',
+                min: 0
+            },
+            {
+                fieldname: 'height',
+                fieldtype: 'Float',
+                label: 'Height (cm)',
+                depends_on: 'eval:!doc.manual_area',
+                mandatory_depends_on: 'eval:!doc.manual_area',
+                min: 0
+            },
+            {
+                fieldname: 'glass_section',
+                fieldtype: 'Section Break',
+                label: 'Glass Details'
+            },
+            {
+                fieldname: 'glass_unit',
+                fieldtype: 'Float',
+                label: 'Glass Unit',
+                default: scope.glass_sqm_price,
+                reqd: 1
+            },
+            {
+                fieldname: 'aluminum_section',
+                fieldtype: 'Section Break',
+                label: 'Aluminum Details'
+            },
+            {
+                fieldname: 'curtain_wall',
+                fieldtype: 'Float',
+                label: 'Curtain Wall',
+                reqd: 1
+            },
+            {
+                fieldname: 'col_break1',
+                fieldtype: 'Column Break'
+            },
+            {
+                fieldname: 'insertion_1',
+                fieldtype: 'Float',
+                label: 'Insertion 1'
+            },
+            {
+                fieldname: 'insertion_2',
+                fieldtype: 'Float',
+                label: 'Insertion 2'
+            },
+            {
+                fieldname: 'col_break2',
+                fieldtype: 'Column Break'
+            },
+            {
+                fieldname: 'insertion_3',
+                fieldtype: 'Float',
+                label: 'Insertion 3'
+            },
+            {
+                fieldname: 'insertion_4',
+                fieldtype: 'Float',
+                label: 'Insertion 4'
+            }
+        ];
+    } else {
+        // Add actual_unit_rate field for non-Openings/Skylights types
+        fields.push(
+            {
+                fieldname: 'pricing_section',
+                fieldtype: 'Section Break',
+                label: 'Pricing Details'
+            },
+            {
+                fieldname: 'actual_unit_rate',
+                fieldtype: 'Currency',
+                label: 'Unit Rate (Including Profit)',
+                reqd: 1
+            }
+        );
+
+        // Add area fields for types other than Handrails/Cladding
+        if (!isHandrailOrCladding) {
+            fields.splice(3, 0, // Insert after qty field
+                {
+                    fieldname: 'dimensions_section',
+                    fieldtype: 'Section Break',
+                    label: 'Dimensions'
+                },
+                {
+                    fieldname: 'manual_area',
+                    fieldtype: 'Check',
+                    label: 'Manual Area',
+                    description: 'Check this to manually enter the area instead of calculating it from width and height'
+                },
+                {
+                    fieldname: 'area',
+                    fieldtype: 'Float',
+                    label: 'Area (sqm)',
+                    depends_on: 'eval:doc.manual_area',
+                    mandatory_depends_on: 'eval:doc.manual_area',
+                },
+                {
+                    fieldname: 'width',
+                    fieldtype: 'Float',
+                    label: 'Width (cm)',
+                    depends_on: 'eval:!doc.manual_area',
+                    mandatory_depends_on: 'eval:!doc.manual_area',
+                    min: 0
+                },
+                {
+                    fieldname: 'height',
+                    fieldtype: 'Float',
+                    label: 'Height (cm)',
+                    depends_on: 'eval:!doc.manual_area',
+                    mandatory_depends_on: 'eval:!doc.manual_area',
+                    min: 0
+                }
+            );
+        }
+    }
+
+    // Add profit percentage field
+    fields.push(
+        {
+            fieldname: 'profit_section',
+            fieldtype: 'Section Break',
+            label: 'Profit Details'
+        },
+        {
+            fieldname: 'profit_percentage',
+            fieldtype: 'Percent',
+            label: 'Profit Percentage',
+            default: scope.profit,
+            reqd: 1
+        }
+    );
+
+    const addItemDialog = new frappe.ui.Dialog({
+        title: `Add Item to Scope ${scope.scope_number}`,
+        fields: fields,
+        primary_action_label: 'Add Item',
+        primary_action(values) {
+            // Convert numeric fields to numbers
+            const numericFields = ['width', 'height', 'glass_unit', 'curtain_wall', 
+                'insertion_1', 'insertion_2', 'insertion_3', 'insertion_4', 'qty',
+                'actual_unit_rate'];
+            
+            const processedValues = { ...values };
+            numericFields.forEach(field => {
+                if (field in processedValues) {
+                    processedValues[field] = flt(processedValues[field]);
+                }
+            });
+            
+            frappe.call({
+                method: "rua_company.rua_company.doctype.project.project.add_item",
+                args: {
+                    project: frm.doc.name,
+                    scope_number: scope.scope_number,
+                    item_data: processedValues
+                },
+                freeze: true,
+                freeze_message: __("Adding item..."),
+                callback: function(r) {
+                    if (!r.exc) {
+                        addItemDialog.hide();
+                        frm.reload_doc().then(() => {
+                            const itemsHtml = dialog.fields_dict.items_html.$wrapper;
+                            renderItemsTable(frm.doc.items.filter(item => 
+                                currentScope === "all" || item.scope_number === currentScope
+                            ));
+                        });
+                        frappe.show_alert({
+                            message: __("Item added successfully"),
+                            indicator: "green"
+                        });
+                    }
+                }
+            });
+        }
+    });
+
+    addItemDialog.show();
+}
 
   function renderScopeCards() {
       const scopes = [
@@ -2516,10 +2754,16 @@ rua_company.project_dialogs.showItemsDialog = function (frm) {
                            data-scope="${scope.id}">
                           <div class="scope-card-header" style="background: var(--subtle-fg); color: ${colorSet.text}">
                               <div class="scope-card-title">
+                               ${!isAll ? `<span class="scope-number-badge" style="background: ${colorSet.bg}; color: ${colorSet.text}">${scope.id}</span>` : ''}
                                   ${scope.name}
-                                  ${!isAll ? `<span class="scope-number-badge" style="background: ${colorSet.bg}; color: ${colorSet.text}">${scope.id}</span>` : ''}
                               </div>
+                              ${!isAll ? `
+                            <button class="btn btn-sm btn-primary add-item-btn" style="background: ${colorSet.text}; border: none;">
+                                <i class="fa fa-plus"></i> Add Item
+                            </button>
+                        ` : ''}
                           </div>
+
                           ${!isAll ? `
                               <div class="scope-card-body">
                                   <div class="scope-card-stats">
@@ -2549,6 +2793,13 @@ rua_company.project_dialogs.showItemsDialog = function (frm) {
           $(this).addClass('active');
           filterItems();
       });
+      // Add item button handler
+dialog.$wrapper.find('.add-item-btn').on('click', function(e) {
+  e.stopPropagation(); // Prevent scope card click
+  const scopeCard = $(this).closest('.scope-card');
+  const scopeId = scopeCard.data('scope');
+  showAddItemDialog(frm, scopeId);
+});
   }
 
   function renderItemsTable(items) {
