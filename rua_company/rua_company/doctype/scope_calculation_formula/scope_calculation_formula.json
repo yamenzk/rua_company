@@ -1,0 +1,71 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2024-12-20 14:37:09.213084",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "field_name",
+  "label",
+  "field_type",
+  "column_break_xyzw",
+  "formula",
+  "description"
+ ],
+ "fields": [
+  {
+   "fieldname": "field_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Field Name",
+   "reqd": 1
+  },
+  {
+   "fieldname": "label",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Label",
+   "reqd": 1
+  },
+  {
+   "fieldname": "field_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Field Type",
+   "options": "\nFloat\nInt\nCurrency",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_xyzw",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "formula",
+   "fieldtype": "Code",
+   "in_list_view": 1,
+   "label": "Formula",
+   "options": "JS",
+   "reqd": 1,
+   "description": "Use variables['field_name'] for current values and doc_totals['Total Field'] for scope totals"
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "label": "Description",
+   "description": "Optional description of what this formula calculates"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2024-12-20 14:40:14.949649",
+ "modified_by": "Administrator",
+ "module": "Rua Company",
+ "name": "Scope Calculation Formula",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

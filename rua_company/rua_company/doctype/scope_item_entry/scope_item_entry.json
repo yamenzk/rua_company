@@ -1,0 +1,49 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2024-12-20 15:11:00.509787",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "item_name",
+  "row_id",
+  "column_break_veci",
+  "_data"
+ ],
+ "fields": [
+  {
+   "fieldname": "item_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Item Name",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_veci",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "_data",
+   "fieldtype": "JSON",
+   "label": "_data"
+  },
+  {
+   "fieldname": "row_id",
+   "fieldtype": "Data",
+   "label": "Row ID"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2024-12-20 15:13:34.836247",
+ "modified_by": "Administrator",
+ "module": "Rua Company",
+ "name": "Scope Item Entry",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

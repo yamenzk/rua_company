@@ -1,0 +1,91 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2024-12-20 15:09:00.228807",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "scope_type",
+  "column_break_ooqj",
+  "status",
+  "section_break_whlu",
+  "items_html",
+  "totals_html",
+  "section_break_dako",
+  "items",
+  "_totals_data"
+ ],
+ "fields": [
+  {
+   "fieldname": "scope_type",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Scope Type",
+   "options": "Scope Type",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_ooqj",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Draft",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Draft\nAssigned",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_dako",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "_totals_data",
+   "fieldtype": "JSON",
+   "label": "_totals_data"
+  },
+  {
+   "fieldname": "items",
+   "fieldtype": "Table",
+   "label": "Items",
+   "options": "Scope Item Entry"
+  },
+  {
+   "fieldname": "section_break_whlu",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "items_html",
+   "fieldtype": "HTML"
+  },
+  {
+   "fieldname": "totals_html",
+   "fieldtype": "HTML"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2024-12-20 17:23:21.626491",
+ "modified_by": "Administrator",
+ "module": "Rua Company",
+ "name": "Scope Items",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

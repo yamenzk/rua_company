@@ -1,0 +1,97 @@
+{
+ "actions": [],
+ "autoname": "field:function_name",
+ "creation": "2024-12-20 14:47:57.220130",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "function_name",
+  "description",
+  "column_break_dbpb",
+  "is_scope_level",
+  "disabled",
+  "section_break_goys",
+  "parameters",
+  "column_break_qvyy",
+  "function_code"
+ ],
+ "fields": [
+  {
+   "fieldname": "function_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Function Name",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "label": "Description"
+  },
+  {
+   "fieldname": "column_break_dbpb",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "description": "Check if function works with scope totals",
+   "fieldname": "is_scope_level",
+   "fieldtype": "Check",
+   "label": "Is Scope Level Function"
+  },
+  {
+   "default": "0",
+   "description": "Temporarily disable this function",
+   "fieldname": "disabled",
+   "fieldtype": "Check",
+   "label": "Disabled"
+  },
+  {
+   "fieldname": "section_break_goys",
+   "fieldtype": "Section Break"
+  },
+  {
+   "description": "One parameter per line",
+   "fieldname": "parameters",
+   "fieldtype": "Small Text",
+   "label": "Parameters"
+  },
+  {
+   "fieldname": "column_break_qvyy",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "Python code for the function. Available modules: frappe, math",
+   "fieldname": "function_code",
+   "fieldtype": "Code",
+   "label": "Function Code",
+   "options": "Python"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2024-12-20 14:51:07.864941",
+ "modified_by": "Administrator",
+ "module": "Rua Company",
+ "name": "Scope Custom Function",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

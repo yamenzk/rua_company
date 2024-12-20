@@ -5,5 +5,5 @@
 from frappe.model.document import Document
 
 
-class ProjectItems(Document):
+class ScopeCalculationFormula(Document):
 	pass
