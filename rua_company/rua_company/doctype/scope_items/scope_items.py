@@ -65,19 +65,36 @@ class ScopeItems(Document):
                 for name, func in functions.items():
                     setattr(self, name, func)
         
-        return {
+        # Get constants from _constants_data
+        constants = {}
+        if hasattr(self, '_constants_data') and self._constants_data:
+            try:
+                constants = json.loads(self._constants_data)
+            except Exception as e:
+                frappe.log_error(f"Error loading constants data: {str(e)}")
+        
+        # Convert all constant values to float for calculations
+        constants = {k: flt(v) for k, v in constants.items()}
+        
+        context = {
             "variables": variables,
             "doc_totals": doc_totals,
+            "constants": constants,
             "custom": CustomFunctions(self.custom_functions),
             "frappe": frappe,
             "math": math,
             "flt": flt,
             "cint": cint
         }
+        
+        # Add constants directly to the context for backward compatibility
+        context.update(constants)
+        
+        return context
 
     def calculate_item_values(self):
         """Calculate values for each item based on scope type formulas"""
-        if not self.scope_type:
+        if not self.scope_type or not self.items:
             return
 
         scope_type = frappe.get_doc("Scope Type", self.scope_type)
@@ -225,12 +242,13 @@ class ScopeItems(Document):
 
     def calculate_totals(self):
         """Calculate scope-level totals"""
-        totals = {}
-        
-        if not self.scope_type:
+        if not self.scope_type or not self.items:
+            # Clear totals if no items
+            self._totals_data = json.dumps({})
             return
-            
+
         scope_type = frappe.get_doc("Scope Type", self.scope_type)
+        totals = {}  # Initialize totals dictionary
         
         # Get all items with their variables
         items_data = [self.get_item_variables(item) for item in self.items]
@@ -334,6 +352,16 @@ class ScopeItems(Document):
                         else:  # sum
                             result = sum(item.get(sum_field, 0) for item in filtered_items)
                 else:
+                    # Get constants from _constants_data
+                    constants = {}
+                    if hasattr(self, '_constants_data') and self._constants_data:
+                        try:
+                            constants = json.loads(self._constants_data)
+                            # Convert all constant values to float for calculations
+                            constants = {k: flt(v) for k, v in constants.items()}
+                        except Exception as e:
+                            frappe.log_error(f"Error loading constants data: {str(e)}")
+                    
                     # Create evaluation context for regular formulas
                     eval_globals = {
                         "items": items_data,
@@ -347,8 +375,12 @@ class ScopeItems(Document):
                         "max": lambda field: max(item.get(field, 0) for item in items_data) if items_data else 0,
                         "count": lambda field: sum(1 for item in items_data if field in item),
                         "distinct_count": lambda field: len(set(item.get(field) for item in items_data if field in item)),
-                        "doc_totals": totals  # Add current totals to context
+                        "doc_totals": totals,  # Use the current totals
+                        "constants": constants  # Add constants to context
                     }
+                    
+                    # Add constants directly to context for backward compatibility
+                    eval_globals.update(constants)
                     
                     result = eval(formula.formula, eval_globals)
                 

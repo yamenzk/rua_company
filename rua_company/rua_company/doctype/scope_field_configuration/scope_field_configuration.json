@@ -6,8 +6,8 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
-  "field_name",
   "label",
+  "field_name",
   "field_type",
   "reqd",
   "auto_calculate",
@@ -96,7 +96,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-12-20 17:45:56.436098",
+ "modified": "2024-12-21 15:53:24.572274",
  "modified_by": "Administrator",
  "module": "Rua Company",
  "name": "Scope Field Configuration",

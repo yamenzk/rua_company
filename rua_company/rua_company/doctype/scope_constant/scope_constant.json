@@ -1,27 +1,29 @@
 {
  "actions": [],
  "allow_rename": 1,
- "creation": "2024-12-20 14:37:09.213084",
+ "creation": "2024-12-21 11:14:21",
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
   "label",
-  "field_name",
-  "field_type",
-  "column_break_xyzw",
-  "formula",
-  "description"
+  "constant_name",
+  "constant_type",
+  "column_break_veci",
+  "description",
+  "read_only"
  ],
  "fields": [
   {
-   "fieldname": "field_name",
+   "columns": 2,
+   "fieldname": "constant_name",
    "fieldtype": "Data",
    "in_list_view": 1,
-   "label": "Field Name",
+   "label": "Constant Name",
    "reqd": 1
   },
   {
+   "columns": 2,
    "fieldname": "label",
    "fieldtype": "Data",
    "in_list_view": 1,
@@ -29,40 +31,37 @@
    "reqd": 1
   },
   {
-   "fieldname": "field_type",
+   "columns": 2,
+   "fieldname": "constant_type",
    "fieldtype": "Select",
    "in_list_view": 1,
-   "label": "Field Type",
-   "options": "\nFloat\nInt\nCurrency",
+   "label": "Constant Type",
+   "options": "\nFloat\nInt\nCurrency\nPercent",
    "reqd": 1
   },
   {
-   "fieldname": "column_break_xyzw",
+   "fieldname": "column_break_veci",
    "fieldtype": "Column Break"
   },
   {
-   "description": "Use variables['field_name'] for current values and doc_totals['Total Field'] for scope totals",
-   "fieldname": "formula",
-   "fieldtype": "Code",
-   "in_list_view": 1,
-   "label": "Formula",
-   "options": "JS",
-   "reqd": 1
-  },
-  {
-   "description": "Optional description of what this formula calculates",
    "fieldname": "description",
    "fieldtype": "Small Text",
    "label": "Description"
+  },
+  {
+   "default": "0",
+   "fieldname": "read_only",
+   "fieldtype": "Check",
+   "label": "Read Only"
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-12-21 15:53:45.053346",
+ "modified": "2024-12-21 14:21:17.806397",
  "modified_by": "Administrator",
  "module": "Rua Company",
- "name": "Scope Calculation Formula",
+ "name": "Scope Constant",
  "owner": "Administrator",
  "permissions": [],
  "sort_field": "modified",

@@ -1,9 +1,62 @@
-frappe.ui.form.on("Scope Type", {
-    refresh(frm) {
+// Copyright (c) 2024, Yamen Zakhour and contributors
+// For license information, please see license.txt
+
+frappe.ui.form.on('Scope Type', {
+    refresh: function(frm) {
         frm.add_custom_button(__('Formula Documentation'), function() {
             show_formula_documentation();
         });
+    }
+});
+
+// Helper function to convert label to field name
+function labelToFieldName(label) {
+    if (!label) return '';
+    return label
+        .toLowerCase()
+        // Replace special characters and spaces with underscore
+        .replace(/[^a-z0-9]+/g, '_')
+        // Remove leading/trailing underscores
+        .replace(/^_+|_+$/g, '')
+        // Replace multiple underscores with single
+        .replace(/_+/g, '_');
+}
+
+// Handle Scope Fields child table
+frappe.ui.form.on('Scope Field Configuration', {
+    label: function(frm, cdt, cdn) {
+        const row = locals[cdt][cdn];
+        if (row.label && !row.field_name) {
+            frappe.model.set_value(cdt, cdn, 'field_name', labelToFieldName(row.label));
+        }
     },
+    
+    auto_calculate: function(frm, cdt, cdn) {
+        const row = locals[cdt][cdn];
+        if (row.auto_calculate) {
+            frappe.model.set_value(cdt, cdn, 'read_only', 1);
+        }
+    }
+});
+
+// Handle Calculation Formulas child table
+frappe.ui.form.on('Scope Calculation Formula', {
+    label: function(frm, cdt, cdn) {
+        const row = locals[cdt][cdn];
+        if (row.label && !row.total_name) {
+            frappe.model.set_value(cdt, cdn, 'total_name', labelToFieldName(row.label));
+        }
+    }
+});
+
+// Handle Constants child table
+frappe.ui.form.on('Scope Constant', {
+    label: function(frm, cdt, cdn) {
+        const row = locals[cdt][cdn];
+        if (row.label && !row.constant_name) {
+            frappe.model.set_value(cdt, cdn, 'constant_name', labelToFieldName(row.label));
+        }
+    }
 });
 
 function show_formula_documentation() {
@@ -14,7 +67,8 @@ function show_formula_documentation() {
                     <p>Field level formulas allow you to perform calculations using values from:</p>
                     <ul>
                         <li><code>variables['field_name']</code> - Other fields within the same item</li>
-                        <li><code>doc_totals['total_name']</code> - Scope-level calculated totals</li>
+                        <li><code>doc_totals['total_name']</code> - Scope-level calculated totals. You can also include predefined constants here</li>
+                        <li><code>constants['constant_name']</code> - User defined constants</li>
                     </ul>
                     <p>These formulas support all standard JavaScript mathematical operations and the <a style="text-decoration: underline;" href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math" target="_blank">Math object</a>. You can also use Math object functions.</p>
                 </div>

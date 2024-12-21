@@ -9,7 +9,9 @@
   "scope_type",
   "section_break_ynqm",
   "scope_fields",
-  "calculation_formulas"
+  "calculation_formulas",
+  "constants_section",
+  "constants"
  ],
  "fields": [
   {
@@ -35,11 +37,23 @@
    "fieldtype": "Table",
    "label": "Calculation Formulas",
    "options": "Scope Calculation Formula"
+  },
+  {
+   "fieldname": "constants_section",
+   "fieldtype": "Section Break",
+   "label": "Constants"
+  },
+  {
+   "fieldname": "constants",
+   "fieldtype": "Table",
+   "label": "Constants",
+   "options": "Scope Constant"
   }
  ],
+ "hide_toolbar": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-12-20 20:24:29.718804",
+ "modified": "2024-12-21 15:56:29.295368",
  "modified_by": "Administrator",
  "module": "Rua Company",
  "name": "Scope Type",

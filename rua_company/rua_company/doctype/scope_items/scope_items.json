@@ -1,5 +1,6 @@
 {
  "actions": [],
+ "allow_copy": 1,
  "allow_rename": 1,
  "creation": "2024-12-20 15:09:00.228807",
  "doctype": "DocType",
@@ -7,13 +8,19 @@
  "field_order": [
   "scope_type",
   "column_break_ooqj",
+  "project",
+  "column_break_byga",
   "status",
   "section_break_whlu",
+  "constants_html",
+  "section_break_emsu",
   "items_html",
+  "section_break_hjhv",
   "totals_html",
   "section_break_dako",
   "items",
-  "_totals_data"
+  "_totals_data",
+  "_constants_data"
  ],
  "fields": [
   {
@@ -38,7 +45,8 @@
   },
   {
    "fieldname": "section_break_dako",
-   "fieldtype": "Section Break"
+   "fieldtype": "Section Break",
+   "hidden": 1
   },
   {
    "fieldname": "_totals_data",
@@ -62,11 +70,39 @@
   {
    "fieldname": "totals_html",
    "fieldtype": "HTML"
+  },
+  {
+   "fieldname": "_constants_data",
+   "fieldtype": "JSON",
+   "label": "_constants_data"
+  },
+  {
+   "fieldname": "constants_html",
+   "fieldtype": "HTML"
+  },
+  {
+   "fieldname": "project",
+   "fieldtype": "Link",
+   "label": "Project",
+   "options": "Project"
+  },
+  {
+   "fieldname": "column_break_byga",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_emsu",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "section_break_hjhv",
+   "fieldtype": "Section Break"
   }
  ],
+ "hide_toolbar": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-12-20 17:23:21.626491",
+ "modified": "2024-12-21 15:51:31.866250",
  "modified_by": "Administrator",
  "module": "Rua Company",
  "name": "Scope Items",

@@ -16,11 +16,93 @@ frappe.ui.form.on('Scope Items', {
     }
 });
 
+class ConstantsDialog {
+    constructor(frm) {
+        this.frm = frm;
+        this.constants = [];
+        this.dialog = null;
+    }
+
+    async init() {
+        if (!this.frm.doc.scope_type) {
+            frappe.throw(__('Please select a Scope Type first'));
+            return;
+        }
+
+        // Get constants from scope type
+        const scope_type = await frappe.db.get_doc('Scope Type', this.frm.doc.scope_type);
+        this.constants = scope_type.constants || [];
+
+        if (!this.constants.length) {
+            frappe.throw(__('No constants defined in the Scope Type'));
+            return;
+        }
+
+        // Get current constants data
+        let constants_data = {};
+        try {
+            constants_data = JSON.parse(this.frm.doc._constants_data || '{}');
+        } catch (e) {
+            console.error('Error parsing constants data:', e);
+        }
+
+        // Create fields for dialog
+        const fields = this.constants.map(constant => ({
+            fieldname: constant.constant_name,
+            label: constant.label || constant.constant_name,
+            fieldtype: constant.constant_type || 'Float',
+            default: constants_data[constant.constant_name] || 0,
+            description: constant.description,
+            read_only: constant.read_only
+        }));
+
+        this.dialog = new frappe.ui.Dialog({
+            title: __('Define Constants'),
+            fields: fields,
+            primary_action_label: __('Save'),
+            primary_action: (values) => {
+                this.save_constants(values);
+            }
+        });
+    }
+
+    show() {
+        if (this.dialog) {
+            this.dialog.show();
+        } else {
+            frappe.throw(__('Dialog not initialized. Please try again.'));
+        }
+    }
+
+    save_constants(values) {
+        // Save constants to _constants_data
+        this.frm.doc._constants_data = JSON.stringify(values);
+        
+        // Mark form as dirty and trigger change event
+        this.frm.set_value('_constants_data', this.frm.doc._constants_data);
+        this.frm.dirty();
+        // Save the form
+        this.frm.save().then(() => {
+            this.dialog.hide();
+            frappe.show_alert({
+                message: __('Constants saved successfully'),
+                indicator: 'green'
+            });
+        }).catch(err => {
+            frappe.show_alert({
+                message: __('Error saving constants: ') + err.message,
+                indicator: 'red'
+            });
+        });
+    }
+}
+
 class ScopeItemsRenderer {
     constructor(frm) {
         this.frm = frm;
         this.scope_fields = [];
         this.calculation_formulas = [];
+        this.constants = [];
         this.make();
     }
 
@@ -28,7 +110,7 @@ class ScopeItemsRenderer {
         if (!this.frm.doc.scope_type) return;
 
         // Get scope fields and calculation formulas
-        const [fields_response, formulas_response] = await Promise.all([
+        const [fields_response, scope_type] = await Promise.all([
             frappe.call({
                 method: 'rua_company.rua_company.doctype.scope_items.scope_items.get_scope_fields',
                 args: { scope_type: this.frm.doc.scope_type }
@@ -37,90 +119,85 @@ class ScopeItemsRenderer {
         ]);
 
         this.scope_fields = fields_response.message;
-        this.calculation_formulas = formulas_response.calculation_formulas;
+        this.calculation_formulas = scope_type.calculation_formulas;
+        this.constants = scope_type.constants;
 
         this.render_items();
         this.render_totals();
+        this.render_constants();
+    }
+
+    check_constants() {
+        // Return true if all constants are properly defined
+        if (!this.constants || !this.constants.length) return true;
+
+        let constants_data = {};
+        try {
+            constants_data = JSON.parse(this.frm.doc._constants_data || '{}');
+        } catch (e) {
+            console.error('Error parsing constants data:', e);
+            return false;
+        }
+
+        // Check if any constant is undefined or 0
+        const missing_constants = this.constants.filter(constant => {
+            const value = constants_data[constant.constant_name];
+            return value === undefined || value === 0;
+        });
+
+        if (missing_constants.length > 0) {
+            const constant_names = missing_constants.map(c => c.label || c.constant_name).join(', ');
+            $(this.frm.fields_dict.items_html.wrapper).find('.add-item')
+                .prop('disabled', true)
+                .attr('title', __(`Please define values for constants: ${constant_names}`));
+            return false;
+        }
+
+        $(this.frm.fields_dict.items_html.wrapper).find('.add-item')
+            .prop('disabled', false)
+            .attr('title', '');
+        return true;
     }
 
     render_items() {
         // Create table HTML
         let table_html = `
             <div class="scope-items-container">
-                <div class="d-flex justify-content-end mb-3">
-                    <button class="btn btn-primary btn-sm add-item">
-                        ${frappe.utils.icon('add', 'xs')} Add Item
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div class="h6 text-uppercase mb-0">${__('Items')}</div>
+                    <button class="btn btn-primary btn-sm add-item" ${!this.check_constants() ? 'disabled' : ''}>
+                        ${frappe.utils.icon('add', 'xs')} ${__('Add Item')}
                     </button>
                 </div>
                 <div class="scope-items-table-wrapper">
-                    <table class="table table-bordered">
-                        <thead>
-                            <tr>
-                                <th>Item Name</th>
-                                ${this.scope_fields.map(field => 
-                                    `<th>${field.label}</th>`
-                                ).join('')}
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${this.get_items_html()}
-                        </tbody>
-                    </table>
+                    ${this.frm.doc.items && this.frm.doc.items.length ? `
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th class="item-name-col">${__('Item Name')}</th>
+                                    ${this.scope_fields.map(field => 
+                                        `<th class="text-right">${field.label}</th>`
+                                    ).join('')}
+                                    <th class="actions-col text-right">${__('Actions')}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${this.get_items_html()}
+                            </tbody>
+                        </table>
+                    ` : `
+                        <div class="no-items-message text-center text-muted p-4">
+                            ${!this.check_constants() ? 
+                                __('Please define all constants before adding items') :
+                                __('No items added yet. Click "Add Item" to get started.')}
+                        </div>
+                    `}
                 </div>
             </div>
         `;
 
         $(this.frm.fields_dict.items_html.wrapper).html(table_html);
         this.setup_actions();
-    }
-
-    render_totals() {
-        if (!this.frm.doc._totals_data) return;
-        
-        let totals;
-        try {
-            totals = JSON.parse(this.frm.doc._totals_data || '{}');
-        } catch (e) {
-            console.error('Error parsing totals data:', e);
-            return;
-        }
-
-        // Only show totals if we have data
-        if (!Object.keys(totals).length) return;
-
-        let totals_html = `
-            <div class="scope-totals-container">
-                <div class="scope-totals-table-wrapper">
-                    <table class="table table-bordered">
-                        <thead>
-                            <tr>
-                                <th>Field</th>
-                                <th>Total</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${Object.entries(totals).map(([key, value]) => {
-                                const formula = this.calculation_formulas?.find(f => f.field_name === key);
-                                if (!formula) return '';
-                                
-                                // Determine field type from formula
-                                const field_type = formula.field_type || 'Float';
-                                
-                                return `
-                                    <tr>
-                                        <td>${formula.label || key}</td>
-                                        <td>${this.format_field_value(value, { field_type })}</td>
-                                    </tr>
-                                `;
-                            }).join('')}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        `;
-
-        $(this.frm.fields_dict.totals_html.wrapper).html(totals_html);
     }
 
     get_items_html() {
@@ -130,40 +207,48 @@ class ScopeItemsRenderer {
                 data = JSON.parse(item._data || '{}');
             } catch (e) {
                 console.error('Error parsing item data:', e);
+                data = {};
             }
+
             return `
                 <tr data-row-id="${item.row_id}">
-                    <td>${item.item_name}</td>
-                    ${this.scope_fields.map(field => 
-                        `<td>${this.format_field_value(data[field.field_name], field)}</td>`
-                    ).join('')}
-                    <td>
-                        <button class="btn btn-xs btn-default edit-item">
-                            ${frappe.utils.icon('edit', 'xs')}
-                        </button>
-                        <button class="btn btn-xs btn-danger delete-item">
-                            ${frappe.utils.icon('delete', 'xs')}
-                        </button>
+                    <td class="item-name-col">
+                        <div>
+                            <div class="font-weight-bold">${item.item_name || __('Untitled Item')}</div>
+                            ${item.item_code ? `
+                                <div class="text-muted small">${item.item_code}</div>
+                            ` : ''}
+                        </div>
+                    </td>
+                    ${this.scope_fields.map(field => {
+                        const value = data[field.field_name];
+                        return `
+                            <td class="text-right">
+                                <div class="field-value ${value ? '' : 'text-muted'}">
+                                    ${this.format_field_value(value, field)}
+                                </div>
+                            </td>
+                        `;
+                    }).join('')}
+                    <td class="actions-col text-right">
+                        <div class="d-flex justify-content-end">
+                            <button class="btn btn-xs btn-default edit-item mr-1" title="${__('Edit Item')}">
+                                ${frappe.utils.icon('edit', 'xs')}
+                            </button>
+                            <button class="btn btn-xs btn-danger delete-item" title="${__('Remove Item')}">
+                                ${frappe.utils.icon('delete', 'xs')}
+                            </button>
+                        </div>
                     </td>
                 </tr>
             `;
-        }).join('') || `<tr><td colspan="${this.scope_fields.length + 2}" class="text-center text-muted">No items found</td></tr>`;
-    }
-
-    format_field_value(value, field) {
-        if (value === undefined || value === null) return '';
-        
-        switch(field.field_type) {
-            case 'Currency':
-                return frappe.format(value, { fieldtype: 'Currency' });
-            case 'Float':
-            case 'Percent':
-                return frappe.format(value, { fieldtype: field.field_type });
-            case 'Check':
-                return value ? '✓' : '';
-            default:
-                return value;
-        }
+        }).join('') || `
+            <tr>
+                <td colspan="${this.scope_fields.length + 2}" class="text-center text-muted">
+                    ${__('No items found')}
+                </td>
+            </tr>
+        `;
     }
 
     setup_actions() {
@@ -186,6 +271,171 @@ class ScopeItemsRenderer {
             const row_id = $(this).closest('tr').data('row-id');
             me.delete_item(row_id);
         });
+    }
+
+    render_totals() {
+        if (!this.frm.doc._totals_data) return;
+        
+        let totals;
+        try {
+            totals = JSON.parse(this.frm.doc._totals_data || '{}');
+        } catch (e) {
+            console.error('Error parsing totals data:', e);
+            return;
+        }
+
+        // Only show totals if we have data
+        if (!Object.keys(totals).length) return;
+
+        let totals_html = `
+            <div class="scope-totals-container">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div class="h6 text-uppercase mb-0">${__('Totals')}</div>
+                </div>
+                <div class="scope-totals-table-wrapper">
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>${__('Field')}</th>
+                                <th class="text-right">${__('Total')}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${Object.entries(totals).map(([key, value]) => {
+                                const formula = this.calculation_formulas?.find(f => f.field_name === key);
+                                if (!formula) return '';
+                                
+                                // Determine field type from formula
+                                const field_type = formula.field_type || 'Float';
+                                
+                                return `
+                                    <tr>
+                                        <td>
+                                            <div class="font-weight-bold">${formula.label || key}</div>
+                                        </td>
+                                        <td class="text-right">
+                                            <div class="total-value">
+                                                ${this.format_field_value(value, { field_type })}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                `;
+                            }).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        `;
+
+        $(this.frm.fields_dict.totals_html.wrapper).html(totals_html);
+    }
+
+    render_constants() {
+        if (!this.constants || !this.constants.length) {
+            $(this.frm.fields_dict.constants_html.wrapper).empty();
+            return;
+        }
+
+        // Parse current constants data
+        let constants_data = {};
+        try {
+            constants_data = JSON.parse(this.frm.doc._constants_data || '{}');
+        } catch (e) {
+            console.error('Error parsing constants data:', e);
+        }
+
+        // Create table HTML with warning if constants are not defined
+        let table_html = `
+            <div class="scope-constants-container">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div class="h6 text-uppercase mb-0">${__('Constants')}</div>
+                    <button class="btn btn-sm btn-primary define-constants">
+                        ${frappe.utils.icon('edit', 'xs')} ${__('Define Constants')}
+                    </button>
+                </div>
+                ${!this.check_constants() ? `
+                    <div class="alert alert-warning mb-3">
+                        ${__('Please define all constants before adding items')}
+                    </div>
+                ` : ''}
+                <div class="scope-constants-table-wrapper">
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>${__('Constant')}</th>
+                                <th class="text-right">${__('Value')}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${this.constants.map(constant => {
+                                const value = constants_data[constant.constant_name] || 0;
+                                return `
+                                    <tr class="${value === 0 ? 'text-danger' : ''}">
+                                        <td>
+                                            <div class="font-weight-bold">${constant.label || constant.constant_name}</div>
+                                        </td>
+                                        <td class="text-right">
+                                            <div class="constant-value">
+                                                ${this.format_value(value, constant.constant_type)}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                `;
+                            }).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        `;
+
+        const wrapper = $(this.frm.fields_dict.constants_html.wrapper);
+        wrapper.html(table_html);
+
+        // Setup Define Constants button action
+        wrapper.find('.define-constants').on('click', async () => {
+            const dialog = new ConstantsDialog(this.frm);
+            await dialog.init();
+            dialog.show();
+        });
+    }
+
+    format_field_value(value, field) {
+        if (value === undefined || value === null) return '';
+        
+        switch(field.field_type) {
+            case 'Currency':
+                return frappe.format(value, { fieldtype: 'Currency' });
+            case 'Float':
+            case 'Percent':
+                return frappe.format(value, { fieldtype: field.field_type });
+            case 'Check':
+                return value ? '✓' : '';
+            default:
+                return value;
+        }
+    }
+
+    get_type_indicator(type) {
+        const indicators = {
+            'Float': 'blue',
+            'Int': 'green',
+            'Currency': 'yellow',
+            'Percent': 'purple'
+        };
+        return indicators[type] || 'gray';
+    }
+
+    format_value(value, type) {
+        switch (type) {
+            case 'Currency':
+                return format_currency(value);
+            case 'Percent':
+                return flt(value, 2) + '%';
+            case 'Int':
+                return cint(value);
+            default: // Float
+                return flt(value, 2);
+        }
     }
 
     show_item_dialog(item = null) {
@@ -439,51 +689,142 @@ class ScopeItemsRenderer {
 
 // Add some CSS
 frappe.dom.set_style(`
-    .scope-items-container,
+    .scope-items-container {
+        margin: 15px 0;
+    }
+
+    .scope-items-table-wrapper {
+        position: relative;
+        overflow-x: auto;
+        border-radius: var(--border-radius-md);
+        box-shadow: var(--card-shadow);
+    }
+
+    .scope-items-table-wrapper table {
+        margin: 0;
+    }
+
+    .scope-items-table-wrapper th {
+        position: sticky;
+        top: 0;
+        background-color: var(--fg-color);
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    .scope-items-table-wrapper td {
+        background-color: var(--fg-color);
+        vertical-align: middle;
+    }
+
+    .item-name-col {
+        min-width: 200px;
+    }
+
+    .actions-col {
+        width: 100px;
+    }
+
+    .no-items-message {
+        background: var(--fg-color);
+        border: 1px dashed var(--gray-400);
+        border-radius: var(--border-radius-md);;
+    }
+
+    .field-value {
+        font-variant-numeric: tabular-nums;
+    }
+
     .scope-totals-container {
         margin: 15px 0;
     }
 
-    .scope-items-table-wrapper,
     .scope-totals-table-wrapper {
-        position: relative;
-        overflow-x: auto;
-        border-radius: var(--border-radius);
-        border: 1px solid var(--border-color);
+        display: flex;
+        justify-content: flex-end;
+        border-radius: var(--border-radius-md);
     }
 
-    .scope-items-table-wrapper table,
     .scope-totals-table-wrapper table {
+        width: auto;
+        min-width: 300px;
         margin: 0;
+        background-color: var(--fg-color);
+        border-radius: var(--border-radius-md);;
+        box-shadow: var(--card-shadow);
     }
 
-    .scope-items-table-wrapper th,
     .scope-totals-table-wrapper th {
-        position: sticky;
-        top: 0;
         background-color: var(--fg-color);
         font-weight: 600;
         white-space: nowrap;
         border-bottom: 2px solid var(--border-color);
     }
 
-    .scope-items-table-wrapper td,
     .scope-totals-table-wrapper td {
         background-color: var(--fg-color);
         vertical-align: middle;
     }
 
-    .scope-items-table-wrapper tr:last-child td {
+    .scope-totals-table-wrapper .total-value {
+        font-weight: 600;
+        font-variant-numeric: tabular-nums;
+        font-size: 1.1em;
+        color: var(--text-color);
+    }
+
+    .scope-totals-table-wrapper tr:last-child td {
         border-bottom: none;
     }
 
-    .scope-totals-table-wrapper table {
-        width: auto;
-        min-width: 300px;
+    .scope-totals-table-wrapper tr:last-child .total-value {
+        color: var(--primary);
     }
 
-    .scope-totals-table-wrapper td:last-child {
+    .scope-constants-container {
+        margin: 15px 0;
+    }
+
+    .scope-constants-table-wrapper {
+        display: flex;
+        justify-content: flex-start;
+        border-radius: var(--border-radius-md);
+    }
+
+    .scope-constants-table-wrapper table {
+        width: auto;
+        min-width: 300px;
+        max-width: 400px;
+        margin: 0;
+        background-color: var(--fg-color);
+        border-radius: var(--border-radius-md);
+        box-shadow: var(--card-shadow);
+    }
+
+    .scope-constants-table-wrapper th {
+        background-color: var(--fg-color);
         font-weight: 600;
-        text-align: right;
+        white-space: nowrap;
+        border-bottom: 2px solid var(--border-color);
+    }
+
+    .scope-constants-table-wrapper td {
+        background-color: var(--fg-color);
+        vertical-align: middle;
+    }
+
+    .scope-constants-table-wrapper .constant-value {
+        font-weight: 600;
+        font-variant-numeric: tabular-nums;
+        font-size: 1.1em;
+        color: var(--text-color);
+    }
+
+    .scope-constants-table-wrapper tr.text-danger .constant-value {
+        color: var(--red-500);
+    }
+
+    .scope-constants-table-wrapper tr:last-child td {
+        border-bottom: none;
     }
 `);
