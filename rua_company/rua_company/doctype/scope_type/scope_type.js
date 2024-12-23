@@ -43,8 +43,8 @@ frappe.ui.form.on('Scope Field Configuration', {
 frappe.ui.form.on('Scope Calculation Formula', {
     label: function(frm, cdt, cdn) {
         const row = locals[cdt][cdn];
-        if (row.label && !row.total_name) {
-            frappe.model.set_value(cdt, cdn, 'total_name', labelToFieldName(row.label));
+        if (row.label && !row.field_name) {
+            frappe.model.set_value(cdt, cdn, 'field_name', labelToFieldName(row.label));
         }
     }
 });

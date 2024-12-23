@@ -28,12 +28,14 @@
    "fieldtype": "Section Break"
   },
   {
+   "description": "Item name is included by default. Do not add it here.",
    "fieldname": "scope_fields",
    "fieldtype": "Table",
    "label": "Scope Fields",
    "options": "Scope Field Configuration"
   },
   {
+   "description": "For billable scopes, make sure you have fields ['total_items', 'total', 'vat_amount' and 'grand_total]",
    "fieldname": "calculation_formulas",
    "fieldtype": "Table",
    "label": "Calculation Formulas",
@@ -58,7 +60,7 @@
  "hide_toolbar": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-12-23 00:46:50.349681",
+ "modified": "2024-12-23 14:50:03.948739",
  "modified_by": "Administrator",
  "module": "Rua Company",
  "name": "Scope Type",

@@ -14,10 +14,20 @@ class Bill(Document):
 		"""Update bill totals by summing scope item totals of the same type"""
 		if not self.scope_items:
 			self._data = ''
+			self.total_items = 0
+			self.total = 0
+			self.vat_amount = 0
+			self.grand_total = 0
 			return
 			
 		# Group scope items by scope type
 		scope_items_by_type = {}
+		# Initialize bill summary totals
+		self.total_items = 0
+		self.total = 0
+		self.vat_amount = 0
+		self.grand_total = 0
+		
 		for item in self.scope_items:
 			if not item.scope_item:
 				continue
@@ -26,8 +36,21 @@ class Bill(Document):
 			if scope_doc.scope_type not in scope_items_by_type:
 				scope_items_by_type[scope_doc.scope_type] = []
 			scope_items_by_type[scope_doc.scope_type].append(scope_doc)
+			
+			# Update bill summary totals from scope item totals
+			if scope_doc._totals_data:
+				totals_data = json.loads(scope_doc._totals_data) if isinstance(scope_doc._totals_data, str) else scope_doc._totals_data
+				if totals_data:
+					if 'total_items' in totals_data:
+						self.total_items += float(totals_data['total_items'])
+					if 'total' in totals_data:
+						self.total += float(totals_data['total'])
+					if 'vat_amount' in totals_data:
+						self.vat_amount += float(totals_data['vat_amount'])
+					if 'grand_total' in totals_data:
+						self.grand_total += float(totals_data['grand_total'])
 		
-		# Initialize bill totals
+		# Initialize bill totals for _data
 		bill_totals = {}
 		
 		# Process each scope type

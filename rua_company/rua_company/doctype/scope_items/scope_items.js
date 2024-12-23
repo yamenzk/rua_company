@@ -409,7 +409,7 @@ class ScopeItemsRenderer {
             case 'Percent':
                 return frappe.format(value, { fieldtype: field.field_type });
             case 'Check':
-                return value ? '✓' : '';
+                return value ? '✅' : '❌';
             default:
                 return value;
         }

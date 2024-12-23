@@ -6,16 +6,24 @@
  "engine": "InnoDB",
  "field_order": [
   "section_break_3ypv",
+  "column_break_ikxu",
+  "bill_type",
+  "payment_status",
+  "amended_from",
   "column_break_nskj",
   "project",
   "party",
-  "column_break_ikxu",
-  "date",
   "column_break_ntov",
-  "amended_from",
+  "date",
   "auto_update_items",
   "section_break_hfxf",
   "bill_html",
+  "section_break_rjxe",
+  "total_items",
+  "column_break_lbri",
+  "total",
+  "vat_amount",
+  "grand_total",
   "section_break_puof",
   "scope_items",
   "_data"
@@ -47,7 +55,8 @@
   },
   {
    "fieldname": "section_break_puof",
-   "fieldtype": "Section Break"
+   "fieldtype": "Section Break",
+   "hidden": 1
   },
   {
    "fieldname": "project",
@@ -70,6 +79,7 @@
   },
   {
    "default": "0",
+   "description": "Document must remain as 'Draft'",
    "fieldname": "auto_update_items",
    "fieldtype": "Check",
    "label": "Auto Update Items"
@@ -92,12 +102,56 @@
   {
    "fieldname": "bill_html",
    "fieldtype": "HTML"
+  },
+  {
+   "fieldname": "bill_type",
+   "fieldtype": "Select",
+   "label": "Bill Type",
+   "options": "\nRequest for Quotation\nPurchase Order\nQuotation\nProforma\nTax Invoice"
+  },
+  {
+   "fieldname": "section_break_rjxe",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "total_items",
+   "fieldtype": "Int",
+   "label": "Total Items",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_lbri",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "total",
+   "fieldtype": "Currency",
+   "label": "Total",
+   "read_only": 1
+  },
+  {
+   "fieldname": "vat_amount",
+   "fieldtype": "Currency",
+   "label": "VAT Amount",
+   "read_only": 1
+  },
+  {
+   "fieldname": "grand_total",
+   "fieldtype": "Currency",
+   "label": "Grand Total",
+   "read_only": 1
+  },
+  {
+   "fieldname": "payment_status",
+   "fieldtype": "Select",
+   "label": "Payment Status",
+   "options": "\nPaid\nPartially Paid\nUnpaid"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-12-23 04:37:12.547780",
+ "modified": "2024-12-23 15:09:25.038961",
  "modified_by": "Administrator",
  "module": "Rua Company",
  "name": "Bill",
