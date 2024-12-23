@@ -9,9 +9,10 @@
   "label",
   "constant_name",
   "constant_type",
+  "in_bill",
+  "read_only",
   "column_break_veci",
-  "description",
-  "read_only"
+  "description"
  ],
  "fields": [
   {
@@ -52,13 +53,21 @@
    "default": "0",
    "fieldname": "read_only",
    "fieldtype": "Check",
+   "in_list_view": 1,
    "label": "Read Only"
+  },
+  {
+   "default": "0",
+   "fieldname": "in_bill",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "In Bill"
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-12-21 14:21:17.806397",
+ "modified": "2024-12-23 01:05:33.284991",
  "modified_by": "Administrator",
  "module": "Rua Company",
  "name": "Scope Constant",

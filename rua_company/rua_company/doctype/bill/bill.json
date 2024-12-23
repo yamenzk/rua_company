@@ -1,0 +1,123 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2024-12-23 00:49:07.415714",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_break_3ypv",
+  "column_break_nskj",
+  "project",
+  "party",
+  "column_break_ikxu",
+  "date",
+  "column_break_ntov",
+  "amended_from",
+  "auto_update_items",
+  "section_break_hfxf",
+  "bill_html",
+  "section_break_puof",
+  "scope_items",
+  "_data"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_break_3ypv",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Bill",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "column_break_nskj",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "party",
+   "fieldtype": "Link",
+   "label": "Party",
+   "options": "Party"
+  },
+  {
+   "fieldname": "section_break_puof",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "project",
+   "fieldtype": "Link",
+   "label": "Project",
+   "options": "Project"
+  },
+  {
+   "fieldname": "column_break_ikxu",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "date",
+   "fieldtype": "Date",
+   "label": "Date"
+  },
+  {
+   "fieldname": "column_break_ntov",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "auto_update_items",
+   "fieldtype": "Check",
+   "label": "Auto Update Items"
+  },
+  {
+   "fieldname": "_data",
+   "fieldtype": "JSON",
+   "label": "_data"
+  },
+  {
+   "fieldname": "scope_items",
+   "fieldtype": "Table",
+   "label": "Scope Items",
+   "options": "Bill Items"
+  },
+  {
+   "fieldname": "section_break_hfxf",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "bill_html",
+   "fieldtype": "HTML"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2024-12-23 04:37:12.547780",
+ "modified_by": "Administrator",
+ "module": "Rua Company",
+ "name": "Bill",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

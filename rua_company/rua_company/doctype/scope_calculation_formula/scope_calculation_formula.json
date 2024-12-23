@@ -9,6 +9,7 @@
   "label",
   "field_name",
   "field_type",
+  "in_bill",
   "column_break_xyzw",
   "formula",
   "description"
@@ -54,12 +55,19 @@
    "fieldname": "description",
    "fieldtype": "Small Text",
    "label": "Description"
+  },
+  {
+   "default": "0",
+   "fieldname": "in_bill",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "In Bill"
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-12-21 15:53:45.053346",
+ "modified": "2024-12-23 01:02:18.533173",
  "modified_by": "Administrator",
  "module": "Rua Company",
  "name": "Scope Calculation Formula",

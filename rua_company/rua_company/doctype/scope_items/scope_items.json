@@ -40,8 +40,7 @@
    "fieldname": "status",
    "fieldtype": "Select",
    "label": "Status",
-   "options": "Draft\nAssigned",
-   "read_only": 1
+   "options": "Draft\nAssigned"
   },
   {
    "fieldname": "section_break_dako",
@@ -102,7 +101,7 @@
  "hide_toolbar": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-12-21 15:51:31.866250",
+ "modified": "2024-12-23 03:51:32.377668",
  "modified_by": "Administrator",
  "module": "Rua Company",
  "name": "Scope Items",

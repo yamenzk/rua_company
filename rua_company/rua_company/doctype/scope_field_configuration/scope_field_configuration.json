@@ -10,6 +10,7 @@
   "field_name",
   "field_type",
   "reqd",
+  "in_bill",
   "auto_calculate",
   "calculation_formula",
   "column_break_veci",
@@ -91,12 +92,20 @@
    "fieldtype": "Check",
    "in_list_view": 1,
    "label": "Reqd"
+  },
+  {
+   "columns": 1,
+   "default": "0",
+   "fieldname": "in_bill",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "In Bill"
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-12-21 15:53:24.572274",
+ "modified": "2024-12-23 01:01:42.297616",
  "modified_by": "Administrator",
  "module": "Rua Company",
  "name": "Scope Field Configuration",

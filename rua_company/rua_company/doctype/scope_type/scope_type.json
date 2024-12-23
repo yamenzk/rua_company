@@ -7,6 +7,7 @@
  "engine": "InnoDB",
  "field_order": [
   "scope_type",
+  "column_break_ilfx",
   "section_break_ynqm",
   "scope_fields",
   "calculation_formulas",
@@ -48,12 +49,16 @@
    "fieldtype": "Table",
    "label": "Constants",
    "options": "Scope Constant"
+  },
+  {
+   "fieldname": "column_break_ilfx",
+   "fieldtype": "Column Break"
   }
  ],
  "hide_toolbar": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-12-21 15:56:29.295368",
+ "modified": "2024-12-23 00:46:50.349681",
  "modified_by": "Administrator",
  "module": "Rua Company",
  "name": "Scope Type",
