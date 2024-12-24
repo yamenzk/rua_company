@@ -3,7 +3,7 @@
 
 frappe.ui.form.on("Bill", {
   refresh: function (frm) {
-    if (!frm.doc.is_new() && frm.doc.docstatus !== 1) {
+    if (frm.doc.docstatus !== 1) {
       frm
         .add_custom_button(__("Add Items"), function () {
           // Get list of already added scope items
@@ -210,8 +210,23 @@ function render_bill_data(frm) {
     // Get all unique fields
     const fields = new Set();
     Object.values(items_data).forEach((item) => {
-      Object.keys(item).forEach((field) => fields.add(field));
+      Object.keys(item).forEach((field) => {
+        if (!field.endsWith('_unit')) {
+          fields.add(field);
+        }
+      });
     });
+
+    // Unit color mapping using Frappe design system
+    const unitColorMap = {
+      'SQM': 'blue',     // Square meters - blue
+      'LM': 'green',     // Linear meters - green
+      'm': 'purple',     // Meters - purple
+      'cm': 'red',       // Centimeters - red
+      'mm': 'yellow',    // Millimeters - yellow
+      'g': 'orange',     // Grams - orange
+      'kg': 'pink'       // Kilograms - pink
+    };
 
     const header_html = Array.from(fields)
       .map((field) => `<th>${frappe.model.unscrub(field)}</th>`)
@@ -222,7 +237,11 @@ function render_bill_data(frm) {
         ([id, item]) => `
 			<tr>
 				${Array.from(fields)
-          .map((field) => `<td>${item[field] || ""}</td>`)
+          .map((field) => {
+            const unit = item[`${field}_unit`];
+            const colorClass = unit ? unitColorMap[unit] || 'gray' : '';
+            return `<td>${item[field] || ""}${unit ? ` <span class="unit-chip ${colorClass}">${unit}</span>` : ''}</td>`;
+          })
           .join("")}
 			</tr>
 		`
@@ -422,6 +441,46 @@ function render_bill_data(frm) {
 					color: var(--text-color);
 					border-radius: 12px;
 					font-size: 0.8em;
+				}
+				.bill-data .unit-chip {
+					display: inline-block;
+					padding: 2px 8px;
+					margin-left: 4px;
+					border-radius: 12px;
+					font-size: 0.75em;
+					font-weight: 500;
+				}
+				.bill-data .unit-chip.blue {
+					background-color: var(--bg-blue);
+					color: var(--text-on-blue);
+				}
+				.bill-data .unit-chip.green {
+					background-color: var(--bg-green);
+					color: var(--text-on-green);
+				}
+				.bill-data .unit-chip.purple {
+					background-color: var(--bg-purple);
+					color: var(--text-on-purple);
+				}
+				.bill-data .unit-chip.red {
+					background-color: var(--bg-red);
+					color: var(--text-on-red);
+				}
+				.bill-data .unit-chip.yellow {
+					background-color: var(--bg-yellow);
+					color: var(--text-on-yellow);
+				}
+				.bill-data .unit-chip.orange {
+					background-color: var(--bg-orange);
+					color: var(--text-on-orange);
+				}
+				.bill-data .unit-chip.pink {
+					background-color: var(--bg-pink);
+					color: var(--text-on-pink);
+				}
+				.bill-data .unit-chip.gray {
+					background-color: var(--bg-gray);
+					color: var(--text-on-gray);
 				}
 			</style>
 			<div class="scope-type-chips mb-4">

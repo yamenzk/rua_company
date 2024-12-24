@@ -55,8 +55,7 @@
   },
   {
    "fieldname": "section_break_puof",
-   "fieldtype": "Section Break",
-   "hidden": 1
+   "fieldtype": "Section Break"
   },
   {
    "fieldname": "project",
@@ -151,7 +150,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-12-23 15:09:25.038961",
+ "modified": "2024-12-24 17:56:24.295241",
  "modified_by": "Administrator",
  "module": "Rua Company",
  "name": "Bill",

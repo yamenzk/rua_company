@@ -13,7 +13,7 @@ class Bill(Document):
 	def update_totals(self):
 		"""Update bill totals by summing scope item totals of the same type"""
 		if not self.scope_items:
-			self._data = ''
+			self._data = "{}"
 			self.total_items = 0
 			self.total = 0
 			self.vat_amount = 0
@@ -81,6 +81,15 @@ class Bill(Document):
 			if type_totals:
 				bill_totals[scope_type] = type_totals
 		
+		# Handle case where we have no scope items but existing data
+		if not bill_totals and hasattr(self, '_data') and self._data:
+			try:
+				existing_data = json.loads(self._data) if isinstance(self._data, str) else self._data
+				if isinstance(existing_data, dict):
+					bill_totals = existing_data
+			except (ValueError, TypeError):
+				pass
+		
 		# Update bill's _data field
 		self._data = json.dumps(bill_totals) if bill_totals else "{}"
 
@@ -124,11 +133,13 @@ def get_scope_item_data(scope_item):
 	scope_type_doc = frappe.get_doc('Scope Type', scope_doc.scope_type)
 	
 	# Create a lookup dictionary for field configurations
-	field_config_dict = {
-		fc.field_name: fc.in_bill 
-		for fc in scope_type_doc.scope_fields 
-		if hasattr(fc, 'field_name') and hasattr(fc, 'in_bill')
-	}
+	field_config_dict = {}
+	for fc in scope_type_doc.scope_fields:
+		if hasattr(fc, 'field_name') and hasattr(fc, 'in_bill'):
+			field_config_dict[fc.field_name] = {
+				'in_bill': fc.in_bill,
+				'unit': fc.unit if hasattr(fc, 'unit') else ''
+			}
 	
 	# Process items data
 	for idx, item in enumerate(scope_doc.items):
@@ -146,8 +157,10 @@ def get_scope_item_data(scope_item):
 		
 		# Add fields where in_bill is True
 		for field_name, value in item_data.items():
-			if field_name in field_config_dict and cint(field_config_dict[field_name]):
+			if field_name in field_config_dict and cint(field_config_dict[field_name]['in_bill']):
 				row_data[field_name] = value
+				if field_config_dict[field_name]['unit']:
+					row_data[f"{field_name}_unit"] = field_config_dict[field_name]['unit']
 		
 		# Add this item's data to the result using row_id as key
 		result['_data'][scope_item]['items'][item.row_id] = row_data
