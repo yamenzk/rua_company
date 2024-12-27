@@ -1,0 +1,94 @@
+{
+ "actions": [],
+ "allow_copy": 1,
+ "autoname": "format:{signed_doctype}-{signed_docname}",
+ "creation": "2024-12-27 19:32:25.557383",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "signed_doctype",
+  "signed_docname",
+  "column_break_ujfd",
+  "signee_name",
+  "position",
+  "column_break_wdth",
+  "date",
+  "image"
+ ],
+ "fields": [
+  {
+   "fieldname": "signed_doctype",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Signed Doctype",
+   "options": "DocType",
+   "reqd": 1
+  },
+  {
+   "fieldname": "signed_docname",
+   "fieldtype": "Dynamic Link",
+   "in_list_view": 1,
+   "label": "Signed Docname",
+   "options": "signed_doctype",
+   "reqd": 1
+  },
+  {
+   "fieldname": "image",
+   "fieldtype": "Attach Image",
+   "hidden": 1,
+   "label": "Image"
+  },
+  {
+   "fieldname": "column_break_ujfd",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "signee_name",
+   "fieldtype": "Data",
+   "label": "Signee Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "position",
+   "fieldtype": "Data",
+   "label": "Position",
+   "read_only": 1
+  },
+  {
+   "fieldname": "date",
+   "fieldtype": "Date",
+   "label": "Date",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_wdth",
+   "fieldtype": "Column Break"
+  }
+ ],
+ "hide_toolbar": 1,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2024-12-27 21:17:02.338884",
+ "modified_by": "Administrator",
+ "module": "Rua Company",
+ "name": "Docusign",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

@@ -26,7 +26,9 @@
   "grand_total",
   "section_break_puof",
   "scope_items",
-  "_data"
+  "_data",
+  "tab_2_tab",
+  "signature"
  ],
  "fields": [
   {
@@ -145,12 +147,22 @@
    "fieldtype": "Select",
    "label": "Payment Status",
    "options": "\nPaid\nPartially Paid\nUnpaid"
+  },
+  {
+   "fieldname": "tab_2_tab",
+   "fieldtype": "Tab Break",
+   "label": "Signature"
+  },
+  {
+   "fieldname": "signature",
+   "fieldtype": "Signature",
+   "label": "Signature"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-12-24 17:56:24.295241",
+ "modified": "2024-12-27 19:03:09.295431",
  "modified_by": "Administrator",
  "module": "Rua Company",
  "name": "Bill",

@@ -13,6 +13,8 @@ fixtures = [
     }
 ]
 
+
+
 # Apps
 # ------------------
 
@@ -40,7 +42,7 @@ add_to_apps_screen = [
 # ------------------
 
 # include js, css files in header of desk.html
-app_include_css = "/assets/rua_company/css/project_dashboard.css"
+# app_include_css = "/assets/rua_company/css/project_dashboard.css"
 # app_include_js = [
 #     "/assets/rua_company/js/project_dashboard.js"
 # ]
@@ -60,18 +62,18 @@ app_include_css = "/assets/rua_company/css/project_dashboard.css"
 # page_js = {"page" : "public/js/file.js"}
 
 # include js in doctype views
-doctype_js = {
-    "Project": [
-        "public/js/project_dashboard.js",
-        "public/js/project_dialogs.js"
-    ]
-}
+# doctype_js = {
+#     "Project": [
+#         "public/js/project_dashboard.js",
+#         "public/js/project_dialogs.js"
+#     ]
+# }
 
-doctype_css = {
-    "Project": [
-        "public/css/project_dashboard.css",
-    ]
-}
+# doctype_css = {
+#     "Project": [
+#         "public/css/project_dashboard.css",
+#     ]
+# }
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
@@ -202,9 +204,7 @@ doc_events = {
 # }
 #
 # rua_company/hooks.py
-whitelisted_methods = {
-    "get_item_suggestions": "rua_company.rua_company.doctype.project.project.get_item_suggestions"
-}
+
 # each overriding function accepts a `data` argument;
 # generated from the base implementation of the doctype dashboard,
 # along with any modifications made in other Frappe apps
