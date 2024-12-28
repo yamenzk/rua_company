@@ -7,7 +7,7 @@
  "engine": "InnoDB",
  "field_order": [
   "scope_item",
-  "_data"
+  "data"
  ],
  "fields": [
   {
@@ -18,15 +18,15 @@
    "options": "Scope Items"
   },
   {
-   "fieldname": "_data",
+   "fieldname": "data",
    "fieldtype": "JSON",
-   "label": "_data"
+   "label": "data"
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-12-23 00:56:01.175187",
+ "modified": "2024-12-28 15:15:40.187588",
  "modified_by": "Administrator",
  "module": "Rua Company",
  "name": "Bill Items",

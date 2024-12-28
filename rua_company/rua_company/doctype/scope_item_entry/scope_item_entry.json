@@ -9,7 +9,7 @@
   "item_name",
   "row_id",
   "column_break_veci",
-  "_data"
+  "data"
  ],
  "fields": [
   {
@@ -24,20 +24,20 @@
    "fieldtype": "Column Break"
   },
   {
-   "fieldname": "_data",
-   "fieldtype": "JSON",
-   "label": "_data"
-  },
-  {
    "fieldname": "row_id",
    "fieldtype": "Data",
    "label": "Row ID"
+  },
+  {
+   "fieldname": "data",
+   "fieldtype": "JSON",
+   "label": "data"
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-12-20 15:13:34.836247",
+ "modified": "2024-12-28 15:20:50.282894",
  "modified_by": "Administrator",
  "module": "Rua Company",
  "name": "Scope Item Entry",

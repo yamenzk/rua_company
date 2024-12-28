@@ -13,7 +13,7 @@ class Bill(Document):
 	def update_totals(self):
 		"""Update bill totals by summing scope item totals of the same type"""
 		if not self.scope_items:
-			self._data = "{}"
+			self.data = "{}"
 			self.total_items = 0
 			self.total = 0
 			self.vat_amount = 0
@@ -38,8 +38,8 @@ class Bill(Document):
 			scope_items_by_type[scope_doc.scope_type].append(scope_doc)
 			
 			# Update bill summary totals from scope item totals
-			if scope_doc._totals_data:
-				totals_data = json.loads(scope_doc._totals_data) if isinstance(scope_doc._totals_data, str) else scope_doc._totals_data
+			if scope_doc.totals_data:
+				totals_data = json.loads(scope_doc.totals_data) if isinstance(scope_doc.totals_data, str) else scope_doc.totals_data
 				if totals_data:
 					if 'total_items' in totals_data:
 						self.total_items += float(totals_data['total_items'])
@@ -50,7 +50,7 @@ class Bill(Document):
 					if 'grand_total' in totals_data:
 						self.grand_total += float(totals_data['grand_total'])
 		
-		# Initialize bill totals for _data
+		# Initialize bill totals for data
 		bill_totals = {}
 		
 		# Process each scope type
@@ -67,7 +67,7 @@ class Bill(Document):
 			# Sum totals for this scope type
 			type_totals = {}
 			for scope_doc in scope_items:
-				totals_data = json.loads(scope_doc._totals_data) if isinstance(scope_doc._totals_data, str) else scope_doc._totals_data
+				totals_data = json.loads(scope_doc.totals_data) if isinstance(scope_doc.totals_data, str) else scope_doc.totals_data
 				if not totals_data:
 					continue
 					
@@ -82,16 +82,16 @@ class Bill(Document):
 				bill_totals[scope_type] = type_totals
 		
 		# Handle case where we have no scope items but existing data
-		if not bill_totals and hasattr(self, '_data') and self._data:
+		if not bill_totals and hasattr(self, 'data') and self.data:
 			try:
-				existing_data = json.loads(self._data) if isinstance(self._data, str) else self._data
+				existing_data = json.loads(self.data) if isinstance(self.data, str) else self.data
 				if isinstance(existing_data, dict):
 					bill_totals = existing_data
 			except (ValueError, TypeError):
 				pass
 		
-		# Update bill's _data field
-		self._data = json.dumps(bill_totals) if bill_totals else "{}"
+		# Update bill's data field
+		self.data = json.dumps(bill_totals) if bill_totals else "{}"
 
 	def refresh_scope_item_data(self, scope_item_name):
 		"""Refresh data for a specific scope item in the bill"""
@@ -103,8 +103,8 @@ class Bill(Document):
 				# Fetch fresh data
 				scope_doc = frappe.get_doc('Scope Items', scope_item_name)
 				result = get_scope_item_data(scope_item_name)
-				if result and '_data' in result:
-					item._data = json.dumps(result['_data'])
+				if result and 'data' in result:
+					item.data = json.dumps(result['data'])
 		
 		# Update totals after refreshing data
 		self.update_totals()
@@ -117,7 +117,7 @@ def get_scope_item_data(scope_item):
 	
 	result = {
 		'scope_item': scope_item,
-		'_data': {
+		'data': {
 			scope_item: {
 				'items': {},
 				'totals': {},
@@ -144,11 +144,11 @@ def get_scope_item_data(scope_item):
 	# Process items data
 	for idx, item in enumerate(scope_doc.items):
 		
-		if not item._data or not item.row_id:
+		if not item.data or not item.row_id:
 			continue
 			
-		# Parse _data if it's a string
-		item_data = json.loads(item._data) if isinstance(item._data, str) else item_data
+		# Parse data if it's a string
+		item_data = json.loads(item.data) if isinstance(item.data, str) else item_data
 		
 		# Create entry for this item
 		row_data = {
@@ -163,10 +163,10 @@ def get_scope_item_data(scope_item):
 					row_data[f"{field_name}_unit"] = field_config_dict[field_name]['unit']
 		
 		# Add this item's data to the result using row_id as key
-		result['_data'][scope_item]['items'][item.row_id] = row_data
+		result['data'][scope_item]['items'][item.row_id] = row_data
 	
 	# Process totals data
-	totals_data = json.loads(scope_doc._totals_data) if isinstance(scope_doc._totals_data, str) else scope_doc._totals_data
+	totals_data = json.loads(scope_doc.totals_data) if isinstance(scope_doc.totals_data, str) else scope_doc.totals_data
 	if totals_data:
 		# Get calculation formulas with in_bill=1
 		billable_formulas = {
@@ -178,10 +178,10 @@ def get_scope_item_data(scope_item):
 		# Add only billable totals
 		for field_name, value in totals_data.items():
 			if field_name in billable_formulas:
-				result['_data'][scope_item]['totals'][field_name] = value
+				result['data'][scope_item]['totals'][field_name] = value
 	
 	# Process constants data
-	constants_data = json.loads(scope_doc._constants_data) if isinstance(scope_doc._constants_data, str) else scope_doc._constants_data
+	constants_data = json.loads(scope_doc.constants_data) if isinstance(scope_doc.constants_data, str) else scope_doc.constants_data
 	if constants_data:
 		# Get constants with in_bill=1
 		billable_constants = {
@@ -193,7 +193,7 @@ def get_scope_item_data(scope_item):
 		# Add only billable constants
 		for field_name, value in constants_data.items():
 			if field_name in billable_constants:
-				result['_data'][scope_item]['constants'][field_name] = value
+				result['data'][scope_item]['constants'][field_name] = value
 			
 	return result
 

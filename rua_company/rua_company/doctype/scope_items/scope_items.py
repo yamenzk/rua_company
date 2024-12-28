@@ -70,11 +70,11 @@ class ScopeItems(Document):
                 for name, func in functions.items():
                     setattr(self, name, func)
         
-        # Get constants from _constants_data
+        # Get constants from constants_data
         constants = {}
-        if hasattr(self, '_constants_data') and self._constants_data:
+        if hasattr(self, 'constants_data') and self.constants_data:
             try:
-                constants = json.loads(self._constants_data)
+                constants = json.loads(self.constants_data)
             except Exception as e:
                 frappe.log_error(f"Error loading constants data: {str(e)}")
         
@@ -249,7 +249,7 @@ class ScopeItems(Document):
         """Calculate scope-level totals"""
         if not self.scope_type or not self.items:
             # Clear totals if no items
-            self._totals_data = json.dumps({})
+            self.totals_data = json.dumps({})
             return
 
         scope_type = frappe.get_doc("Scope Type", self.scope_type)
@@ -357,11 +357,11 @@ class ScopeItems(Document):
                         else:  # sum
                             result = sum(item.get(sum_field, 0) for item in filtered_items)
                 else:
-                    # Get constants from _constants_data
+                    # Get constants from constants_data
                     constants = {}
-                    if hasattr(self, '_constants_data') and self._constants_data:
+                    if hasattr(self, 'constants_data') and self.constants_data:
                         try:
-                            constants = json.loads(self._constants_data)
+                            constants = json.loads(self.constants_data)
                             # Convert all constant values to float for calculations
                             constants = {k: flt(v) for k, v in constants.items()}
                         except Exception as e:
@@ -400,11 +400,11 @@ class ScopeItems(Document):
             except Exception as e:
                 frappe.throw(f"Error calculating {formula.label}: {str(e)}")
         
-        self._totals_data = json.dumps(totals)
+        self.totals_data = json.dumps(totals)
 
     def get_item_variables(self, item):
         """Get all variables for an item with defaults"""
-        if not item._data:
+        if not item.data:
             # Get scope type for default values
             scope_type = frappe.get_doc("Scope Type", self.scope_type)
             defaults = {}
@@ -425,18 +425,18 @@ class ScopeItems(Document):
             return defaults
             
         try:
-            return json.loads(item._data)
+            return json.loads(item.data)
         except json.JSONDecodeError:
             return {}
 
     def get_scope_totals(self):
         """Get scope-level totals with error handling"""
-        if not self._totals_data:
+        if not self.totals_data:
             return {}
         try:
-            return json.loads(self._totals_data)
+            return json.loads(self.totals_data)
         except json.JSONDecodeError:
-            frappe.log_error("Invalid JSON in _totals_data")
+            frappe.log_error("Invalid JSON in totals_data")
             return {}
 
     def get_field_values(self, field_name):
@@ -529,7 +529,7 @@ def save_multiple_scope_items(scope_items, items_data, clear_existing=False):
             'parentfield': 'items',
             'row_id': frappe.utils.cstr(frappe.utils.now_datetime().timestamp()),
             'item_name': item_data.get('item_name'),
-            '_data': json.dumps(item_data)
+            'data': json.dumps(item_data)
         }
         
         # Append the item using the dictionary
@@ -573,9 +573,9 @@ def get_template_with_formulas(scope_items, include_data=False):
         var_map = {field: f"Data!{get_column_letter(i+1)}{row_num}" 
                   for i, field in enumerate(headers)}
         const_map = {key: f"Constants!B{i+2}" 
-                    for i, key in enumerate(doc._constants_data and json.loads(doc._constants_data) or {})}
+                    for i, key in enumerate(doc.constants_data and json.loads(doc.constants_data) or {})}
         totals_map = {key: f"Totals!B{i+2}" 
-                     for i, key in enumerate(doc._totals_data and json.loads(doc._totals_data) or {})}
+                     for i, key in enumerate(doc.totals_data and json.loads(doc.totals_data) or {})}
         
         # Replace variable references
         excel_formula = formula
@@ -757,7 +757,7 @@ def get_template_with_formulas(scope_items, include_data=False):
                 )
             
             # Handle constants
-            constants = json.loads(doc._constants_data) if doc._constants_data else {}
+            constants = json.loads(doc.constants_data) if doc.constants_data else {}
             for i, (key, value) in enumerate(constants.items(), 2):
                 excel_formula = excel_formula.replace(
                     f"constants['{key}']",
@@ -800,7 +800,7 @@ def get_template_with_formulas(scope_items, include_data=False):
     if include_data and doc.items:
         for item in doc.items:
             try:
-                data = json.loads(item._data or '{}')
+                data = json.loads(item.data or '{}')
             except json.JSONDecodeError:
                 data = {}
             
@@ -834,8 +834,8 @@ def get_template_with_formulas(scope_items, include_data=False):
     constants_sheet.cell(row=1, column=1, value='Name').font = Font(bold=True)
     constants_sheet.cell(row=1, column=2, value='Value').font = Font(bold=True)
     
-    if doc._constants_data:
-        constants = json.loads(doc._constants_data)
+    if doc.constants_data:
+        constants = json.loads(doc.constants_data)
         for i, (key, value) in enumerate(constants.items(), 2):
             constants_sheet.cell(row=i, column=1, value=key)
             constants_sheet.cell(row=i, column=2, value=value)
@@ -853,7 +853,7 @@ def get_template_with_formulas(scope_items, include_data=False):
     items_data = []
     for item in doc.items:
         try:
-            item_data = json.loads(item._data) if item._data else {}
+            item_data = json.loads(item.data) if item.data else {}
             items_data.append(item_data)
         except json.JSONDecodeError:
             items_data.append({})
@@ -873,7 +873,7 @@ def get_template_with_formulas(scope_items, include_data=False):
         "count": lambda field: sum(1 for item in items_data if field in item),
         "distinct_count": lambda field: len(set(item.get(field) for item in items_data if field in item)),
         "doc_totals": totals,
-        "constants": json.loads(doc._constants_data) if doc._constants_data else {}
+        "constants": json.loads(doc.constants_data) if doc.constants_data else {}
     }
     
     for i, formula in enumerate(totals_config, 2):

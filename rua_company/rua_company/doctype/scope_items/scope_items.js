@@ -11,7 +11,7 @@ frappe.ui.form.on('Scope Items', {
     items: function(frm) {
         new ScopeItemsRenderer(frm);
     },
-    _totals_data: function(frm) {
+    totals_data: function(frm) {
         new ScopeItemsRenderer(frm);
     }
 });
@@ -41,7 +41,7 @@ class ConstantsDialog {
         // Get current constants data
         let constants_data = {};
         try {
-            constants_data = JSON.parse(this.frm.doc._constants_data || '{}');
+            constants_data = JSON.parse(this.frm.doc.constants_data || '{}');
         } catch (e) {
             console.error('Error parsing constants data:', e);
         }
@@ -75,11 +75,11 @@ class ConstantsDialog {
     }
 
     save_constants(values) {
-        // Save constants to _constants_data
-        this.frm.doc._constants_data = JSON.stringify(values);
+        // Save constants to constants_data
+        this.frm.doc.constants_data = JSON.stringify(values);
         
         // Mark form as dirty and trigger change event
-        this.frm.set_value('_constants_data', this.frm.doc._constants_data);
+        this.frm.set_value('constants_data', this.frm.doc.constants_data);
         this.frm.dirty();
         // Save the form
         this.frm.save().then(() => {
@@ -133,7 +133,7 @@ class ScopeItemsRenderer {
 
         let constants_data = {};
         try {
-            constants_data = JSON.parse(this.frm.doc._constants_data || '{}');
+            constants_data = JSON.parse(this.frm.doc.constants_data || '{}');
         } catch (e) {
             console.error('Error parsing constants data:', e);
             return false;
@@ -204,7 +204,7 @@ class ScopeItemsRenderer {
         return (this.frm.doc.items || []).map(item => {
             let data = {};
             try {
-                data = JSON.parse(item._data || '{}');
+                data = JSON.parse(item.data || '{}');
             } catch (e) {
                 console.error('Error parsing item data:', e);
                 data = {};
@@ -274,11 +274,11 @@ class ScopeItemsRenderer {
     }
 
     render_totals() {
-        if (!this.frm.doc._totals_data) return;
+        if (!this.frm.doc.totals_data) return;
         
         let totals;
         try {
-            totals = JSON.parse(this.frm.doc._totals_data || '{}');
+            totals = JSON.parse(this.frm.doc.totals_data || '{}');
         } catch (e) {
             console.error('Error parsing totals data:', e);
             return;
@@ -339,7 +339,7 @@ class ScopeItemsRenderer {
         // Parse current constants data
         let constants_data = {};
         try {
-            constants_data = JSON.parse(this.frm.doc._constants_data || '{}');
+            constants_data = JSON.parse(this.frm.doc.constants_data || '{}');
         } catch (e) {
             console.error('Error parsing constants data:', e);
         }
@@ -647,7 +647,7 @@ class ScopeItemsRenderer {
                     label: field.label,
                     options: field.options,
                     reqd: field.reqd ? 1 : 0,
-                    default: item ? JSON.parse(item._data || '{}')[field.field_name] : field.default_value,
+                    default: item ? JSON.parse(item.data || '{}')[field.field_name] : field.default_value,
                     onchange: () => this.calculate_field_values(d, sorted_fields),
                     depends_on: item ? '1' : 'eval:doc.entry_mode === "single"',
                     mandatory_depends_on: field.reqd ? (item ? '1' : 'eval:doc.entry_mode === "single"') : '0'
@@ -663,7 +663,7 @@ class ScopeItemsRenderer {
                     fieldtype: field.field_type,
                     label: field.label,
                     read_only: 1,
-                    default: item ? JSON.parse(item._data || '{}')[field.field_name] : null
+                    default: item ? JSON.parse(item.data || '{}')[field.field_name] : null
                 })),
 
                 // Bulk Import Section
@@ -910,8 +910,8 @@ class ScopeItemsRenderer {
         });
 
         // Get current totals
-        const doc_totals = this.frm.doc._totals_data ? 
-            JSON.parse(this.frm.doc._totals_data) : {};
+        const doc_totals = this.frm.doc.totals_data ? 
+            JSON.parse(this.frm.doc.totals_data) : {};
 
         // Calculate each field in dependency order
         sorted_fields.forEach(field => {

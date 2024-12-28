@@ -9,8 +9,8 @@ import json
 class ScopeItemEntry(Document):
     def get_dynamic_value(self, field_name):
         """Get value from JSON storage"""
-        if self._data:
-            data = json.loads(self._data)
+        if self.data:
+            data = json.loads(self.data)
             return data.get(field_name)
         return None
 
@@ -32,13 +32,13 @@ class ScopeItemEntry(Document):
 
         data = {}
         try:
-            if self._data:
-                data = json.loads(self._data)
+            if self.data:
+                data = json.loads(self.data)
         except json.JSONDecodeError:
             data = {}
 
         data[field_name] = value
-        self._data = json.dumps(data)
+        self.data = json.dumps(data)
 
     def validate(self):
         """Validate required fields based on scope type"""

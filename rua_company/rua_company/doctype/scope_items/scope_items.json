@@ -19,8 +19,8 @@
   "totals_html",
   "section_break_dako",
   "items",
-  "_totals_data",
-  "_constants_data"
+  "totals_data",
+  "constants_data"
  ],
  "fields": [
   {
@@ -48,9 +48,9 @@
    "hidden": 1
   },
   {
-   "fieldname": "_totals_data",
+   "fieldname": "totals_data",
    "fieldtype": "JSON",
-   "label": "_totals_data"
+   "label": "totals_data"
   },
   {
    "fieldname": "items",
@@ -71,9 +71,9 @@
    "fieldtype": "HTML"
   },
   {
-   "fieldname": "_constants_data",
+   "fieldname": "constants_data",
    "fieldtype": "JSON",
-   "label": "_constants_data"
+   "label": "constants_data"
   },
   {
    "fieldname": "constants_html",
@@ -101,7 +101,7 @@
  "hide_toolbar": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-12-23 03:51:32.377668",
+ "modified": "2024-12-28 15:22:54.079481",
  "modified_by": "Administrator",
  "module": "Rua Company",
  "name": "Scope Items",

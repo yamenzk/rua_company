@@ -39,7 +39,7 @@ frappe.ui.form.on("Bill", {
                     if (r.message) {
                       let row = frm.add_child("scope_items");
                       row.scope_item = r.message.scope_item;
-                      row._data = JSON.stringify(r.message._data);
+                      row.data = JSON.stringify(r.message.data);
                       frm.refresh_field("scope_items");
                       frm.save();
                       d.hide();
@@ -154,10 +154,10 @@ function render_bill_data(frm) {
   // Parse scope items data
   const scope_items_data = {};
   frm.doc.scope_items.forEach((item) => {
-    if (!item.scope_item || !item._data) return;
+    if (!item.scope_item || !item.data) return;
 
     try {
-      const data = JSON.parse(item._data);
+      const data = JSON.parse(item.data);
       const scope_item_id = Object.keys(data)[0];
       scope_items_data[scope_item_id] = {
         name: item.scope_item,
@@ -171,7 +171,7 @@ function render_bill_data(frm) {
   // Parse bill totals
   let bill_totals = {};
   try {
-    bill_totals = JSON.parse(frm.doc._data || "{}");
+    bill_totals = JSON.parse(frm.doc.data || "{}");
   } catch (e) {
     console.error("Error parsing bill totals:", e);
   }
