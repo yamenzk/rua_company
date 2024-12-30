@@ -775,7 +775,7 @@ function generateOverviewSections(frm, bills, receiveVouchers, payVouchers) {
                 .section-content {
                     display: grid;
                     gap: 20px;
-                    grid-template-columns: repeat(3, 1fr);
+                    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
                 }
                 .overview-card {
                     background: white;
@@ -1003,7 +1003,7 @@ function generateOverviewSections(frm, bills, receiveVouchers, payVouchers) {
                     </svg>
                     <span class="section-title">Actual Financing</span>
                 </div>
-                <div class="section-content">
+                <div class="section-content" style="grid-template-columns: repeat(auto-fit, minmax(330px, 1fr));">
                     ${generateBillCard('Purchase Order', groupedBills['Purchase Order'])}
                     ${generateVoucherCard('Paid Payments', payVouchers, false)}
                     ${generateBillCard('Tax Invoice', groupedBills['Tax Invoice'])}
@@ -1017,7 +1017,7 @@ function generateOverviewSections(frm, bills, receiveVouchers, payVouchers) {
                     </svg>
                     <span class="section-title">Draft Financing</span>
                 </div>
-                <div class="section-content">
+                <div class="section-content" style="grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));">
                     ${Object.entries(groupedBills)
                         .filter(([type]) => !['Purchase Order', 'Tax Invoice'].includes(type))
                         .map(([type, bills]) => generateBillCard(type, bills))
@@ -1039,10 +1039,27 @@ function updateProjectDisplay(frm) {
         order_by: 'creation desc',
         limit: 1000
     }).then(bills => {
+        // Calculate project costs from submitted Purchase Order bills
+        const projectCosts = bills
+            .filter(bill => bill.docstatus === 1 && bill.bill_type === 'Purchase Order')
+            .reduce((total, bill) => total + (bill.grand_total || 0), 0);
+        
+        // Calculate profit percentage
+        const contractValue = frm.doc.contract_value || 0;
+        const profitAmount = contractValue - projectCosts;
+        const profitPercentage = contractValue > 0 ? (profitAmount / contractValue * 100) : 0;
+        
         // Filter bills based on their type and draft state
-        return bills.filter(bill => 
+        const filteredBills = bills.filter(bill => 
             bill.docstatus === 1 || showDraftsState[bill.bill_type]
         );
+        
+        return {
+            bills: filteredBills,
+            projectCosts,
+            profitAmount,
+            profitPercentage
+        };
     });
 
     const getReceiveVouchers = () => frappe.db.get_list('Payment Voucher', {
@@ -1155,18 +1172,39 @@ function updateProjectDisplay(frm) {
                     .meta-text {
                         font-size: 15px;
                     }
-                    .value-display {
+                    .value-cards {
+                        display: grid;
+                        grid-template-columns: repeat(3, 1fr);
+                        gap: 20px;
                         margin-top: 20px;
                         padding-top: 20px;
                         border-top: 1px solid #eee;
-                        cursor: pointer;
-                        padding: 8px;
-                        margin: -8px;
-                        border-radius: 4px;
-                        transition: background-color 0.2s;
                     }
-                    .value-display:hover {
-                        background-color: #f3f4f6;
+                    .value-card {
+                        background: #fff;
+                        padding: 16px;
+                        border-radius: 8px;
+                        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+                        transition: transform 0.2s, box-shadow 0.2s;
+                    }
+                    .value-card.contract-value {
+                        cursor: pointer;
+                    }
+                    .value-card.contract-value:hover {
+                        transform: translateY(-2px);
+                        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+                    }
+                    .value-card.project-costs {
+                        background: #f8fafc;
+                    }
+                    .value-card.project-profit {
+                        position: relative;
+                    }
+                    .value-card.project-profit.positive {
+                        background: #f0fdf4;
+                    }
+                    .value-card.project-profit.negative {
+                        background: #fef2f2;
                     }
                     .value-label {
                         font-size: 13px;
@@ -1176,9 +1214,22 @@ function updateProjectDisplay(frm) {
                         margin-bottom: 8px;
                     }
                     .value-amount {
-                        font-size: 28px;
+                        font-size: 24px;
                         font-weight: 600;
-                        color: #2563eb;
+                        color: #1a1a1a;
+                    }
+                    .profit-percentage {
+                        position: absolute;
+                        top: 16px;
+                        right: 16px;
+                        font-size: 14px;
+                        font-weight: 500;
+                    }
+                    .project-profit.positive .profit-percentage {
+                        color: #16a34a;
+                    }
+                    .project-profit.negative .profit-percentage {
+                        color: #dc2626;
                     }
                     .party-chips-container {
                         margin-top: 20px;
@@ -1317,25 +1368,39 @@ function updateProjectDisplay(frm) {
                                     <span class="editable-hint">(Click to edit)</span>
                                 </div>
                             </div>
-                            <div class="value-display">
-                                <div class="value-label">Contract Value</div>
-                                <div class="value-amount">${
-                                    frm.doc.contract_value ? 
-                                    format_currency(frm.doc.contract_value, 'AED', 0) : 
-                                    'Not specified'
-                                }</div>
-                                <span class="editable-hint">(Click to edit)</span>
+                            <div class="value-cards">
+                                <div class="value-card contract-value">
+                                    <div class="value-label">Contract Value</div>
+                                    <div class="value-amount">${
+                                        frm.doc.contract_value ? 
+                                        format_currency(frm.doc.contract_value, 'AED', 0) : 
+                                        'Not specified'
+                                    }</div>
+                                    <span class="editable-hint">(Click to edit)</span>
+                                </div>
+                                <div class="value-card project-costs">
+                                    <div class="value-label">Project Costs</div>
+                                    <div class="value-amount">${format_currency(bills.projectCosts, 'AED', 0)}</div>
+                                </div>
+                                <div class="value-card project-profit ${bills.profitAmount >= 0 ? 'positive' : 'negative'}">
+                                    <div class="value-label">Project Profit</div>
+                                    <div class="value-amount">${format_currency(bills.profitAmount, 'AED', 0)}</div>
+                                    <div class="profit-percentage">${bills.profitPercentage.toFixed(1)}%</div>
+                                </div>
                             </div>
                             ${generatePartyChips(frm)}
                         </div>
                     </div>
-                    ${generateOverviewSections(frm, bills, receiveVouchers, payVouchers)}
+                    ${generateOverviewSections(frm, bills.bills, receiveVouchers, payVouchers)}
                 </div>
             `;
             
             frm.set_df_property('project_html', 'options', projectHtml);
             
-            // Setup toggle event listeners after the HTML is rendered
-            setTimeout(() => setupDraftToggles(frm), 100);
+            // Setup toggle event listeners and click handlers after the HTML is rendered
+            setTimeout(() => {
+                setupDraftToggles(frm);
+                setupClickHandlers(frm);
+            }, 100);
         });
 }
