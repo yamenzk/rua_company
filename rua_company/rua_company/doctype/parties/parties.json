@@ -12,7 +12,9 @@
   "column_break_ldcq",
   "image",
   "phone",
-  "email"
+  "email",
+  "trn",
+  "emirate"
  ],
  "fields": [
   {
@@ -60,12 +62,24 @@
    "in_list_view": 1,
    "label": "Section",
    "options": "\nAluminum\nGlass\nCladding"
+  },
+  {
+   "fetch_from": "party.trn",
+   "fieldname": "trn",
+   "fieldtype": "Read Only",
+   "label": "TRN"
+  },
+  {
+   "fetch_from": "party.emirate",
+   "fieldname": "emirate",
+   "fieldtype": "Read Only",
+   "label": "Emirate"
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-12-09 13:24:21.323246",
+ "modified": "2024-12-30 20:41:58.305953",
  "modified_by": "Administrator",
  "module": "Rua Company",
  "name": "Parties",

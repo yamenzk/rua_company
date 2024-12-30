@@ -5,18 +5,66 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "project_name"
+  "project_dashboard_tab",
+  "project_html",
+  "details_tab",
+  "project_name",
+  "location",
+  "contract_value",
+  "column_break_qgzt",
+  "parties",
+  "image"
  ],
  "fields": [
   {
    "fieldname": "project_name",
    "fieldtype": "Data",
    "label": "Project Name"
+  },
+  {
+   "fieldname": "column_break_qgzt",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "parties",
+   "fieldtype": "Table",
+   "label": "Parties",
+   "options": "Parties"
+  },
+  {
+   "fieldname": "location",
+   "fieldtype": "Data",
+   "label": "Location"
+  },
+  {
+   "fieldname": "contract_value",
+   "fieldtype": "Currency",
+   "label": "Contract Value"
+  },
+  {
+   "fieldname": "project_dashboard_tab",
+   "fieldtype": "Tab Break",
+   "label": "Project Dashboard"
+  },
+  {
+   "fieldname": "details_tab",
+   "fieldtype": "Tab Break",
+   "label": "Details"
+  },
+  {
+   "fieldname": "project_html",
+   "fieldtype": "HTML"
+  },
+  {
+   "fieldname": "image",
+   "fieldtype": "Attach Image",
+   "label": "Image"
   }
  ],
+ "image_field": "image",
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-12-20 15:06:59.237650",
+ "modified": "2024-12-30 20:13:29.135217",
  "modified_by": "Administrator",
  "module": "Rua Company",
  "name": "Project",
