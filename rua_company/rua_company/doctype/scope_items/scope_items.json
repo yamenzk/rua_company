@@ -1,7 +1,7 @@
 {
  "actions": [],
  "allow_copy": 1,
- "allow_rename": 1,
+ "autoname": "format:{project}-{scope_type}-{label}",
  "creation": "2024-12-20 15:09:00.228807",
  "doctype": "DocType",
  "engine": "InnoDB",
@@ -10,6 +10,7 @@
   "column_break_ooqj",
   "project",
   "column_break_byga",
+  "label",
   "status",
   "section_break_whlu",
   "constants_html",
@@ -40,7 +41,8 @@
    "fieldname": "status",
    "fieldtype": "Select",
    "label": "Status",
-   "options": "Draft\nAssigned"
+   "options": "Draft\nAssigned",
+   "read_only": 1
   },
   {
    "fieldname": "section_break_dako",
@@ -83,7 +85,8 @@
    "fieldname": "project",
    "fieldtype": "Link",
    "label": "Project",
-   "options": "Project"
+   "options": "Project",
+   "reqd": 1
   },
   {
    "fieldname": "column_break_byga",
@@ -96,15 +99,22 @@
   {
    "fieldname": "section_break_hjhv",
    "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "label",
+   "fieldtype": "Data",
+   "label": "Label",
+   "reqd": 1
   }
  ],
  "hide_toolbar": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-12-28 15:22:54.079481",
+ "modified": "2024-12-30 17:48:46.987029",
  "modified_by": "Administrator",
  "module": "Rua Company",
  "name": "Scope Items",
+ "naming_rule": "Expression",
  "owner": "Administrator",
  "permissions": [
   {

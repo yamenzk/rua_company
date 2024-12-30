@@ -1,6 +1,5 @@
 {
  "actions": [],
- "autoname": "naming_series:",
  "creation": "2024-12-23 00:49:07.415714",
  "doctype": "DocType",
  "engine": "InnoDB",
@@ -9,8 +8,8 @@
   "amended_from",
   "column_break_mrqc",
   "date",
+  "bill_number",
   "auto_update_items",
-  "naming_series",
   "section_break_3ypv",
   "column_break_nskj",
   "party",
@@ -54,8 +53,10 @@
   {
    "fieldname": "party",
    "fieldtype": "Link",
+   "in_list_view": 1,
    "label": "Party",
-   "options": "Party"
+   "options": "Party",
+   "reqd": 1
   },
   {
    "fieldname": "section_break_puof",
@@ -65,17 +66,22 @@
   {
    "fieldname": "project",
    "fieldtype": "Link",
+   "in_list_view": 1,
    "label": "Project",
-   "options": "Project"
+   "options": "Project",
+   "reqd": 1
   },
   {
    "fieldname": "column_break_ikxu",
    "fieldtype": "Column Break"
   },
   {
+   "default": "Today",
    "fieldname": "date",
    "fieldtype": "Date",
-   "label": "Date"
+   "in_list_view": 1,
+   "label": "Date",
+   "reqd": 1
   },
   {
    "default": "0",
@@ -102,8 +108,10 @@
   {
    "fieldname": "bill_type",
    "fieldtype": "Select",
+   "in_list_view": 1,
    "label": "Bill Type",
-   "options": "\nRequest for Quotation\nPurchase Order\nQuotation\nProforma\nTax Invoice"
+   "options": "\nRequest for Quotation\nPurchase Order\nQuotation\nProforma\nTax Invoice",
+   "reqd": 1
   },
   {
    "fieldname": "section_break_rjxe",
@@ -175,20 +183,20 @@
    "read_only": 1
   },
   {
-   "fieldname": "naming_series",
-   "fieldtype": "Select",
-   "hidden": 1,
-   "label": "Naming Series"
+   "allow_on_submit": 1,
+   "fieldname": "bill_number",
+   "fieldtype": "Int",
+   "label": "Bill Number",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-12-30 17:21:35.864926",
+ "modified": "2024-12-30 17:50:31.013123",
  "modified_by": "Administrator",
  "module": "Rua Company",
  "name": "Bill",
- "naming_rule": "By \"Naming Series\" field",
  "owner": "Administrator",
  "permissions": [
   {

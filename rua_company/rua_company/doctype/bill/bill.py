@@ -7,8 +7,76 @@ from frappe.model.document import Document
 from frappe.utils import cint
 
 class Bill(Document):
+	def autoname(self):
+		"""Set up naming series based on bill_type"""
+		series_mapping = {
+			'Purchase Order': 'RC-LPO-.YYYY.',
+			'Request for Quotation': 'RC-RFQ-.YYYY.',
+			'Tax invoice': 'RC-TAX-.YYYY.',
+			'Proforma': 'RC-PRO-.YYYY.',
+			'Quotation': 'RC-QTN-.YYYY.'
+		}
+		
+		if self.bill_type in series_mapping:
+			self.naming_series = series_mapping[self.bill_type]
+			self.name = frappe.model.naming.make_autoname(self.naming_series)
+
 	def validate(self):
 		self.update_totals()
+		if self.bill_type in ['Purchase Order', 'Tax Invoice'] and self.payment_status == 'N/B':
+			self.payment_status = 'Unpaid'
+	
+	def on_submit(self):
+		"""Set bill_number based on highest bill number for same project and bill_type"""
+		# Get the highest bill number for the same project and bill type
+		highest_bill = frappe.get_all(
+			"Bill",
+			filters={
+				"project": self.project,
+				"bill_type": self.bill_type,
+				"docstatus": 1,  # Only consider submitted documents
+				"name": ("!=", self.name)  # Exclude current document
+			},
+			fields=["bill_number"],
+			order_by="bill_number desc",
+			limit=1
+		)
+		
+		# Set bill_number to highest + 1, or 1 if no previous bills exist
+		if highest_bill:
+			self.bill_number = (highest_bill[0].bill_number or 0) + 1
+		else:
+			self.bill_number = 1
+		
+		# Save the changes
+		self.db_set('bill_number', self.bill_number)
+	
+	def on_cancel(self):
+		"""Reconcile bill numbers after cancellation"""
+		# Get all bills with higher numbers
+		subsequent_bills = frappe.get_all(
+			"Bill",
+			filters={
+				"project": self.project,
+				"bill_type": self.bill_type,
+				"docstatus": 1,  # Only consider submitted documents
+				"bill_number": (">", self.bill_number)  # Get bills with higher numbers
+			},
+			fields=["name", "bill_number"],
+			order_by="bill_number asc"
+		)
+		
+		# Update bill numbers for all subsequent bills
+		for bill in subsequent_bills:
+			frappe.db.set_value(
+				"Bill",
+				bill.name,
+				"bill_number",
+				bill.bill_number - 1
+			)
+		
+		if subsequent_bills:
+			frappe.db.commit()
 	
 	def update_totals(self):
 		"""Update bill totals by summing scope item totals of the same type"""

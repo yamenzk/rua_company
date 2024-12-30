@@ -5,6 +5,14 @@ import frappe
 from frappe.model.document import Document
 
 class PaymentVoucher(Document):
+    def autoname(self):
+        """Set up naming series based on type"""
+        if self.type == "Pay":
+            self.naming_series = "RC-PAY-.YYYY."
+        else:
+            self.naming_series = "RC-REC-.YYYY."
+        self.name = frappe.model.naming.make_autoname(self.naming_series)
+
     def on_submit(self):
         if self.bill:
             frappe.db.set_value('Bill', self.bill, 'payment_status', 'Paid')
