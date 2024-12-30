@@ -1,0 +1,169 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2024-12-30 13:43:48.574776",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_break_yqv7",
+  "type",
+  "party",
+  "column_break_nzfi",
+  "date",
+  "project",
+  "column_break_ribb",
+  "amended_from",
+  "bill",
+  "section_break_uran",
+  "mode",
+  "payment_amount",
+  "column_break_wibg",
+  "ref",
+  "bank",
+  "section_break_gvng",
+  "details",
+  "petty_cash"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_break_yqv7",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Payment Voucher",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Type",
+   "options": "\nPay\nReceive",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "party",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Party",
+   "options": "Party",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_nzfi",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Today",
+   "fieldname": "date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "project",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Project",
+   "options": "Project",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_ribb",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "bill",
+   "fieldtype": "Link",
+   "label": "Bill",
+   "options": "Bill",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_break_uran",
+   "fieldtype": "Section Break"
+  },
+  {
+   "default": "Cash",
+   "fieldname": "mode",
+   "fieldtype": "Select",
+   "label": "Mode",
+   "options": "Cash\nBank\nCheque",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_wibg",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "ref",
+   "fieldtype": "Data",
+   "label": "Ref"
+  },
+  {
+   "fieldname": "bank",
+   "fieldtype": "Data",
+   "label": "Bank"
+  },
+  {
+   "fieldname": "section_break_gvng",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "details",
+   "fieldtype": "Small Text",
+   "label": "Details"
+  },
+  {
+   "default": "0",
+   "fieldname": "petty_cash",
+   "fieldtype": "Check",
+   "label": "Petty Cash",
+   "read_only": 1
+  },
+  {
+   "fieldname": "payment_amount",
+   "fieldtype": "Currency",
+   "label": "Amount",
+   "non_negative": 1,
+   "reqd": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2024-12-30 14:15:48.751564",
+ "modified_by": "Administrator",
+ "module": "Rua Company",
+ "name": "Payment Voucher",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

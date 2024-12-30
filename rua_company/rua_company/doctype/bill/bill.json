@@ -27,8 +27,8 @@
   "section_break_puof",
   "scope_items",
   "data",
-  "tab_2_tab",
-  "signature"
+  "quotation_tab",
+  "content"
  ],
  "fields": [
   {
@@ -57,7 +57,8 @@
   },
   {
    "fieldname": "section_break_puof",
-   "fieldtype": "Section Break"
+   "fieldtype": "Section Break",
+   "hidden": 1
   },
   {
    "fieldname": "project",
@@ -138,31 +139,35 @@
    "read_only": 1
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "payment_status",
    "fieldtype": "Select",
    "label": "Payment Status",
-   "options": "\nPaid\nPartially Paid\nUnpaid"
-  },
-  {
-   "fieldname": "tab_2_tab",
-   "fieldtype": "Tab Break",
-   "label": "Signature"
-  },
-  {
-   "fieldname": "signature",
-   "fieldtype": "Signature",
-   "label": "Signature"
+   "options": "N/P\nPaid\nUnpaid",
+   "read_only": 1
   },
   {
    "fieldname": "data",
    "fieldtype": "JSON",
    "label": "data"
+  },
+  {
+   "depends_on": "eval:doc.bill_type == \"Quotation\"",
+   "fieldname": "quotation_tab",
+   "fieldtype": "Tab Break",
+   "label": "Quotation"
+  },
+  {
+   "default": "<p><strong>SPECIFICATION</strong></p><ol><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span><u>ALUMINUM</u>: \"ALUMIL\" ATTESTED SYSTEM.</li><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span><u>GLASS</u>: \"GUARDIAN GLASS\" DOUBLE TEMPERED GLASS (6MM CLEAR TEMPERED GLASS + 16MM SILICONE AIR SPACER + 6MM REFLECTIVE TEMPERED GLASS)</li><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span><u>FINISHES</u>: SUPER DURABLED POWDER COATED</li></ol><p><br></p><p><strong>STANDARD SPECIFICATIONS</strong></p><p>OUR OFFER IS BASED ON THE ITEMS LISTED IN YOUR RECEIVED BOQ AND DRAWINGS (SUBJECT TO RE-MEASUREMENT ON SITE). ANY ITEMS NOT INCLUDED IN THE BOQ HAVE BEEN EXCLUDED FROM OUR BID. ANY ADDITIONAL ITEMS WILL BE SUBJECT TO PRICE ADJUSTMENTS.</p><p><br></p><p><strong>SCOPE OF WORK</strong></p><ol><li data-list=\"unchecked\"><span class=\"ql-ui\" contenteditable=\"false\"></span>ALUMINUM DOORS &amp; WINDOWS</li><li data-list=\"unchecked\"><span class=\"ql-ui\" contenteditable=\"false\"></span>CURTAIN WALLS</li><li data-list=\"unchecked\"><span class=\"ql-ui\" contenteditable=\"false\"></span>HANDRAILS</li><li data-list=\"unchecked\"><span class=\"ql-ui\" contenteditable=\"false\"></span>GLASS PARTITION</li><li data-list=\"unchecked\"><span class=\"ql-ui\" contenteditable=\"false\"></span>ALUMINUM PERGOLA</li><li data-list=\"unchecked\"><span class=\"ql-ui\" contenteditable=\"false\"></span>ANY FIRE RATED WORKS</li></ol><p><br></p><p><strong>EXCLUSIONS</strong></p><p>DOOR CLOSER, SUBFRAME, CAT LADDER, FIRE RATED CURTAIN WALLS, DOOR &amp; WINDOWS, CRANE, SCAFFOLDING, CRADLE, ELECTRICITY, WATER &amp; ANY ITEM NOT MENTIONED OR INCLUDED IN THE ATTACHED DOCUMENTS.</p><p><br></p><p><strong>TERMS AND CONDITIONS</strong></p><ol><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span>THE PROPOSAL IS STRICTLY BASED ON ITEMS AS DESCRIBED IN THE BOQ AND THIS LETTER. ITEMS NOT SPECIFICALLY MENTIONED IN THE BILL OF QUANTITY OR THIS LETTER SHOULD NOT BE CONSIDERED AS PART OF THIS SCOPE OF WORKS/QUOTATION.</li><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span>CUTTING LIST WILL BE BASED ON THE APPROVED SHOP DRAWINGS.</li><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span>ALL ACCESS REQUIREMENTS AND EQUIPMENT ARE TO BE PROVIDED BY THE MAIN CONTRACTOR AT NO ADDITIONAL COST.</li><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span>ELECTRICITY, WATER, STORAGE AREAS, AND/OR ADEQUATE SITE OFFICES REQUIRED FOR THE EXECUTION OF THE PROJECT SHALL BE PROVIDED BY THE MAIN CONTRACTOR.</li><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span>WE HAVE NOT MADE ANY PROVISION FOR CARNAGE, MONORAILS, CRADLES AND SCAFFOLDING. ALL ACCESS REQUIREMENTS AND EQUIPMENT ARE TO BE PROVIDED BY THE MAIN CONTRACTOR FREE OF CHARGE.</li><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span>THIRD PARTY TESTING CHARGES FOR ALUMINUM AND CLADDING WORKS (IF APPLICABLE) ARE PAYABLE FOR THE MAIN CONTRACTOR ONLY. </li><li data-list=\"bullet\"><span class=\"ql-ui\" contenteditable=\"false\"></span>MAIN CONTRACTOR TO PAY FOR ALL INSPECTION CHARGES FOR ALUMINUM, GLASS AND CLADDING.</li></ol><p><br></p><p><strong>PROPOSAL BASIS</strong></p><p>THE PROPOSAL WILL BE BASED ON THE FOLLOWING DOCUMENTS</p><ol><li data-list=\"ordered\"><span class=\"ql-ui\" contenteditable=\"false\"></span>AS PER ATTACHED BOQ</li><li data-list=\"ordered\"><span class=\"ql-ui\" contenteditable=\"false\"></span>AS PER ATTACHED DRAWINGS</li></ol><p><br></p><p><strong>DURATION</strong></p><p>AS AGREED.</p><p><br></p><p><strong>PAYMENT TERMS</strong></p><p>TO BE DISCUSSED.</p><p><br></p><p><strong>MAINTENANCE AND WARRANTY</strong></p><p>RUA COMPANY ALUMINUM AND GLASS IS PLEASED TO OFFER A COMPREHENSIVE ONE-YEAR WARRANTY FOR ALL ALUMINUM ITEMS SUPPLIED FOR THIS PROJECT. COMMENCING FROM THE INITIAL HANDOVER DATE, THIS WARRANTY COVERS ANY TECHNICAL FAULTS. PLEASE NOTE THAT DAMAGES RESULTING FROM MISHANDLING ARE EXCLUDED FROM THIS MAINTENANCE GUARANTEE. FOR OTHER ITEMS SUCH AS GLASS, ALUMINUM FINISHING, ETC., OUR STANDARD WARRANTY WILL APPLY. WE ARE COMMITTED TO DELIVERING TOP-QUALITY PRODUCTS AND STAND FIRMLY BEHIND THE WORK WE PERFORM. IF YOU HAVE ANY QUESTIONS REGARDING OUR WARRANTIES, PLEASE DO NOT HESITATE TO CONTACT US. WE ARE EXCITED ABOUT THE OPPORTUNITY TO COLLABORATE WITH YOU AND LOOK FORWARD TO A SUCCESSFUL PARTNERSHIP. THANK YOU FOR CHOOSING RUA COMPANY ALUMINUM AND GLASS FOR YOUR PROJECT. WE HIGHLY VALUE YOUR BUSINESS AND LOOK FORWARD TO SERVING YOU.</p><p></p><p></p><p></p><p></p>",
+   "fieldname": "content",
+   "fieldtype": "Text Editor",
+   "label": "Content"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-12-28 15:18:47.760991",
+ "modified": "2024-12-30 14:02:08.213445",
  "modified_by": "Administrator",
  "module": "Rua Company",
  "name": "Bill",

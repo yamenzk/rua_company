@@ -3,6 +3,19 @@
 
 frappe.ui.form.on("Bill", {
   refresh: function (frm) {
+    if (frm.doc.docstatus === 1 && (frm.doc.bill_type === "Tax Invoice" || frm.doc.bill_type === "Purchase Order")) {
+      frm.add_custom_button(__("Generate Payment"), function () {
+        frappe.new_doc("Payment Voucher", {
+          payment_amount: parseFloat(frm.doc.grand_total),
+          party: frm.doc.party,
+          date: frappe.datetime.get_today(),
+          project: frm.doc.project,
+          bill: frm.doc.name,
+          type: frm.doc.bill_type === "Purchase Order" ? "Pay" : "Receive"
+        });
+      });
+    }
+
     if (frm.doc.docstatus !== 1) {
       frm
         .add_custom_button(__("Add Items"), function () {
