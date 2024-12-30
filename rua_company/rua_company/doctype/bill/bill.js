@@ -3,16 +3,20 @@
 
 frappe.ui.form.on("Bill", {
   refresh: function (frm) {
-    if (frm.doc.docstatus === 1 && (frm.doc.bill_type === "Tax Invoice" || frm.doc.bill_type === "Purchase Order")) {
+    if (frm.doc.docstatus === 1 && frm.doc.payment_status != "Paid" && (frm.doc.bill_type === "Tax Invoice" || frm.doc.bill_type === "Purchase Order")) {
       frm.add_custom_button(__("Generate Payment"), function () {
-        frappe.new_doc("Payment Voucher", {
-          payment_amount: parseFloat(frm.doc.grand_total),
-          party: frm.doc.party,
-          date: frappe.datetime.get_today(),
-          project: frm.doc.project,
-          bill: frm.doc.name,
-          type: frm.doc.bill_type === "Purchase Order" ? "Pay" : "Receive"
-        });
+        const payment = frappe.model.get_new_doc("Payment Voucher");
+        payment.type = frm.doc.bill_type === "Purchase Order" ? "Pay" : "Receive";
+        payment.party = frm.doc.party;
+        payment.date = frappe.datetime.get_today();
+        payment.project = frm.doc.project;
+        payment.bill = frm.doc.name;
+        payment.mode = "Cash"
+        payment.payment_amount = frm.doc.grand_total;
+        frappe.set_route("Form", payment.doctype, payment.name);
+      }).css({
+        "background-color": "green",
+        "color": "white"
       });
     }
 

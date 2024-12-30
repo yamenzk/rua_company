@@ -1,21 +1,23 @@
 {
  "actions": [],
- "allow_rename": 1,
+ "autoname": "naming_series:",
  "creation": "2024-12-23 00:49:07.415714",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "section_break_3ypv",
-  "column_break_ikxu",
   "bill_type",
-  "payment_status",
   "amended_from",
-  "column_break_nskj",
-  "project",
-  "party",
-  "column_break_ntov",
+  "column_break_mrqc",
   "date",
   "auto_update_items",
+  "naming_series",
+  "section_break_3ypv",
+  "column_break_nskj",
+  "party",
+  "project",
+  "column_break_ikxu",
+  "payment_status",
+  "payment_voucher",
   "section_break_hfxf",
   "bill_html",
   "section_break_rjxe",
@@ -76,11 +78,8 @@
    "label": "Date"
   },
   {
-   "fieldname": "column_break_ntov",
-   "fieldtype": "Column Break"
-  },
-  {
    "default": "0",
+   "depends_on": "eval:doc.docstatus == 0",
    "description": "Document must remain as 'Draft'",
    "fieldname": "auto_update_items",
    "fieldtype": "Check",
@@ -162,15 +161,34 @@
    "fieldname": "content",
    "fieldtype": "Text Editor",
    "label": "Content"
+  },
+  {
+   "fieldname": "column_break_mrqc",
+   "fieldtype": "Column Break"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "payment_voucher",
+   "fieldtype": "Link",
+   "label": "Payment Voucher",
+   "options": "Payment Voucher",
+   "read_only": 1
+  },
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "hidden": 1,
+   "label": "Naming Series"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-12-30 14:02:08.213445",
+ "modified": "2024-12-30 17:21:35.864926",
  "modified_by": "Administrator",
  "module": "Rua Company",
  "name": "Bill",
+ "naming_rule": "By \"Naming Series\" field",
  "owner": "Administrator",
  "permissions": [
   {
