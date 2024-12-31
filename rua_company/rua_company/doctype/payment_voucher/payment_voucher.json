@@ -86,8 +86,7 @@
    "fieldtype": "Link",
    "label": "Bill",
    "options": "Bill",
-   "read_only": 1,
-   "reqd": 1
+   "read_only": 1
   },
   {
    "fieldname": "section_break_uran",
@@ -142,7 +141,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-12-30 17:39:31.852746",
+ "modified": "2024-12-31 13:05:25.337966",
  "modified_by": "Administrator",
  "module": "Rua Company",
  "name": "Payment Voucher",

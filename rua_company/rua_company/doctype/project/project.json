@@ -11,6 +11,7 @@
   "project_name",
   "location",
   "contract_value",
+  "status",
   "column_break_qgzt",
   "parties",
   "image"
@@ -59,12 +60,18 @@
    "fieldname": "image",
    "fieldtype": "Attach Image",
    "label": "Image"
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Tender\nJob In Hand\nIn Progress\nCompleted\nCancelled"
   }
  ],
  "image_field": "image",
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-12-30 20:13:29.135217",
+ "modified": "2024-12-31 14:04:15.851307",
  "modified_by": "Administrator",
  "module": "Rua Company",
  "name": "Project",
@@ -85,5 +92,26 @@
  ],
  "sort_field": "modified",
  "sort_order": "DESC",
- "states": []
+ "states": [
+  {
+   "color": "Yellow",
+   "title": "Tender"
+  },
+  {
+   "color": "Pink",
+   "title": "Job In Hand"
+  },
+  {
+   "color": "Purple",
+   "title": "In Progress"
+  },
+  {
+   "color": "Cyan",
+   "title": "Completed"
+  },
+  {
+   "color": "Gray",
+   "title": "Cancelled"
+  }
+ ]
 }

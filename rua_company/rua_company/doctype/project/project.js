@@ -4,6 +4,108 @@
 frappe.ui.form.on("Project", {
     refresh(frm) {
         updateProjectDisplay(frm);
+        
+        // Add status chip to the header
+        updateStatusChip(frm);
+        
+        // Status change buttons based on current status
+        if (frm.doc.status === "Tender") {
+            frm.add_custom_button(__('Change to Job In Hand'), function() {
+                frm.set_value('status', 'Job In Hand');
+                frm.save();
+            }, __('Status'));
+            
+            frm.add_custom_button(__('Cancel Project'), function() {
+                frm.set_value('status', 'Cancelled');
+                frm.save();
+            }, __('Status'));
+        }
+        
+        if (frm.doc.status === "Job In Hand") {
+            frm.add_custom_button(__('Start Progress'), function() {
+                frm.set_value('status', 'In Progress');
+                frm.save();
+            }, __('Status'));
+            
+            frm.add_custom_button(__('Cancel Project'), function() {
+                frm.set_value('status', 'Cancelled');
+                frm.save();
+            }, __('Status'));
+        }
+        
+        if (frm.doc.status === "In Progress") {
+            frm.add_custom_button(__('Mark as Completed'), function() {
+                frm.set_value('status', 'Completed');
+                frm.save();
+            }, __('Status'));
+            
+            frm.add_custom_button(__('Cancel Project'), function() {
+                frm.set_value('status', 'Cancelled');
+                frm.save();
+            }, __('Status'));
+        }
+        
+        // Add Additional Expense button
+        frm.add_custom_button(__('Add Additional Expense'), function() {
+            let d = new frappe.ui.Dialog({
+                title: __('Add Additional Expense'),
+                fields: [
+                    {
+                        label: __('Party'),
+                        fieldname: 'party',
+                        fieldtype: 'Link',
+                        options: 'Party',
+                        reqd: 1
+                    },
+                    {
+                        label: __('Date'),
+                        fieldname: 'date',
+                        fieldtype: 'Date',
+                        default: frappe.datetime.get_today(),
+                        reqd: 1
+                    },
+                    {
+                        label: __('Amount'),
+                        fieldname: 'amount',
+                        fieldtype: 'Currency',
+                        reqd: 1
+                    },
+                    {
+                        label: __('Details'),
+                        fieldname: 'details',
+                        fieldtype: 'Small Text',
+                        reqd: 1
+                    }
+                ],
+                primary_action_label: __('Create'),
+                primary_action(values) {
+                    frappe.call({
+                        method: 'rua_company.rua_company.doctype.project.project.create_additional_expense',
+                        args: {
+                            self: frm.doc.name,
+                            party: values.party,
+                            date: values.date,
+                            amount: values.amount,
+                            details: values.details
+                        },
+                        callback: function(r) {
+                            if (r.message) {
+                                frappe.show_alert({
+                                    message: __('Payment Voucher created and submitted successfully'),
+                                    indicator: 'green'
+                                });
+                                frm.reload_doc();
+                                d.hide();
+                            }
+                        },
+                        error: function(r) {
+                            frappe.msgprint(__('Error creating payment voucher. Please check the error log.'));
+                        }
+                    });
+                }
+            });
+            d.show();
+        });
     },
     
     project_name: function(frm) { updateProjectDisplay(frm); },
@@ -447,134 +549,142 @@ function showAddPartyDialog(frm) {
 }
 
 function setupClickHandlers(frm) {
-    // Project Name
-    $('.project-name').off('click').on('click', function() {
-        let d = new frappe.ui.Dialog({
-            title: 'Edit Project Name',
-            fields: [
-                {
-                    label: 'Project Name',
-                    fieldname: 'project_name',
-                    fieldtype: 'Data',
-                    reqd: 1,
-                    default: frm.doc.project_name
+    // Wait for the HTML to be rendered
+    setTimeout(() => {
+        // Project Name
+        $('.project-name').off('click').on('click', function() {
+            let d = new frappe.ui.Dialog({
+                title: 'Edit Project Name',
+                fields: [
+                    {
+                        label: 'Project Name',
+                        fieldname: 'project_name',
+                        fieldtype: 'Data',
+                        reqd: 1,
+                        default: frm.doc.project_name
+                    }
+                ],
+                size: 'small',
+                primary_action_label: 'Update',
+                primary_action(values) {
+                    frappe.model.set_value(frm.doctype, frm.docname, 'project_name', values.project_name)
+                        .then(() => {
+                            frm.save().then(() => {
+                                d.hide();
+                                frappe.show_alert({
+                                    message: __('Project Name Updated'),
+                                    indicator: 'green'
+                                });
+                            });
+                        });
                 }
-            ],
-            size: 'small',
-            primary_action_label: 'Update',
-            primary_action(values) {
-                frappe.model.set_value(frm.doctype, frm.docname, 'project_name', values.project_name)
-                    .then(() => {
-                        frm.save().then(() => {
-                            d.hide();
-                            frappe.show_alert({
-                                message: __('Project Name Updated'),
-                                indicator: 'green'
+            });
+            d.show();
+        });
+
+        // Location
+        $('.meta-item').off('click').on('click', function() {
+            let d = new frappe.ui.Dialog({
+                title: 'Edit Location',
+                fields: [
+                    {
+                        label: 'Location',
+                        fieldname: 'location',
+                        fieldtype: 'Data',
+                        reqd: 1,
+                        default: frm.doc.location
+                    }
+                ],
+                size: 'small',
+                primary_action_label: 'Update',
+                primary_action(values) {
+                    frappe.model.set_value(frm.doctype, frm.docname, 'location', values.location)
+                        .then(() => {
+                            frm.save().then(() => {
+                                d.hide();
+                                frappe.show_alert({
+                                    message: __('Location Updated'),
+                                    indicator: 'green'
+                                });
                             });
                         });
-                    });
-            }
-        });
-        d.show();
-    });
-
-    // Location
-    $('.meta-item').off('click').on('click', function() {
-        let d = new frappe.ui.Dialog({
-            title: 'Edit Location',
-            fields: [
-                {
-                    label: 'Location',
-                    fieldname: 'location',
-                    fieldtype: 'Data',
-                    reqd: 1,
-                    default: frm.doc.location
                 }
-            ],
-            size: 'small',
-            primary_action_label: 'Update',
-            primary_action(values) {
-                frappe.model.set_value(frm.doctype, frm.docname, 'location', values.location)
-                    .then(() => {
-                        frm.save().then(() => {
-                            d.hide();
-                            frappe.show_alert({
-                                message: __('Location Updated'),
-                                indicator: 'green'
+            });
+            d.show();
+        });
+
+        // Contract Value
+        $('.value-display').off('click').on('click', function() {
+            let d = new frappe.ui.Dialog({
+                title: 'Edit Contract Value',
+                fields: [
+                    {
+                        label: 'Contract Value (AED)',
+                        fieldname: 'contract_value',
+                        fieldtype: 'Currency',
+                        reqd: 1,
+                        default: frm.doc.contract_value,
+                        options: 'AED'
+                    }
+                ],
+                size: 'small',
+                primary_action_label: 'Update',
+                primary_action(values) {
+                    frappe.model.set_value(frm.doctype, frm.docname, 'contract_value', values.contract_value)
+                        .then(() => {
+                            frm.save().then(() => {
+                                d.hide();
+                                frappe.show_alert({
+                                    message: __('Contract Value Updated'),
+                                    indicator: 'green'
+                                });
                             });
                         });
-                    });
-            }
-        });
-        d.show();
-    });
-
-    // Contract Value
-    $('.value-display').off('click').on('click', function() {
-        let d = new frappe.ui.Dialog({
-            title: 'Edit Contract Value',
-            fields: [
-                {
-                    label: 'Contract Value (AED)',
-                    fieldname: 'contract_value',
-                    fieldtype: 'Currency',
-                    reqd: 1,
-                    default: frm.doc.contract_value,
-                    options: 'AED'
                 }
-            ],
-            size: 'small',
-            primary_action_label: 'Update',
-            primary_action(values) {
-                frappe.model.set_value(frm.doctype, frm.docname, 'contract_value', values.contract_value)
-                    .then(() => {
-                        frm.save().then(() => {
-                            d.hide();
-                            frappe.show_alert({
-                                message: __('Contract Value Updated'),
-                                indicator: 'green'
+            });
+            d.show();
+        });
+
+        // Image
+        $('.project-image-wrapper').off('click').on('click', function() {
+            new frappe.ui.FileUploader({
+                doctype: frm.doctype,
+                docname: frm.docname,
+                frm: frm,
+                folder: 'Home/Attachments',
+                on_success: (file_doc) => {
+                    frappe.model.set_value(frm.doctype, frm.docname, 'image', file_doc.file_url)
+                        .then(() => {
+                            frm.save().then(() => {
+                                frappe.show_alert({
+                                    message: __('Image Updated'),
+                                    indicator: 'green'
+                                });
                             });
                         });
-                    });
+                }
+            });
+        });
+
+        // Party chip click handler
+        $('.party-chip').not('.add-party-chip').off('click').on('click', function() {
+            const idx = $(this).data('party-idx');
+            const party = frm.doc.parties.find(p => p.idx === idx);
+            if (party) {
+                showPartyDetails(frm, party);
             }
         });
-        d.show();
-    });
 
-    // Image
-    $('.project-image-wrapper').off('click').on('click', function() {
-        new frappe.ui.FileUploader({
-            doctype: frm.doctype,
-            docname: frm.docname,
-            frm: frm,
-            folder: 'Home/Attachments',
-            on_success: (file_doc) => {
-                frappe.model.set_value(frm.doctype, frm.docname, 'image', file_doc.file_url)
-                    .then(() => {
-                        frm.save().then(() => {
-                            frappe.show_alert({
-                                message: __('Image Updated'),
-                                indicator: 'green'
-                            });
-                        });
-                    });
-            }
+        // Add party chip click handler
+        $('.add-party-chip').off('click').on('click', function() {
+            showAddPartyDialog(frm);
         });
-    });
 
-    // Party chip click handler
-    $('.party-chip').not('.add-party-chip').off('click').on('click', function() {
-        const idx = $(this).data('party-idx');
-        const party = frm.doc.parties.find(p => p.idx === idx);
-        if (party) {
-            showPartyDetails(frm, party);
-        }
-    });
-
-    // Add party chip click handler
-    $('.add-party-chip').off('click').on('click', function() {
-        showAddPartyDialog(frm);
-    });
+        // Add click handler for view items button
+        $(frm.wrapper).find('[data-action="view-items"]').on('click', () => {
+            showScopeItemsDialog(frm);
+        });
+    }, 100);
 }
 
 let showDraftsState = {
@@ -599,7 +709,7 @@ function setupDraftToggles(frm) {
     });
 }
 
-function generateOverviewSections(frm, bills, receiveVouchers, payVouchers) {
+function generateOverviewSections(frm, bills, receiveVouchers, payVouchers, additionalExpenses) {
     // Group bills by type
     const groupedBills = {};
     const totals = {};
@@ -624,6 +734,7 @@ function generateOverviewSections(frm, bills, receiveVouchers, payVouchers) {
     // Calculate voucher totals
     const receiveTotal = receiveVouchers.reduce((sum, v) => sum + (v.payment_amount || 0), 0);
     const payTotal = payVouchers.reduce((sum, v) => sum + (v.payment_amount || 0), 0);
+    const additionalExpensesTotal = additionalExpenses.reduce((sum, v) => sum + (v.payment_amount || 0), 0);
 
     // Generate bill card HTML
     const generateBillCard = (type, bills) => `
@@ -680,7 +791,7 @@ function generateOverviewSections(frm, bills, receiveVouchers, payVouchers) {
     `;
 
     // Generate voucher card HTML
-    const generateVoucherCard = (type, vouchers, isReceive) => `
+    const generateVoucherCard = (type, vouchers, isReceive, total = null) => `
         <div class="overview-card">
             <div class="overview-header">
                 <div class="header-content">
@@ -697,7 +808,7 @@ function generateOverviewSections(frm, bills, receiveVouchers, payVouchers) {
                             </div>
                         </label>
                     </div>
-                    <span class="total-amount">${format_currency(isReceive ? receiveTotal : payTotal, 'AED', 0)}</span>
+                    <span class="total-amount">${format_currency(total !== null ? total : (isReceive ? receiveTotal : payTotal), 'AED', 0)}</span>
                 </div>
             </div>
             <div class="virtual-list">
@@ -877,58 +988,67 @@ function generateOverviewSections(frm, bills, receiveVouchers, payVouchers) {
                     color: #2563eb;
                 }
                 .virtual-list {
-                    height: 300px;
+                    max-height: 400px;
                     overflow-y: auto;
                 }
                 .item-list {
-                    padding: 8px 0;
+                    padding: 8px;
                 }
                 .list-item {
-                    padding: 12px 16px;
-                    transition: background-color 0.2s;
-                    display: grid;
-                    grid-template-columns: 1fr 1fr auto;
-                    gap: 16px;
+                    display: flex;
+                    justify-content: space-between;
                     align-items: center;
+                    padding: 12px;
+                    border-bottom: 1px solid #eee;
+                    min-height: 72px;
                 }
-                .list-item:hover {
-                    background: #f8fafc;
+                .list-item:last-child {
+                    border-bottom: none;
                 }
                 .item-info {
                     display: flex;
                     flex-direction: column;
                     gap: 4px;
+                    min-width: 0;
                 }
                 .item-number {
-                    font-size: 14px;
                     font-weight: 500;
-                    color: #1e293b;
+                    color: #1a1a1a;
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
                 }
                 .item-date {
-                    font-size: 13px;
-                    color: #64748b;
+                    font-size: 12px;
+                    color: #666;
+                }
+                .item-name-row {
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                    min-width: 0;
                 }
                 .item-link {
-                    font-size: 14px;
-                    color: #2563eb;
+                    color: #4f46e5;
                     text-decoration: none;
-                    font-weight: 500;
-                }
-                .item-link:hover {
-                    text-decoration: underline;
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
                 }
                 .item-amount {
-                    font-size: 13px;
-                    color: #64748b;
+                    font-weight: 500;
+                    color: #1a1a1a;
+                    text-align: right;
                 }
                 .payment-status {
-                    font-size: 12px;
                     padding: 4px 8px;
-                    border-radius: 12px;
+                    border-radius: 4px;
+                    font-size: 12px;
                     font-weight: 500;
+                    white-space: nowrap;
                 }
                 .status-paid {
-                    background: #dcfce7;
+                    background: #f0fdf4;
                     color: #166534;
                 }
                 .status-unpaid {
@@ -953,22 +1073,21 @@ function generateOverviewSections(frm, bills, receiveVouchers, payVouchers) {
                     flex-direction: column;
                     align-items: center;
                     justify-content: center;
-                    padding: 40px 20px;
+                    padding: 32px 16px;
                     text-align: center;
+                    color: #666;
                 }
                 .empty-icon {
                     font-size: 24px;
-                    margin-bottom: 12px;
+                    margin-bottom: 8px;
                 }
                 .empty-text {
-                    font-size: 14px;
                     font-weight: 500;
-                    color: #1e293b;
                     margin-bottom: 4px;
                 }
                 .empty-subtext {
                     font-size: 13px;
-                    color: #64748b;
+                    opacity: 0.8;
                 }
                 .item-name-row {
                     display: flex;
@@ -1005,7 +1124,7 @@ function generateOverviewSections(frm, bills, receiveVouchers, payVouchers) {
                 </div>
                 <div class="section-content" style="grid-template-columns: repeat(auto-fit, minmax(330px, 1fr));">
                     ${generateBillCard('Purchase Order', groupedBills['Purchase Order'])}
-                    ${generateVoucherCard('Paid Payments', payVouchers, false)}
+                    ${generateVoucherCard('Paid Payments', payVouchers, false, payTotal)}
                     ${generateBillCard('Tax Invoice', groupedBills['Tax Invoice'])}
                     ${generateVoucherCard('Received Payments', receiveVouchers, true)}
                 </div>
@@ -1022,6 +1141,17 @@ function generateOverviewSections(frm, bills, receiveVouchers, payVouchers) {
                         .filter(([type]) => !['Purchase Order', 'Tax Invoice'].includes(type))
                         .map(([type, bills]) => generateBillCard(type, bills))
                         .join('')}
+                </div>
+            </div>
+            <div class="section">
+                <div class="section-header" onclick="this.nextElementSibling.style.display = this.nextElementSibling.style.display === 'none' ? 'grid' : 'none'; this.querySelector('.section-icon').classList.toggle('collapsed')">
+                    <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
+                    <span class="section-title">Additional Expenses</span>
+                </div>
+                <div class="section-content" style="grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));">
+                    ${generateVoucherCard('Additional Expenses', additionalExpenses, false, additionalExpensesTotal)}
                 </div>
             </div>
         </div>
@@ -1077,15 +1207,54 @@ function updateProjectDisplay(frm) {
         filters: {
             'project': frm.doc.name,
             'docstatus': showDraftsState['pay'] ? ['in', [0, 1]] : 1,
-            'type': 'Pay'
+            'type': 'Pay',
+            'petty_cash': 0
         },
         fields: ['name', 'date', 'payment_amount', 'docstatus'],
         order_by: 'date desc',
         limit: 1000
     });
 
-    Promise.all([getBills(), getReceiveVouchers(), getPayVouchers()])
-        .then(([bills, receiveVouchers, payVouchers]) => {
+    const getAdditionalExpenses = () => frappe.db.get_list('Payment Voucher', {
+        filters: {
+            'project': frm.doc.name,
+            'docstatus': showDraftsState['pay'] ? ['in', [0, 1]] : 1,
+            'type': 'Pay',
+            'petty_cash': 1
+        },
+        fields: ['name', 'date', 'payment_amount', 'docstatus'],
+        order_by: 'date desc',
+        limit: 1000
+    });
+
+    Promise.all([getBills(), getReceiveVouchers(), getPayVouchers(), getAdditionalExpenses()])
+        .then(([bills, receiveVouchers, payVouchers, additionalExpenses]) => {
+            const getStatusStyle = (status) => {
+                const styles = {
+                    'Tender': {
+                        bg: 'var(--bg-yellow)',
+                        text: 'var(--text-on-yellow)'
+                    },
+                    'Job In Hand': {
+                        bg: 'var(--bg-pink)',
+                        text: 'var(--text-on-pink)'
+                    },
+                    'In Progress': {
+                        bg: 'var(--bg-purple)',
+                        text: 'var(--text-on-purple)'
+                    },
+                    'Completed': {
+                        bg: 'var(--bg-cyan)',
+                        text: 'var(--text-on-cyan)'
+                    },
+                    'Cancelled': {
+                        bg: 'var(--bg-gray)',
+                        text: 'var(--text-on-gray)'
+                    }
+                };
+                return styles[status] || styles['Cancelled'];
+            };
+
             const projectHtml = `
                 <style>
                     .project-display {
@@ -1108,25 +1277,41 @@ function updateProjectDisplay(frm) {
                         cursor: pointer;
                         transition: opacity 0.2s;
                     }
-                    .project-image-wrapper:hover {
-                        opacity: 0.9;
-                    }
-                    .project-image-wrapper:hover::after {
-                        content: "Click to change image";
-                        position: absolute;
-                        bottom: 0;
-                        left: 0;
-                        right: 0;
-                        background: rgba(0, 0, 0, 0.7);
-                        color: white;
-                        padding: 8px;
-                        font-size: 13px;
-                        text-align: center;
-                    }
                     .project-image {
                         width: 100%;
-                        height: 100%;
+                        height: 240px;
                         object-fit: cover;
+                    }
+                    .view-items-btn {
+                        width: 100%;
+                        padding: 8px 12px;
+                        margin-top: 8px;
+                        background: var(--gray-100);
+                        color: var(--gray-900);
+                        border: 1px solid var(--gray-300);
+                        border-radius: var(--border-radius-sm);
+                        font-size: var(--text-md);
+                        font-weight: 500;
+                        display: inline-flex;
+                        align-items: center;
+                        justify-content: center;
+                        gap: 8px;
+                        cursor: pointer;
+                        transition: all 0.2s;
+                    }
+                    .view-items-btn:hover {
+                        background: var(--gray-200);
+                        border-color: var(--gray-400);
+                        color: var(--gray-900);
+                    }
+                    .view-items-btn svg {
+                        width: 16px;
+                        height: 16px;
+                        stroke: var(--gray-600);
+                        stroke-width: 2;
+                    }
+                    .view-items-btn:hover svg {
+                        stroke: var(--gray-800);
                     }
                     .project-info {
                         flex-grow: 1;
@@ -1341,21 +1526,31 @@ function updateProjectDisplay(frm) {
                 </style>
                 <div class="project-display">
                     <div class="project-header">
-                        <div class="project-image-wrapper">
-                            ${frm.doc.image ? 
-                                `<img src="${frm.doc.image}" class="project-image" alt="Project Image"/>` :
-                                `<div class="no-image">
-                                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                                        <circle cx="8.5" cy="8.5" r="1.5"></circle>
-                                        <polyline points="21 15 16 10 5 21"></polyline>
-                                    </svg>
-                                </div>`
-                            }
+                        <div>
+                            <div class="project-image-wrapper">
+                                <img src="${frm.doc.image || '/assets/frappe/images/fallback-image.jpg'}" class="project-image" />
+                            </div>
+                            <button class="view-items-btn" data-action="view-items">
+                                <svg viewBox="0 0 24 24" fill="none">
+                                    <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                                View Items
+                            </button>
                         </div>
                         <div class="project-info">
                             <h1 class="project-name">
                                 ${frm.doc.project_name || 'Untitled Project'}
+                                <div class="status-chip" style="
+                                    background-color: ${getStatusStyle(frm.doc.status).bg};
+                                    color: ${getStatusStyle(frm.doc.status).text};
+                                    display: inline-block;
+                                    padding: 4px 12px;
+                                    border-radius: 12px;
+                                    font-size: 12px;
+                                    font-weight: 600;
+                                    margin-left: 8px;
+                                    vertical-align: middle;
+                                ">${frm.doc.status}</div>
                                 <span class="editable-hint">(Click to edit)</span>
                             </h1>
                             <div class="project-meta">
@@ -1391,7 +1586,7 @@ function updateProjectDisplay(frm) {
                             ${generatePartyChips(frm)}
                         </div>
                     </div>
-                    ${generateOverviewSections(frm, bills.bills, receiveVouchers, payVouchers)}
+                    ${generateOverviewSections(frm, bills.bills, receiveVouchers, payVouchers, additionalExpenses)}
                 </div>
             `;
             
@@ -1403,4 +1598,227 @@ function updateProjectDisplay(frm) {
                 setupClickHandlers(frm);
             }, 100);
         });
+}
+
+function updateStatusChip(frm) {
+    // Remove existing status chip if any
+    const headerRight = document.querySelector('.page-head .page-head-content .page-head-right');
+    const existingChip = headerRight?.querySelector('.status-chip');
+    if (existingChip) {
+        existingChip.remove();
+    }
+
+    // Get status style configuration
+    const getStatusStyle = (status) => {
+        const styles = {
+            'Tender': {
+                bg: 'var(--bg-yellow)',
+                text: 'var(--text-on-yellow)'
+            },
+            'Job In Hand': {
+                bg: 'var(--bg-pink)',
+                text: 'var(--text-on-pink)'
+            },
+            'In Progress': {
+                bg: 'var(--bg-purple)',
+                text: 'var(--text-on-purple)'
+            },
+            'Completed': {
+                bg: 'var(--bg-cyan)',
+                text: 'var(--text-on-cyan)'
+            },
+            'Cancelled': {
+                bg: 'var(--bg-gray)',
+                text: 'var(--text-on-gray)'
+            }
+        };
+        return styles[status] || styles['Cancelled'];
+    };
+
+    const style = getStatusStyle(frm.doc.status);
+
+    // Create and style the chip
+    const chip = document.createElement('div');
+    chip.className = 'status-chip';
+    chip.innerHTML = frm.doc.status;
+    chip.style.cssText = `
+        background-color: ${style.bg};
+        color: ${style.text};
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 600;
+        margin-right: 8px;
+        display: inline-block;
+    `;
+
+    // Insert the chip before the first button in the header
+    if (headerRight) {
+        const firstButton = headerRight.querySelector('.btn');
+        if (firstButton) {
+            headerRight.insertBefore(chip, firstButton);
+        } else {
+            headerRight.appendChild(chip);
+        }
+    }
+}
+
+function showScopeItemsDialog(frm) {
+    frappe.call({
+        method: 'frappe.client.get_list',
+        args: {
+            doctype: 'Scope Items',
+            filters: {
+                'project': frm.doc.name
+            },
+            fields: ['name', 'scope_type', 'items', 'totals_data', 'constants_data']
+        },
+        callback: function(r) {
+            if (!r.message || !r.message.length) {
+                frappe.msgprint(__('No scope items found for this project.'));
+                return;
+            }
+
+            let dialog_content = `
+                <div class="scope-items-overview">
+                    ${r.message.map(scope_item => {
+                        let totals = {};
+                        try {
+                            totals = JSON.parse(scope_item.totals_data || '{}');
+                        } catch (e) {
+                            console.error('Error parsing totals data:', e);
+                        }
+
+                        // Format field names and values
+                        const formattedTotals = Object.entries(totals).map(([field, value]) => {
+                            // Convert snake_case to Title Case
+                            const formattedField = field.split('_')
+                                .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+                                .join(' ');
+                            
+                            // Format value based on field name and value type
+                            let formattedValue;
+                            const currencyFields = ['total', 'grand_total', 'amount', 'vat_amount'];
+                            
+                            if (currencyFields.includes(field.toLowerCase())) {
+                                formattedValue = format_currency(value, 'AED', 0);
+                            } else {
+                                // Check if value is a number
+                                const numValue = Number(value);
+                                if (!isNaN(numValue)) {
+                                    // Format as number with appropriate decimals
+                                    formattedValue = Number.isInteger(numValue) ? 
+                                        numValue.toLocaleString('en-US') : 
+                                        numValue.toLocaleString('en-US', {
+                                            minimumFractionDigits: 2,
+                                            maximumFractionDigits: 2
+                                        });
+                                } else {
+                                    formattedValue = value;
+                                }
+                            }
+
+                            return { field: formattedField, value: formattedValue };
+                        });
+
+                        return `
+                            <div class="scope-item-chip">
+                                <div class="scope-header">
+                                    <div class="scope-type">${scope_item.name}</div>
+                                    <button class="btn btn-xs btn-default view-full-btn" 
+                                            data-name="${scope_item.name}">
+                                        ${__('View Full')}
+                                    </button>
+                                </div>
+                                <div class="totals-section">
+                                    ${formattedTotals.map(({field, value}) => `
+                                        <div class="total-item">
+                                            <span class="field-label">${field}:</span>
+                                            <span class="field-value">${value}</span>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            `;
+
+            let d = new frappe.ui.Dialog({
+                title: __('Project Scope Items'),
+                fields: [{
+                    fieldtype: 'HTML',
+                    fieldname: 'items_html',
+                    options: dialog_content
+                }],
+                size: 'large'
+            });
+
+            // Add custom CSS
+            frappe.dom.set_style(`
+                .scope-items-overview {
+                    display: flex;
+                    flex-wrap: wrap;
+                    gap: 15px;
+                    padding: 10px;
+                }
+                .scope-item-chip {
+                    background: var(--bg-light-gray);
+                    border-radius: 8px;
+                    padding: 15px;
+                    min-width: 300px;
+                    transition: all 0.2s;
+                    box-shadow: var(--shadow-sm);
+                }
+                .scope-item-chip:hover {
+                    box-shadow: var(--shadow-md);
+                }
+                .scope-header {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    margin-bottom: 15px;
+                    padding-bottom: 10px;
+                    border-bottom: 1px solid var(--border-color);
+                }
+                .scope-item-chip .scope-type {
+                    font-weight: bold;
+                    color: var(--text-color);
+                    font-size: 1.1em;
+                }
+                .totals-section {
+                    display: grid;
+                    gap: 8px;
+                }
+                .scope-item-chip .total-item {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    color: var(--text-light);
+                    padding: 4px 0;
+                }
+                .scope-item-chip .field-label {
+                    margin-right: 10px;
+                    color: var(--text-muted);
+                }
+                .scope-item-chip .field-value {
+                    font-weight: 500;
+                    color: var(--text-color);
+                }
+                .view-full-btn:hover {
+                    background-color: var(--bg-gray);
+                }
+            `);
+
+            // Add click handler for View Full buttons
+            d.$wrapper.find('.view-full-btn').on('click', function(e) {
+                e.stopPropagation();
+                let docname = $(this).data('name');
+                frappe.set_route('Form', 'Scope Items', docname);
+                d.hide();
+            });
+
+            d.show();
+        }
+    });
 }

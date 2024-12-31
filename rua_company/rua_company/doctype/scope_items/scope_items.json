@@ -110,7 +110,7 @@
  "hide_toolbar": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-12-30 17:48:46.987029",
+ "modified": "2024-12-31 14:23:09.560712",
  "modified_by": "Administrator",
  "module": "Rua Company",
  "name": "Scope Items",
@@ -132,5 +132,14 @@
  ],
  "sort_field": "modified",
  "sort_order": "DESC",
- "states": []
+ "states": [
+  {
+   "color": "Red",
+   "title": "Draft"
+  },
+  {
+   "color": "Cyan",
+   "title": "Assigned"
+  }
+ ]
 }

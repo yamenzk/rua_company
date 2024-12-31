@@ -4,6 +4,33 @@
 frappe.ui.form.on('Scope Items', {
     refresh: function(frm) {
         new ScopeItemsRenderer(frm);
+        
+        // Add Assign/Draft toggle button
+        if (frm.doc.docstatus === 0) {  // Only show for non-submitted documents
+            const buttonLabel = frm.doc.status === "Assigned" ? "Draft" : "Assign";
+            const newStatus = frm.doc.status === "Assigned" ? "Draft" : "Assigned";
+            
+            frm.add_custom_button(__(buttonLabel), function() {
+                frm.set_value('status', newStatus);
+                frm.save();
+            });
+
+            // Apply styles directly
+            setTimeout(() => {
+                const $button = $(`button[data-label="${buttonLabel}"]`);
+                if (buttonLabel === "Draft") {
+                    $button.css({
+                        'background-color': '#ff6b6b',
+                        'color': 'white'
+                    });
+                } else {
+                    $button.css({
+                        'background-color': '#00CED1',
+                        'color': 'white'
+                    });
+                }
+            }, 100);
+        }
     },
     scope_type: function(frm) {
         new ScopeItemsRenderer(frm);
@@ -1199,5 +1226,15 @@ frappe.dom.set_style(`
     .include-data-checkbox .label-area {
         color: var(--text-muted);
         font-size: var(--text-sm);
+    }
+
+    .draft-button {
+        background-color: #ff6b6b !important;
+        color: white !important;
+    }
+    
+    .assign-button {
+        background-color: #00CED1 !important;
+        color: white !important;
     }
 `);
