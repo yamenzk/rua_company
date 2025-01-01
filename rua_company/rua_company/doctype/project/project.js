@@ -20,6 +20,13 @@ frappe.ui.form.on("Project", {
                 frm.save();
             }, __('Status'));
         }
+
+        if (frm.doc.status === "Cancelled") {
+            frm.add_custom_button(__('Reset Project'), function() {
+                frm.set_value('status', 'Tender');
+                frm.save();
+            });
+        }
         
         if (frm.doc.status === "Job In Hand") {
             frm.add_custom_button(__('Start Progress'), function() {
@@ -1346,7 +1353,12 @@ function updateProjectDisplay(frm) {
                         border-radius: 4px;
                         transition: background-color 0.2s;
                     }
-                    .meta-item:hover {
+                    .meta-item.serial {
+                        cursor: default;
+                        background-color: var(--bg-blue);
+                        color: var(--text-on-blue);
+                    }
+                    .meta-item:not(.serial):hover {
                         background-color: #f3f4f6;
                     }
                     .meta-icon {
@@ -1554,7 +1566,15 @@ function updateProjectDisplay(frm) {
                                 <span class="editable-hint">(Click to edit)</span>
                             </h1>
                             <div class="project-meta">
-                                <div class="meta-item">
+                                ${frm.doc.serial_number ? `
+                                <div class="meta-item serial">
+                                    <svg class="meta-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M4 7V4h16v3M9 20h6M12 4v16"/>
+                                    </svg>
+                                    <span class="meta-text">Serial #${frm.doc.serial_number}</span>
+                                </div>
+                                ` : ''}
+                                <div class="meta-item location-item">
                                     <svg class="meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                         <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
                                         <circle cx="12" cy="10" r="3"></circle>
@@ -1669,9 +1689,10 @@ function showScopeItemsDialog(frm) {
         args: {
             doctype: 'Scope Items',
             filters: {
-                'project': frm.doc.name
+                'project': frm.doc.name,
+                'status': 'Assigned'
             },
-            fields: ['name', 'scope_type', 'items', 'totals_data', 'constants_data']
+            fields: ['name', 'scope_type', 'items', 'totals_data', 'constants_data', 'status']
         },
         callback: function(r) {
             if (!r.message || !r.message.length) {
@@ -1751,7 +1772,14 @@ function showScopeItemsDialog(frm) {
                     fieldname: 'items_html',
                     options: dialog_content
                 }],
-                size: 'large'
+                size: 'large',
+                primary_action_label: __('Add New'),
+                primary_action() {
+                    frappe.new_doc('Scope Items', {
+                        project: frm.doc.name
+                    });
+                    d.hide();
+                }
             });
 
             // Add custom CSS

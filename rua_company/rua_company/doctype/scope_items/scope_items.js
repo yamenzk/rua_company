@@ -32,7 +32,15 @@ frappe.ui.form.on('Scope Items', {
             }, 100);
         }
     },
+    project: function(frm) {
+        if (frm.doc.project && frm.doc.scope_type) {
+            frm.set_value('label', `${frm.doc.project}: ${frm.doc.scope_type}`);
+        }
+    },
     scope_type: function(frm) {
+        if (frm.doc.project && frm.doc.scope_type) {
+            frm.set_value('label', `${frm.doc.project}: ${frm.doc.scope_type}`);
+        }
         new ScopeItemsRenderer(frm);
     },
     items: function(frm) {

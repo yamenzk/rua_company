@@ -60,7 +60,7 @@
  "hide_toolbar": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-12-23 14:50:03.948739",
+ "modified": "2025-01-01 04:20:21.646068",
  "modified_by": "Administrator",
  "module": "Rua Company",
  "name": "Scope Type",
@@ -76,6 +76,18 @@
    "read": 1,
    "report": 1,
    "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "RUA Manager",
    "share": 1,
    "write": 1
   }

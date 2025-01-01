@@ -6,6 +6,24 @@ from frappe.model.document import Document
 from frappe.utils import today
 
 class Project(Document):
+    def validate(self):
+        if self.has_value_changed("status"):
+            if self.status == "Cancelled":
+                self.serial_number = 0
+            elif self.status == "In Progress":
+                self.serial_number = self.get_next_serial_number()
+    
+    def get_next_serial_number(self):
+        # Get the highest serial number from existing projects (excluding cancelled)
+        highest_serial = frappe.db.sql("""
+            SELECT MAX(serial_number) 
+            FROM tabProject 
+            WHERE status != 'Cancelled'
+        """)[0][0]
+        
+        # If no projects exist or all have serial_number 0, start from 1
+        return (highest_serial or 0) + 1
+
     pass
 
 @frappe.whitelist()

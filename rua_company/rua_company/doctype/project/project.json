@@ -14,7 +14,8 @@
   "status",
   "column_break_qgzt",
   "parties",
-  "image"
+  "image",
+  "serial_number"
  ],
  "fields": [
   {
@@ -50,6 +51,7 @@
   {
    "fieldname": "details_tab",
    "fieldtype": "Tab Break",
+   "hidden": 1,
    "label": "Details"
   },
   {
@@ -66,12 +68,17 @@
    "fieldtype": "Select",
    "label": "Status",
    "options": "Tender\nJob In Hand\nIn Progress\nCompleted\nCancelled"
+  },
+  {
+   "fieldname": "serial_number",
+   "fieldtype": "Int",
+   "label": "Serial Number"
   }
  ],
  "image_field": "image",
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-12-31 14:04:15.851307",
+ "modified": "2025-01-01 04:00:16.643854",
  "modified_by": "Administrator",
  "module": "Rua Company",
  "name": "Project",

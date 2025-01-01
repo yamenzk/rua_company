@@ -1,7 +1,7 @@
 {
  "actions": [],
  "allow_copy": 1,
- "autoname": "format:{project}-{scope_type}-{label}",
+ "autoname": "format:{label}",
  "creation": "2024-12-20 15:09:00.228807",
  "doctype": "DocType",
  "engine": "InnoDB",
@@ -30,7 +30,8 @@
    "in_list_view": 1,
    "label": "Scope Type",
    "options": "Scope Type",
-   "reqd": 1
+   "reqd": 1,
+   "set_only_once": 1
   },
   {
    "fieldname": "column_break_ooqj",
@@ -40,6 +41,7 @@
    "default": "Draft",
    "fieldname": "status",
    "fieldtype": "Select",
+   "hidden": 1,
    "label": "Status",
    "options": "Draft\nAssigned",
    "read_only": 1
@@ -86,7 +88,8 @@
    "fieldtype": "Link",
    "label": "Project",
    "options": "Project",
-   "reqd": 1
+   "reqd": 1,
+   "set_only_once": 1
   },
   {
    "fieldname": "column_break_byga",
@@ -104,13 +107,14 @@
    "fieldname": "label",
    "fieldtype": "Data",
    "label": "Label",
-   "reqd": 1
+   "reqd": 1,
+   "set_only_once": 1
   }
  ],
  "hide_toolbar": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-12-31 14:23:09.560712",
+ "modified": "2025-01-01 04:18:18.982958",
  "modified_by": "Administrator",
  "module": "Rua Company",
  "name": "Scope Items",
@@ -126,6 +130,29 @@
    "read": 1,
    "report": 1,
    "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "RUA Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "RUA Employee",
    "share": 1,
    "write": 1
   }
