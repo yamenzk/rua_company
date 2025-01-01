@@ -23,5 +23,13 @@ build-backend = "flit_core.buildapi"
 
 [deploy.dependencies.apt]
 packages = [
-    "google-chrome-stable",
+    "wget",
+    "gnupg2",
+    "google-chrome-stable"
+]
+
+[deploy.dependencies.before_install]
+commands = [
+    "wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add -",
+    "echo 'deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main' > /etc/apt/sources.list.d/google-chrome.list"
 ]
