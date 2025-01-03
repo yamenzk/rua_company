@@ -33,16 +33,12 @@ class ScopeType(Document):
         for field in self.scope_fields:
             if field.auto_calculate and field.calculation_formula:
                 try:
-                    # Check formula syntax - these are Python-style formulas
-                    compile(field.calculation_formula, '', 'eval')
-
-                    # Check field references
+                    # Only validate field references, skip Python syntax check
                     for field_name in field_names:
                         if f"variables['{field_name}']" in field.calculation_formula:
                             if field_name not in field_names:
                                 frappe.throw(
                                     f"Formula references undefined field: {field_name}")
-
                 except Exception as e:
                     frappe.throw(
                         f"Invalid formula for {field.field_name}: {str(e)}")

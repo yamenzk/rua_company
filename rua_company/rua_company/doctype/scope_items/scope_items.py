@@ -168,7 +168,21 @@ class ScopeItems(Document):
                 if field.auto_calculate and field.calculation_formula:
                     try:
                         eval_globals = self.get_eval_context(variables, doc_totals)
-                        result = eval(field.calculation_formula, eval_globals)
+                        
+                        # Convert JavaScript ternary to Python if/else
+                        formula = field.calculation_formula
+                        if '?' in formula and ':' in formula:
+                            parts = formula.split('?')
+                            condition = parts[0].strip()
+                            rest = parts[1].strip()
+                            parts = rest.split(':')
+                            true_value = parts[0].strip()
+                            false_value = parts[1].strip()
+                            
+                            # Keep the variables[] reference intact
+                            formula = f"({true_value}) if ({condition}) else ({false_value})"
+                        
+                        result = eval(formula, eval_globals)
                         
                         if field.field_type == 'Int':
                             result = cint(result)
@@ -215,7 +229,21 @@ class ScopeItems(Document):
                 for field in sorted_doc_totals_fields:
                     try:
                         eval_globals = self.get_eval_context(variables, doc_totals)
-                        result = eval(field.calculation_formula, eval_globals)
+                        
+                        # Convert JavaScript ternary to Python if/else
+                        formula = field.calculation_formula
+                        if '?' in formula and ':' in formula:
+                            parts = formula.split('?')
+                            condition = parts[0].strip()
+                            rest = parts[1].strip()
+                            parts = rest.split(':')
+                            true_value = parts[0].strip()
+                            false_value = parts[1].strip()
+                            
+                            # Keep the variables[] reference intact
+                            formula = f"({true_value}) if ({condition}) else ({false_value})"
+                        
+                        result = eval(formula, eval_globals)
                         
                         if field.field_type == 'Int':
                             result = cint(result)
@@ -404,30 +432,39 @@ class ScopeItems(Document):
 
     def get_item_variables(self, item):
         """Get all variables for an item with defaults"""
-        if not item.data:
-            # Get scope type for default values
-            scope_type = frappe.get_doc("Scope Type", self.scope_type)
-            defaults = {}
+        variables = {}
+        
+        # Get scope type for field list and defaults
+        scope_type = frappe.get_doc("Scope Type", self.scope_type)
+        
+        # Initialize all fields with None first
+        for field in scope_type.scope_fields:
+            variables[field.field_name] = None
             
-            # Initialize with default values from field configuration
-            for field in scope_type.scope_fields:
-                if field.default_value:
-                    # Convert default value based on field type
-                    if field.field_type in ['Float', 'Currency']:
-                        defaults[field.field_name] = flt(field.default_value)
-                    elif field.field_type == 'Int':
-                        defaults[field.field_name] = cint(field.default_value)
-                    elif field.field_type == 'Check':
-                        defaults[field.field_name] = field.default_value.lower() == 'true'
-                    else:
-                        defaults[field.field_name] = field.default_value
+        # Load data from item if available
+        if item.data:
+            try:
+                data = json.loads(item.data)
+                variables.update(data)
+            except:
+                frappe.log_error("Error parsing item data")
+        
+        # Apply defaults for any None values
+        for field in scope_type.scope_fields:
+            if variables[field.field_name] is None and field.default_value:
+                if field.field_type in ['Float', 'Currency']:
+                    variables[field.field_name] = flt(field.default_value)
+                elif field.field_type == 'Int':
+                    variables[field.field_name] = cint(field.default_value)
+                else:
+                    variables[field.field_name] = field.default_value
             
-            return defaults
-            
-        try:
-            return json.loads(item.data)
-        except json.JSONDecodeError:
-            return {}
+            # Ensure numeric fields are 0 if still None
+            if variables[field.field_name] is None:
+                if field.field_type in ['Float', 'Currency', 'Int']:
+                    variables[field.field_name] = 0
+                    
+        return variables
 
     def get_scope_totals(self):
         """Get scope-level totals with error handling"""
@@ -513,17 +550,41 @@ def save_multiple_scope_items(scope_items, items_data, clear_existing=False):
     clear_existing = bool(int(clear_existing)) if str(clear_existing).isdigit() else bool(clear_existing)
         
     doc = frappe.get_doc("Scope Items", scope_items)
+    scope_type = frappe.get_doc("Scope Type", doc.scope_type)
+    
+    # Get list of valid field names
+    valid_fields = {field.field_name for field in scope_type.scope_fields}
+    valid_fields.add('item_name')  # Add item_name as it's always valid
+    
+    # Validate items_data
+    for item_data in items_data:
+        # Check for required fields
+        if not item_data.get('item_name'):
+            frappe.throw("Item name is required for all items")
+            
+        # Remove any invalid fields
+        item_data = {k: v for k, v in item_data.items() if k in valid_fields}
+        
+        # Convert numeric fields to proper type
+        for field in scope_type.scope_fields:
+            if field.field_name in item_data:
+                try:
+                    if field.field_type in ['Float', 'Currency']:
+                        item_data[field.field_name] = flt(item_data[field.field_name])
+                    elif field.field_type == 'Int':
+                        item_data[field.field_name] = cint(item_data[field.field_name])
+                except Exception as e:
+                    frappe.throw(f"Invalid value for {field.field_name}: {str(e)}")
     
     # If clear_existing is True, remove all existing items
     if clear_existing:
-        # Create a new empty list for items
         doc.set('items', [])
     
     # Add new items
     for item_data in items_data:
         # Create new item as a dictionary first
         new_item = {
-            'doctype': 'Scope Item',  # This is the child doctype name
+            'doctype': 'Scope Item',
             'parent': doc.name,
             'parenttype': 'Scope Items',
             'parentfield': 'items',
@@ -535,9 +596,9 @@ def save_multiple_scope_items(scope_items, items_data, clear_existing=False):
         # Append the item using the dictionary
         doc.append('items', new_item)
     
-    # Save the document
+    # Save and validate the document
     doc.save()
-    frappe.db.commit()  # Ensure changes are committed
+    frappe.db.commit()
     
     return doc
 
@@ -592,10 +653,21 @@ def get_template_with_formulas(scope_items, include_data=False):
             excel_formula = excel_formula.replace(f"doc_totals['{total_name}']", excel_ref)
             excel_formula = excel_formula.replace(f"doc_totals.{total_name}", excel_ref)
         
+        # Handle ternary operators
+        if '?' in excel_formula and ':' in excel_formula:
+            # Split the ternary into its components
+            parts = excel_formula.split('?')
+            condition = parts[0].strip()
+            rest = parts[1].strip()
+            parts = rest.split(':')
+            true_value = parts[0].strip()
+            false_value = parts[1].strip()
+            
+            # Build Excel IF formula
+            excel_formula = f"IF({condition}, {true_value}, {false_value})"
+        
         # Convert JavaScript operators to Excel
         excel_formula = (excel_formula
-            .replace("?", "IF(")
-            .replace(":", ",")
             .replace("&&", "*")
             .replace("||", "+")
             .replace("===", "=")
@@ -605,9 +677,14 @@ def get_template_with_formulas(scope_items, include_data=False):
             .replace("true", "1")
             .replace("false", "0"))
         
-        # Fix nested IF statements
-        while "))" in excel_formula:
-            excel_formula = excel_formula.replace("))", ")")
+        # Handle Math functions
+        excel_formula = excel_formula.replace('Math.PI', '3.14159')
+        excel_formula = excel_formula.replace('Math.pow(', 'POWER(')
+        excel_formula = excel_formula.replace('Math.sqrt(', 'SQRT(')
+        excel_formula = excel_formula.replace('Math.abs(', 'ABS(')
+        excel_formula = excel_formula.replace('Math.round(', 'ROUND(')
+        excel_formula = excel_formula.replace('Math.floor(', 'FLOOR(')
+        excel_formula = excel_formula.replace('Math.ceil(', 'CEILING(')
         
         return excel_formula
 
