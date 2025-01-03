@@ -948,6 +948,14 @@ class ScopeItemsRenderer {
         const doc_totals = this.frm.doc.totals_data ? 
             JSON.parse(this.frm.doc.totals_data) : {};
 
+        // Get constants
+        let constants = {};
+        try {
+            constants = JSON.parse(this.frm.doc.constants_data || '{}');
+        } catch (e) {
+            console.error('Error parsing constants data:', e);
+        }
+
         // Calculate each field in dependency order
         sorted_fields.forEach(field => {
             if (field.calculation_formula) {
@@ -961,6 +969,7 @@ class ScopeItemsRenderer {
                     const context = {
                         variables,
                         doc_totals,
+                        constants,
                         math: Math,
                         flt: (val) => parseFloat(val || 0),
                         cint: (val) => parseInt(val || 0)
@@ -968,9 +977,9 @@ class ScopeItemsRenderer {
 
                     // Evaluate formula
                     let result = (new Function(
-                        'variables', 'doc_totals', 'math', 'flt', 'cint',
+                        'variables', 'doc_totals', 'constants', 'math', 'flt', 'cint',
                         `return ${field.calculation_formula}`
-                    ))(context.variables, context.doc_totals, context.math, context.flt, context.cint);
+                    ))(context.variables, context.doc_totals, context.constants, context.math, context.flt, context.cint);
 
                     // Convert result based on field type
                     if (field.field_type === 'Int') {
@@ -985,7 +994,7 @@ class ScopeItemsRenderer {
                     // Update variables for next calculations
                     variables[field.field_name] = result;
                 } catch (e) {
-                    console.error(`Error calculating ${field.label}: ${e.message}`);
+                    frappe.throw(`Error calculating ${field.label}: ${e.message}`);
                 }
             }
         });
