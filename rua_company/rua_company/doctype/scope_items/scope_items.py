@@ -126,6 +126,9 @@ class ScopeItems(Document):
         field_deps = {}
         doc_totals_dependent_fields = []
         regular_fields = []
+        sorted_regular_fields = []
+        sorted_doc_totals_fields = []  # Moved this declaration up
+        calculated_fields = set()
         
         for field in scope_type.scope_fields:
             if field.auto_calculate and field.calculation_formula:
@@ -138,9 +141,6 @@ class ScopeItems(Document):
                 field_deps[field.field_name] = deps
 
         # Sort regular fields by dependencies
-        calculated_fields = set()
-        sorted_regular_fields = []
-        
         def add_field_to_list(field, target_list):
             if field.field_name in calculated_fields:
                 return
@@ -195,9 +195,6 @@ class ScopeItems(Document):
                         frappe.throw(f"Error calculating {field.label}: {str(e)}")
 
         # Sort doc_totals dependent fields by their dependencies (excluding doc_totals)
-        sorted_doc_totals_fields = []
-        calculated_fields = set()  # Reset calculated fields for doc_totals sorting
-        
         for field in doc_totals_dependent_fields:
             add_field_to_list(field, sorted_doc_totals_fields)
 

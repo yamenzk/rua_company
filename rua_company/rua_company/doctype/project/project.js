@@ -621,7 +621,7 @@ function setupClickHandlers(frm) {
         });
 
         // Contract Value
-        $('.value-display').off('click').on('click', function() {
+        $('.value-card.contract-value').off('click').on('click', function() {
             let d = new frappe.ui.Dialog({
                 title: 'Edit Contract Value',
                 fields: [
